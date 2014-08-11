@@ -9,39 +9,83 @@
   <body>
     <p><strong>Cascading stylist</strong></p>
     <div id="cascade">
-        <pre>
-      [Load...]          [Save] [Save as...]
+        <form action="#" onsubmit="return false;">
+            <div style="margin-bottom: 1em;">
+                <button>Load illustration...</button>
+                <button style="float: right;">Save illustration as...</button>
+                <button style="float: right;">Save</button>
+            </div>
 
-        Choose a tree...
-        [SELECT or AUTOCOMPLETE? or URL FIELD]
+            <div style="margin-bottom: 1em;">
+                <label for="tree-chooser">Choose a tree to illustrate</label>
+                <br/>
+                <select id="tree-chooser">
+                    <option>Fig. 1F</option>
+                    <option>Untitled (tree4)</option>
+                    <option>Mammalia (example)</option>
+                    <option>Latest Open Tree synthesis (all)</option>
+                </select>
+                <br/>
+                <label for="tree-upload">... or upload a tree file</label>
+                <br/>
+                <input id="tree-upload" type="file"></input>
+                <br/>
+                <label for="tree-url">... or enter its URL</label>
+                <br/>
+                <input id="tree-url" type="text" placeholder="Enter URL here"></input>
+            </div>
 
-        Choose a general style...
-        [SELECT]
+            <div style="margin-bottom: 1em;">
+                <label for="style-chooser">Choose a general style for this illustration</label>
+                <br/>
+                <select id="style-chooser">
+                    <option>Basic</option>
+                    <option>Nature</option>
+                    <option>Systematic Biology</option>
+                    <option>Nature (monochrome)</option>
+                    <option>Modern (from SysBio)</option>
+                    <option>Jim's favorites</option>
+                </select>
+            </div>
 
-        Refinements to this style
-          [map data elements to visual properties]
-          [path styles & widths]
-          [node styles & size]
-          [colors]
-          [fonts]
-        [SAVE AS new/derived style (and apply)?]
-        
-        Editorial decisions for this tree, mostly "recorded" as 
-        the user interacts with the live viz:
-          [width]
-          [height]
-          [pan and zoom]
-          [expanded/collapsed nodes]
-          [highlight nodes/edges]
-          [add/upload ornaments (images, etc)]
+            <div style="margin-bottom: 1em;">
+                <label>Refine this style for the current illustration</label>
+                <pre>
+      [map data elements to visual properties]
+      [path styles & widths]
+      [node styles & size]
+      [colors]
+      [fonts]</pre>
+                <button>Save modified style as...</button>
+            </div>
+            
+            <div style="margin-bottom: 1em;">
+                <label>Highlights and ornaments</label>
+                <pre>
+    Editorial decisions for this tree, mostly "recorded" as 
+    the user interacts with the live viz:
+      [width]
+      [height]
+      [pan and zoom]
+      [expanded/collapsed nodes]
+      [highlighted nodes/edges]
+      [add/upload ornaments (images, etc)]</pre>
+            </div>
+        </form>
 
-        </pre>
+            <div style="margin-bottom: 1em;">
+                <button>Load illustration...</button>
+                <button style="float: right;">Save illustration as...</button>
+                <button style="float: right;">Save</button>
+            </div>
+
     </div>
     <div id="view" class="view"></div>
-    <p style="clear: left;">TODO here:</p>
+    <hr style="clear: left;"/>
+    <p>TODO here:</p>
     <ul>
         <li>[X] free-standing instance of vega 'interactive' demo</li>
-        <li>[~] mock up basic UI for "cascade" (style selection, etc)
+        <li>[X] mock up basic UI for "cascade" (style selection, etc)
         <li>[ ] add basic vega tree module</li>
         <li>[ ] transform NexSON trees for rendering</li>
         <li>[ ] adapt a generic cladogram to use vega grammar</li>
