@@ -1,6 +1,8 @@
 <html>
   <head>
     <title>Stylist - Tree Illustrator test</title/>
+    <script src="jquery.js"></script>
+    <script src="knockout-2.3.0.js"></script>
     <script src="d3.v3.min.js"></script>
     <script src="vega.js"></script>
     <script src="stylist.js"></script>
@@ -8,9 +10,9 @@
   </head>
   <body>
     <p><strong>Cascading stylist</strong></p>
-    <div id="cascade">
+    <div id="editor">
         <form action="#" onsubmit="return false;">
-            <div style="margin-bottom: 1em;">
+            <div class="button-bar" style="margin-bottom: 1em;">
                 <button>Load illustration...</button>
                 <button style="float: right;">Save illustration as...</button>
                 <button style="float: right;">Save</button>
@@ -38,13 +40,11 @@
             <div style="margin-bottom: 1em;">
                 <label for="style-chooser">Choose a general style for this illustration</label>
                 <br/>
-                <select id="style-chooser">
-                    <option>Basic</option>
-                    <option>Nature</option>
-                    <option>Systematic Biology</option>
-                    <option>Nature (monochrome)</option>
-                    <option>Modern (from SysBio)</option>
-                    <option>Jim's favorites</option>
+                <select id="style-chooser" 
+                        data-bind="options: availableStyles,
+                                   optionsValue: 'name',
+                                   optionsText: 'name',
+                                   event: {change: useChosenStyle}">
                 </select>
             </div>
 
@@ -73,7 +73,7 @@
             </div>
         </form>
 
-            <div style="margin-bottom: 1em;">
+            <div class="button-bar" style="margin-bottom: 1em;">
                 <button>Load illustration...</button>
                 <button style="float: right;">Save illustration as...</button>
                 <button style="float: right;">Save</button>
@@ -87,19 +87,20 @@
     <ul>
         <li>[X] free-standing instance of vega 'interactive' demo</li>
         <li>[X] mock up basic UI for "cascade" (style selection, etc)
+        <li>[X] add Knockout for widget binding, adaptive UI</li>
         <li>[ ] add basic vega tree module</li>
         <li>[ ] transform NexSON trees for rendering</li>
         <li>[ ] adapt a generic cladogram to use vega grammar</li>
         <li>[ ] add event handlers for nodes (expand/collapse)</li>
-        <li>[ ] add (static) lists of:
+        <li>[~] add (static) lists of:
             <ul>
-                <li>[ ] styles (house styles and personal?)</li>
-                <li>[ ] data sources</li>
-                <li>[ ] ornaments</li>
-                <li>[ ] illustration ("editorial") decisions</li>
+                <li>[~] styles (house styles and personal?)</li>
+                <li>[~] data sources</li>
+                <li>[~] ornaments</li>
+                <li>[~] illustration ("editorial") decisions</li>
             </ul>
         </li>
-        <li>[ ] Selection from any list triggers updates/modification</li>
+        <li>[~] Selection from any list triggers updates/modification</li>
         <li>[ ] Auto-save (or manually) changes from interaction?
             <ul>
                 <li>[ ] expand/collapse of nodes</li>

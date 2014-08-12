@@ -1,5 +1,14 @@
-#cascade, #view {
+#editor, #view {
     float: left;
     width: 45%;
     padding-right: 5%;
+}
+#editor {
+    border-right: 1px solid #ddd;
+    margin-right: -1px;
+}
+.button-bar {
+    background-color: #ddd;
+    padding: 3px 5px;
+    border-radius: 4px;
 }
