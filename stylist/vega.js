@@ -97,7 +97,14 @@ vg.accessor = function(f) {
   var s;
   return (vg.isFunction(f) || f==null)
     ? f : vg.isString(f) && (s=vg.field(f)).length > 1
-    ? function(x) { return s.reduce(function(x,f) { return x[f]; }, x); }
+    ? function(x) { 
+        return s.reduce(
+            function(x,f) { 
+                return x[f]; 
+            },
+            x
+        ); 
+      }
     : function(x) { return x[f]; };
 };
 

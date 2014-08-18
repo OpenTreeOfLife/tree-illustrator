@@ -4,6 +4,7 @@
     <script src="jquery.js"></script>
     <script src="knockout-2.3.0.js"></script>
     <script src="d3.v3.min.js"></script>
+    <script src="d3.phylogram.js"></script>
     <script src="vega.js"></script>
     <script src="stylist.js"></script>
     <link rel="stylesheet" type="text/css" href="stylist.css"/>
@@ -21,11 +22,11 @@
             <div style="margin-bottom: 1em;">
                 <label for="tree-chooser">Choose a tree to illustrate</label>
                 <br/>
-                <select id="tree-chooser">
-                    <option>Fig. 1F</option>
-                    <option>Untitled (tree4)</option>
-                    <option>Mammalia (example)</option>
-                    <option>Latest Open Tree synthesis (all)</option>
+                <select id="tree-chooser"
+                        data-bind="options: availableTrees,
+                                   optionsValue: 'name',
+                                   optionsText: 'name',
+                                   event: {change: useChosenData}">
                 </select>
                 <br/>
                 <label for="tree-upload">... or upload a tree file</label>
