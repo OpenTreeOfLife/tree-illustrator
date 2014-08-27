@@ -11,8 +11,9 @@
  * d3-ready tree (see https://github.com/OpenTreeOfLife/tree-illustrator/wiki/Building-on-D3-and-Vega#data-importers)
  */
 vg.data.nexson = function() {
-  var layout = d3.layout.tree()  // seems most basic (or use cluster?)
+  var layout = d3.layout.cluster()  // or tree (seems most basic)
                  //.children(function(d) { return d.values; }),
+                 .size([800,800])
                  .children(getNexsonChildren),  // below
       value = vg.accessor("data"),
       fullNexson = null,

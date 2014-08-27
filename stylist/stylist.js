@@ -87,46 +87,6 @@ var availableStyles = [
             {"type": "y", "scale": "y"}
           ],
           "marks": [
-            {
-              "type": "symbol",
-              //"from": {"data": "phyloTree", "transform": [{"type":"array", "fields":["phyloNodes"] }] },
-              //"from": {"data": "phyloTree", "transform": [{"type":"copy", "from":"phyloTree", "fields":["x", "y"] }] },
-              "from": {"data": "phyloTree", "transform": [{"type":"pluck", "field":"phyloNodes" }] },
-              "properties": {
-                "enter": {
-                  "x": {"scale": "x", "field": "x", "mult":1},
-                  "y": {"scale": "y", "field": "y", "mult":1}
-                },
-                "update": {
-                  "shape": {"value":"circle"},
-                  "size": {"value":30},
-                  "fill": {"value": "maroon"}
-                },
-                "hover": {
-                  "fill": {"value": "red"}
-                }
-              }
-            },
-/*
-            {
-              "type": "text",
-              "from": {"data": "phyloTree", "transform": [{"type":"pluck", "field":"phyloNodes" }] },
-              "properties": {
-                "enter": {
-                  "x": {"scale": "time", "field": "x", "mult":1},
-                  "y": {"scale": "y", "field": "y", "mult":1.0}
-                },
-                "update": {
-                  "text": {"value":"LBL"},
-                  //"text": {"field":"y"},
-                  "fill": {"value":"orange"}
-                },
-                "hover": {
-                  "fill": {"value": "red"}
-                }
-              }
-            },
-*/
             { /* N.B. This expects pre-existing links with 'source' and 'target' properties! The 'link' transform is 
                  just to provide a rendered path of the desired type. */
               "type": "path",
@@ -151,7 +111,47 @@ var availableStyles = [
                   "stroke": {"value": "red"}
                 }
               }
+            },
+            {
+              "type": "symbol",
+              //"from": {"data": "phyloTree", "transform": [{"type":"array", "fields":["phyloNodes"] }] },
+              //"from": {"data": "phyloTree", "transform": [{"type":"copy", "from":"phyloTree", "fields":["x", "y"] }] },
+              "from": {"data": "phyloTree", "transform": [{"type":"pluck", "field":"phyloNodes" }] },
+              "properties": {
+                "enter": {
+                  "x": {"XXscale": "x", "field": "x", "mult":1},
+                  "y": {"XXscale": "y", "field": "y", "mult":1}
+                },
+                "update": {
+                  "shape": {"value":"circle"},
+                  "size": {"value": 5},
+                  "fill": {"value": "maroon"}
+                },
+                "hover": {
+                  "fill": {"value": "red"}
+                }
+              }
             }
+/* ,
+            {
+              "type": "text",
+              "from": {"data": "phyloTree", "transform": [{"type":"pluck", "field":"phyloNodes" }] },
+              "properties": {
+                "enter": {
+                  "x": {"scale": "time", "field": "x", "mult":1},
+                  "y": {"scale": "y", "field": "y", "mult":1.0}
+                },
+                "update": {
+                  "text": {"value":"LBL"},
+                  //"text": {"field":"y"},
+                  "fill": {"value":"orange"}
+                },
+                "hover": {
+                  "fill": {"value": "red"}
+                }
+              }
+            },
+*/
 
           ]
         }
