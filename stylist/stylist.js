@@ -1,3 +1,5 @@
+//vg.data.phylogram = d3.phylogram.rightAngleDiagonal;
+
 var availableTrees = [
     {
         name: "Jansen, 2007", 
@@ -18,107 +20,20 @@ var availableStyles = [
     {
         name: "Basic", 
         style:  { 
-          "width": 400,
-          "height": 200,
+          "width": 800,
+          "height": 1000,
           "padding": {"top": 10, "left": 30, "bottom": 60, "right": 10},
+          //, "viewport": [350, 350],
           //"data": [{"name": "table"}],
-  "scales": [
-    {
-      "name": "color",
-      "type": "ordinal",
-      "range": [
-        "#3182bd", "#6baed6", "#9ecae1", "#c6dbef", "#e6550d",
-        "#fd8d3c", "#fdae6b", "#fdd0a2", "#31a354", "#74c476",
-        "#a1d99b", "#c7e9c0", "#756bb1", "#9e9ac8", "#bcbddc",
-        "#dadaeb", "#636363", "#969696", "#bdbdbd", "#d9d9d9"
-      ]
-    },
-    {
-      "name": "size",
-      "type": "ordinal",
-      "domain": [0, 1, 2, 3],
-      "range": [256, 28, 20, 14]
-    },
-    {
-      "name": "opacity",
-      "type": "ordinal",
-      "domain": [0, 1, 2, 3],
-      "range": [0.15, 0.5, 0.8, 1.0]
-    }
-  ],
-  "marks": [
-    {
-      "type": "rect",
-      "from": {
-        "data": "tree",
-        "transform": [{"type":"filter", "test":"d.values"}]
-      },
-      "interactive": false,
-      "properties": {
-        "enter": {
-          "x": {"field": "x"},
-          "y": {"field": "y"},
-          "width": {"field": "width"},
-          "height": {"field": "height"},
-          "fill": {"scale": "color", "field": "data.name"}
-        }
-      }
-    },
-    {
-      "type": "rect",
-      "from": {
-        "data": "tree",
-        "transform": [{"type":"filter", "test":"!d.values"}]
-      },
-      "properties": {
-        "enter": {
-          "x": {"field": "x"},
-          "y": {"field": "y"},
-          "width": {"field": "width"},
-          "height": {"field": "height"},
-          "stroke": {"value": "#fff"}
-        },
-        "update": {
-          "fill": {"value": "rgba(0,0,0,0)"}
-        },
-        "hover": {
-          "fill": {"value": "red"}
-        }
-      }
-    },
-    {
-      "type": "text",
-      "from": {
-        "data": "tree",
-        "transform": [{"type":"filter", "test":"d.values"}]
-      },
-      "interactive": false,
-      "properties": {
-        "enter": {
-          "x": {"field": "x"},
-          "y": {"field": "y"},
-          "dx": {"field": "width", "mult": 0.5},
-          "dy": {"field": "height", "mult": 0.5},
-          "font": {"value": "Helvetica Neue"},
-          "fontSize": {"scale": "size", "field": "depth"},
-          "align": {"value": "center"},
-          "baseline": {"value": "middle"},
-          "fill": {"value": "#000"},
-          "fillOpacity": {"scale": "opacity", "field": "depth"},
-          "text": {"field": "data.name"}
-        }
-      }
-    }
-  ]
-/*
           "scales": [
             {
               "name": "time", "type": "ordinal", "range": "width",
-              "domain": [0, 100]  // {"data": "phyloTree", "field": "data.versionHistory.length"}
+              "domain": [0, 20, 40, 60, 80, 100]
             },
             {
               "name": "x", "range": "width", "nice": true,
-              "domain": [0, 10]  // {"data": "phyloTree", "field": "data.trees.length"}
+              //"domain": [0, 10]  // {"data": "phyloTree", "field": "data.trees.length"}
+              "domain": {"data": "phyloTree", "field": "x"}
             },
             {
               "name": "y", "range": "height", "nice": true,
@@ -128,8 +43,11 @@ var availableStyles = [
           "axes": [
             {
               "type": "x", 
+              "orient": "top",
               "scale": "time",
               "title": "Time",
+              "ticks": 10,
+              "grid": true,
               "properties": {
                 "ticks": {
                   "stroke": {"value": "steelblue"}
@@ -154,22 +72,22 @@ var availableStyles = [
                   "strokeWidth": {"value": 0.5}
                 }
               }
-            },
-            {"type": "y", "scale": "y"}
+            } /* ,
+            {"type": "y", "scale": "y"} */
           ],
           "marks": [
             {
-              "type": "rect",
+              "type": "symbol",
               "from": {"data": "phyloTree"},
               "properties": {
                 "enter": {
-                  "x": {"scale": "x", "XXvalue": 4, "field": "data.versionHistory.length"},
-                  "y": {"scale": "y", "field": "data.data.nexml.trees.length"},
-                  "y2": {"scale": "y", "value": 0},
-                  "width": {"scale": "x", "value":10, "band": false, "offset": -1}
+                  "x": {"scale": "x", "Xvalue": 4, "field": "x", "mult":1},
+                  "y": {"scale": "y", "Xvalue": 8, "field": "y", "mult":1}
                 },
                 "update": {
-                  "fill": {"value": "steelblue"}
+                  "shape": {"value":"circle"},
+                  "size": {"value":30},
+                  "fill": {"value": "maroon"}
                 },
                 "hover": {
                   "fill": {"value": "red"}
@@ -177,31 +95,44 @@ var availableStyles = [
               }
             },
             {
-              "type": "rect",
-              "interactive": false,
+              "type": "text",
               "from": {"data": "phyloTree"},
               "properties": {
                 "enter": {
-//                "x": {"scale": "x", "field": "data.versionHistory.length", "offset": -3.5},
-//                "y": {"scale": "y", "field": "data.trees.length", "offset": -3.5},
-                  "y2": {"scale": "y", "value": 0, "offset": 3.5},
-                  "width": {"scale": "x", "band": false, "offset": 6},
-                  "fill": {"value": "transparent"},
-                  "stroke": {"value": "red"},
-                  "strokeWidth": {"value": 2}
+                  "x": {"scale": "x", "Xvalue": 4, "field": "x", "mult":1},
+                  "y": {"scale": "y", "Xvalue": 8, "field": "y", "mult":1}
                 },
                 "update": {
-                  "strokeOpacity": {"value": 0}
+                  "text": {"field":"x"},
+                  "fill": {"value":"green"}
                 },
                 "hover": {
-                  "strokeOpacity": {"value": 1}
+                  "fill": {"value": "red"}
                 }
               }
             }
-          ]
+/*
+            ,
+            {
+              "type": "path",
+              "from": {"data": "phyloTree", "transform": [{"type": "link", "shape": "line"}]},
+              "properties": {
+                "enter": {
+                },
+                "update": {
+                  "stroke": {"value":"blue"},
+                  "fill": {"value":"green"}
+                },
+                "hover": {
+                  "fill": {"value": "red"}
+                }
+              }
+            }
 */
+          ]
         }
     },
+
     {
         name: "Nature", 
         style:  {
@@ -428,7 +359,7 @@ $(document).ready(function() {
                 }, 
                 */
                 'format':{
-                    "type":"treejson",
+                    "type":"treejson",   // necessary to ingest a JS object (vs. array)
                     //"property":"data.nexml.trees.0.tree.0.node"       // find node array
                     "children": function(node) {
                         // blah
@@ -442,6 +373,18 @@ $(document).ready(function() {
                     //{"type": "facet", "keys": ["data.nexml.trees.0.tree.0.edge.0.@source"]}
                         // TODO: Generalize this to capture properties of *all* edges? No, assumes simple tabular data!
                     {"type": "nexson", "treesCollectionPosition":0, "treePosition":0}
+                    //, {"type": "phylogram"}
+                    /* TODO: Allow for multiple trees? mapped to their 'roles' in the viz? EXAMPLE:
+                    {
+                        "type": "nexson", 
+                         "trees": {
+                            "primary": {"treeID":"tree43"}, 
+                            "conflicts": {"treesCollectionPosition":0, "treePosition":0}
+                         }
+                    }
+                       MAYBE not such a good idea. These transforms are really
+                       for import, so one compatible tree w/o context is probably best.
+                     */
                 ]
             }
         ],
@@ -479,9 +422,12 @@ function useChosenData() {
     viewModel.data = {
         'name':'phyloTree', 
         'url':treeInfo.url, 
-        'format':{"type":"treejson"},
+        'format':{"type":"treejson"},  // initial match for JSON object, vs. array
         'transform':[
-            {"type": "nexson", "treesCollectionPosition":0, "treePosition":0}
+            {"type": "nexson", "treesCollectionPosition":0, "treePosition":0}  // to generic tree?
+            // TODO: add all possible properties (common to by all formats?)
+            // TODO: merge supporting data from other files? or do that downstream?
+            // TODO: final tailoring to phylogram layout (one, or several?)
         ]
     };
     refreshViz();

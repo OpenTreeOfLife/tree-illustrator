@@ -4,19 +4,26 @@
  * advantage of its pipeline and other features. It's patterned after the 
  * project's treemap.js, which also does transformation tied to a specific 
  * d3 representation.
+ * 
+ * Anticipate other importers like this one for NEXML, etc. (assumes JSON? or
+ * can we parse free-form text? YES, since vega handles CSV, etc.). Each one 
+ * should produce the same output: a uniform JS object representing a
+ * d3-ready tree (see https://github.com/OpenTreeOfLife/tree-illustrator/wiki/Building-on-D3-and-Vega#data-importers)
  */
 vg.data.nexson = function() {
-  var layout = d3.layout.treemap()
+  var layout = d3.layout.tree()  // seems most basic (or use cluster?)
                  //.children(function(d) { return d.values; }),
-                 .children(getChildren),  // below
+                 .children(getNexsonChildren),  // below
       value = vg.accessor("data"),
-      size = ["width", "height"],
-      params = ["round", "sticky", "ratio", "padding"],
+      fullNexson = null,
+      nexml = null,
+      //size = ["width", "height"],
+      params = [ ],  // ["round", "sticky", "ratio", "padding"],
       output = {
-        "x": "x",
-        "y": "y",
-        "dx": "width",
-        "dy": "height"
+        //"x": "x",
+        //"y": "y",
+        //"dx": "width",
+        //"dy": "height"
       };
 
   // Expect the ID of the specified tree, or the position of the specified
@@ -26,12 +33,26 @@ vg.data.nexson = function() {
       treePosition = 0;
 
   function nexson(data, db, group) {
-debugger;
+console.log("INCOMING data to nexson transform:");
+console.log(data);
+
+    fullNexson = data['data'];  // stash the complete NEXson!
+    nexml = fullNexson.data.nexml;
+    var rootNode = getRootNode();  // defined below
+    if (!rootNode) {
+        console.warn("No root node found!");
+        console.warn("  treeID: "+ treeID);
+        console.warn("  treesCollectionPosition: "+ treesCollectionPosition);
+        console.warn("  treePosition: "+ treePosition);
+        return false;
+    }
+
     data = layout
-      .size(vg.data.size(size, group))
-      .value(value)
-      .nodes(vg.isTree(data) ? data : {values: data});
+      //.size(vg.data.size(size, group))
+      //.value(value)
+      .nodes(rootNode);
     
+/* translate incoming keys to their output names?
     var keys = vg.keys(output),
         len = keys.length;
 
@@ -45,20 +66,17 @@ debugger;
           d[output[key]] = val;
         }
       }
-      d.children = getChildren(d);
+      //d.children = getChildren(d);
     });
+*/
     
+    console.log("OUTGOING data from nexson transform:");
+    console.log(data);
+
     return data;
   }
 
-  nexson.size = function(sz) {
-debugger;
-    size = sz;
-    return nexson;
-  };
-
   nexson.value = function(field) {
-debugger;
     value = vg.accessor(field);
     return nexson;
   };
@@ -72,12 +90,10 @@ debugger;
 
   // stolen from facet.js
   nexson.keys = function(k) {
-debugger;
     keys = vg.array(k).map(vg.accessor);
     return nexson;
   };
   nexson.sort = function(s) {
-debugger;
     sort = vg.data.sort().by(s);
     return nexson;
   };
@@ -97,13 +113,243 @@ debugger;
     return nexson;
   };
 
-  function getChildren(node) {
-    debugger;
-    return [];
-  }
+    /* 
+     * NEXson-specific logic, encapsulated for easy access to nexml, etc.
+     * 
+     * Adapted from https://github.com/OpenTreeOfLife/opentree/blob/79aa1f4f72940c0f5708fd2ced56190d8c34ad9a/curator/static/js/study-editor.js
+     */
+    var fastLookups = {
+        'NODES_BY_ID': null,
+        'OTUS_BY_ID': null,
+        'EDGES_BY_SOURCE_ID': null,
+        'EDGES_BY_TARGET_ID': null
+    };
+    function getFastLookup( lookupName ) {
+        // return (or build) a flat list of Nexson elements by ID
+        if (lookupName in fastLookups) {
+            if (fastLookups[ lookupName ] === null) {
+                buildFastLookup( lookupName );
+            }
+            return fastLookups[ lookupName ];
+        }
+        console.error("No such lookup as '"+ lookupName +"'!");
+        return null;
+    }
+    function buildFastLookup( lookupName ) {
+        // (re)build and store a flat list of Nexson elements by ID
+        if (lookupName in fastLookups) {
+            clearFastLookup( lookupName );
+            var newLookup = {};
+            switch( lookupName ) {
+
+                case 'NODES_BY_ID':
+                    // assumes that all node ids are unique, across all trees
+                    var allTrees = [];
+                    $.each(nexml.trees, function(i, treesCollection) {
+                        $.each(treesCollection.tree, function(i, tree) {
+                            allTrees.push( tree );
+                        });
+                    });
+                    $.each(allTrees, function( i, tree ) {
+                        $.each(tree.node, function( i, node ) {
+                            var itsID = node['@id'];
+                            if (itsID in newLookup) {
+                                console.warn("Duplicate node ID '"+ itsID +"' found!");
+                            }
+                            newLookup[ itsID ] = node;
+                        });
+                    });
+                    break;
+
+                case 'OTUS_BY_ID':
+                    // assumes that all node ids are unique, across all trees
+                    // AND 'otus' collections!
+                    $.each(nexml.otus, function( i, otusCollection ) {
+                        $.each(otusCollection.otu, function( i, otu ) {
+                            var itsID = otu['@id'];
+                            if (itsID in newLookup) {
+                                console.warn("Duplicate otu ID '"+ itsID +"' found!");
+                            }
+                            newLookup[ itsID ] = otu;
+                        });
+                    });
+                    break;
+
+                case 'EDGES_BY_SOURCE_ID':
+                    // allow multiple values for each source (ie, multiple children)
+                    var allTrees = [];
+                    $.each(nexml.trees, function(i, treesCollection) {
+                        $.each(treesCollection.tree, function(i, tree) {
+                            allTrees.push( tree );
+                        });
+                    });
+                    $.each(allTrees, function( i, tree ) {
+                        $.each(tree.edge, function( i, edge ) {
+                            var sourceID = edge['@source'];
+                            if (sourceID in newLookup) {
+                                newLookup[ sourceID ].push( edge );
+                            } else {
+                                // create the array, if not found
+                                newLookup[ sourceID ] = [ edge ];
+                            }
+                        });
+                    });
+                    break;
+
+                case 'EDGES_BY_TARGET_ID':
+                    // allow multiple values for each target (for conflicted trees)
+                    var allTrees = [];
+                    $.each(nexml.trees, function(i, treesCollection) {
+                        $.each(treesCollection.tree, function(i, tree) {
+                            allTrees.push( tree );
+                        });
+                    });
+                    $.each(allTrees, function( i, tree ) {
+                        $.each(tree.edge, function( i, edge ) {
+                            var targetID = edge['@target'];
+                            if (targetID in newLookup) {
+                                newLookup[ targetID ].push( edge );
+                            } else {
+                                // create the array, if not found
+                                newLookup[ targetID ] = [ edge ];
+                            }
+                        });
+                    });
+                    break;
+
+            }
+            fastLookups[ lookupName ] = newLookup;
+        } else {
+            console.error("No such lookup as '"+ lookupName +"'!");
+        }
+    }
+    function clearFastLookup( lookupName ) {
+        // clear chosen lookup, on demand (eg, after merging in new OTUs)
+        if (lookupName === 'ALL') {
+            for (var aName in fastLookups) {
+                fastLookups[ aName ] = null;
+            }
+            return;
+        } else if (lookupName in fastLookups) {
+            fastLookups[ lookupName ] = null;
+            return;
+        }
+        console.error("No such lookup as '"+ lookupName +"'!");
+    }
+    function getNexsonChildren(d) {
+        var parentID = d['@id'];
+        var itsChildren = [];
+        var childEdges = getTreeEdgesByID(null, parentID, 'SOURCE');
+
+        // If this node has one child, it's probably a latent root-node that
+        // should be hidden in the tree view.
+        if (childEdges.length === 1) {
+            // treat ITS child node as my immediate child in the displayed tree
+            var onlyChildNodeID = childEdges[0]['@target'];
+            childEdges = getTreeEdgesByID(null, onlyChildNodeID, 'SOURCE');
+        }
+
+        $.each(childEdges, function(index, edge) {
+            var childID = edge['@target'];
+            var childNode = getTreeNodeByID(null, childID);
+            if (!('@id' in childNode)) {
+                console.error(">>>>>>> childNode is a <"+ typeof(childNode) +">");
+                console.error(childNode);
+            }
+            itsChildren.push( childNode );
+        });
+        // N.B. D3 layouts expect null, instead of an empty array
+        ///return (itsChildren.length === 0) ? null: itsChildren;
+        return itsChildren;
+    }
+    function getTreeNodeByID(tree, id) {
+        // There should be only one matching (or none) within a tree
+        // (NOTE that we now use a flat collection across all trees, so disregard 'tree' argument)
+        var lookup = getFastLookup('NODES_BY_ID');
+        return lookup[ id ] || null;
+    }
+    function getTreeEdgesByID(tree, id, sourceOrTarget) {
+        // look for any edges associated with the specified *node* ID; return
+        // an array of 0, 1, or more matching edges within a tree
+        //
+        // 'sourceOrTarget' lets us filter, should be 'SOURCE', 'TARGET', 'ANY'
+        var foundEdges = [];
+        var matchingEdges = null;
+
+        if ((sourceOrTarget === 'SOURCE') || (sourceOrTarget === 'ANY')) {
+            // fetch and add edges with this source node
+            var sourceLookup = getFastLookup('EDGES_BY_SOURCE_ID');
+            matchingEdges = sourceLookup[ id ];
+            if (matchingEdges) {
+                foundEdges = foundEdges.concat( matchingEdges );
+            }
+        }
+
+        if ((sourceOrTarget === 'TARGET') || (sourceOrTarget === 'ANY')) {
+            // fetch and add edges with this target node
+            var targetLookup = getFastLookup('EDGES_BY_TARGET_ID');
+            matchingEdges = targetLookup[ id ];
+            if (matchingEdges) {
+                foundEdges = foundEdges.concat( matchingEdges );
+            }
+        }
+
+        return foundEdges;
+    }
+    function getSpecifiedTree() {
+      var tree = null;
+      // try all incoming options to locate this tree
+      if ($.trim(treeID) !== '') {
+          tree = getTreeByID(treeID);
+      } else {
+          tree = getTreeByPosition(treesCollectionPosition, treePosition);
+      }
+      return tree;
+    }
+    function getTreeByID(id) {
+        var allTrees = [];
+        if (!nexml) {
+            return null;
+        }
+        $.each(nexml.trees, function(i, treesCollection) {
+            $.each(treesCollection.tree, function(i, tree) {
+                allTrees.push( tree );
+            });
+        });
+        var foundTree = null;
+        $.each( allTrees, function(i, tree) {
+            if (tree['@id'] === id) {
+                foundTree = tree;
+                return false;
+            }
+        });
+        return foundTree;
+    }
+    function getTreeByPosition(collectionPos, treePos) {
+      var collection = nexml.trees[collectionPos];
+      var tree = collection.tree[treePos];
+      return tree;
+    }
+    function getRootNode() {
+      // use options to find the root node, or return null
+      var foundRoot = null;
+      var tree = getSpecifiedTree();
+      if (!tree) {
+          return null;
+      }
+      var specifiedRoot = tree['^ot:specifiedRoot'] || null;
+      var rootNodeID = specifiedRoot ? specifiedRoot : tree.node[0]['@id'];
+      $.each(tree.node, function(i, node) {
+          // Find the node with this ID and see if it has an assigned OTU
+          if (node['@id'] === rootNodeID) {
+              foundRoot = node;
+              return false;
+          }
+      });
+      return foundRoot;
+    }
 
   nexson.output = function(map) {
-debugger;
     // build children
     vg.keys(output).forEach(function(k) {
       if (map[k] !== undefined) {

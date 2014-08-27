@@ -4441,6 +4441,10 @@ vg.parse.properties = (function() {
     if (hasPath(mark, vars)) code += "\n  item.touch();";
     code += "\n  if (trans) trans.interpolate(item, o);";
 
+    if (code.indexOf('children') !== -1) {
+        code = "if (!('children' in item.datum)) {debugger}; " + code;
+    }
+
     try {
       return Function("item", "group", "trans", code);
     } catch (e) {
