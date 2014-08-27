@@ -21,33 +21,44 @@ var availableStyles = [
         name: "Basic", 
         style:  { 
           "width": 800,
-          "height": 1000,
-          "padding": {"top": 10, "left": 30, "bottom": 60, "right": 10},
+          "height": 800,
+          "padding": {"top": 50, "left": 30, "bottom": 60, "right": 10},
           //, "viewport": [350, 350],
           //"data": [{"name": "table"}],
           "scales": [
+/*
             {
-              "name": "time", "type": "ordinal", "range": "width",
-              "domain": [0, 20, 40, 60, 80, 100]
+              "name": "time", 
+              "type": "linear",
+              "range": "width",
+              //"domain": {"data": "phyloTree", transform: {"type": "pluck", "field": "phyloNodes"}, "field": "x"}
+              "domain": [0, 1]
+            },
+*/
+            {
+              "name": "x", 
+              "range": "width", 
+              "nice": false,
+              //"domain": {"data": "phyloTree", transform: [{"type": "pluck", "field": "phyloNodes"}], "field": "x" }
+              "domain": [0, 1]  // {"data": "phyloTree", "field": "data.trees.length"}
             },
             {
-              "name": "x", "range": "width", "nice": true,
-              //"domain": [0, 10]  // {"data": "phyloTree", "field": "data.trees.length"}
-              "domain": {"data": "phyloTree", "field": "x"}
-            },
-            {
-              "name": "y", "range": "height", "nice": true,
-              "domain": [0, 10]  // {"data": "phyloTree", "field": "data.trees.length"}
+              "name": "y", 
+              "type": "linear",
+              "range": "height", 
+              "nice": false,
+              "domain": [0, 1]  // {"data": "phyloTree", "field": "data.trees.length"}
+              //"domain": {"data": "phyloTree", transform: {"type": "pluck", "field": "phyloNodes"}, "field": "y"}
             }
           ],
           "axes": [
             {
               "type": "x", 
+              "scale": "x",
               "orient": "top",
-              "scale": "time",
-              "title": "Time",
-              "ticks": 10,
-              "grid": true,
+              //"title": "Time",
+              "ticks": 10,  // MISSING? what's up with that?
+              //"grid": true,
               "properties": {
                 "ticks": {
                   "stroke": {"value": "steelblue"}
@@ -60,8 +71,8 @@ var availableStyles = [
                   "angle": {"value": 50},
                   "fontSize": {"value": 14},
                   "align": {"value": "left"},
-                  "baseline": {"value": "middle"},
-                  "dx": {"value": 3}
+                  "baseline": {"value": "middle"}
+                  //"dx": {"value": 3}
                 },
                 "title": {
                   "fill": {"value": "steelblue"},
@@ -72,17 +83,19 @@ var availableStyles = [
                   "strokeWidth": {"value": 0.5}
                 }
               }
-            } /* ,
-            {"type": "y", "scale": "y"} */
+            },
+            {"type": "y", "scale": "y"}
           ],
           "marks": [
             {
               "type": "symbol",
-              "from": {"data": "phyloTree"},
+              //"from": {"data": "phyloTree", "transform": [{"type":"array", "fields":["phyloNodes"] }] },
+              //"from": {"data": "phyloTree", "transform": [{"type":"copy", "from":"phyloTree", "fields":["x", "y"] }] },
+              "from": {"data": "phyloTree", "transform": [{"type":"pluck", "field":"phyloNodes" }] },
               "properties": {
                 "enter": {
-                  "x": {"scale": "x", "Xvalue": 4, "field": "x", "mult":1},
-                  "y": {"scale": "y", "Xvalue": 8, "field": "y", "mult":1}
+                  "x": {"scale": "x", "field": "x", "mult":1},
+                  "y": {"scale": "y", "field": "y", "mult":1}
                 },
                 "update": {
                   "shape": {"value":"circle"},
@@ -94,45 +107,56 @@ var availableStyles = [
                 }
               }
             },
+/*
             {
               "type": "text",
-              "from": {"data": "phyloTree"},
+              "from": {"data": "phyloTree", "transform": [{"type":"pluck", "field":"phyloNodes" }] },
               "properties": {
                 "enter": {
-                  "x": {"scale": "x", "Xvalue": 4, "field": "x", "mult":1},
-                  "y": {"scale": "y", "Xvalue": 8, "field": "y", "mult":1}
+                  "x": {"scale": "time", "field": "x", "mult":1},
+                  "y": {"scale": "y", "field": "y", "mult":1.0}
                 },
                 "update": {
-                  "text": {"field":"x"},
-                  "fill": {"value":"green"}
+                  "text": {"value":"LBL"},
+                  //"text": {"field":"y"},
+                  "fill": {"value":"orange"}
                 },
                 "hover": {
                   "fill": {"value": "red"}
                 }
               }
-            }
-/*
-            ,
-            {
-              "type": "path",
-              "from": {"data": "phyloTree", "transform": [{"type": "link", "shape": "line"}]},
-              "properties": {
-                "enter": {
-                },
-                "update": {
-                  "stroke": {"value":"blue"},
-                  "fill": {"value":"green"}
-                },
-                "hover": {
-                  "fill": {"value": "red"}
-                }
-              }
-            }
+            },
 */
+            { /* N.B. This expects pre-existing links with 'source' and 'target' properties! The 'link' transform is 
+                 just to provide a rendered path of the desired type. */
+              "type": "path",
+              //"from": {"data": "phyloTree", "property": "links", "transform": [{"type": "link", "shape": "line"}]},
+              "from": {
+                "data": "phyloTree", 
+                "transform": [
+                  {"type":"pluck", "field":"phyloEdges" },
+                // how do apply the 'time' scale here? TRY brute-forcing x and y properties
+                  {"type":"formula", "field":"x", "expr":"d.x * 100"},
+                  {"type":"formula", "field":"y", "expr":"400"},
+                  {"type":"link", "shape":"line" }
+                ]
+              },
+              "properties": {
+                "update": {
+                  "path": {"field": "path", "transform":{"scale":"x"}},
+                  "stroke": {"value": "#ccc"},
+                  "strokeWidth": {"value": 0.5}
+                },
+                "hover": {
+                  "stroke": {"value": "red"}
+                }
+              }
+            }
+
           ]
         }
     },
-
+/*
     {
         name: "Nature", 
         style:  {
@@ -198,6 +222,7 @@ var availableStyles = [
           ]
         }
     },
+*/
     {
         name: "Phylogram test", 
         style:  { 
@@ -232,7 +257,7 @@ var spec = {
       "domain": {"data": "table", "field": "data.x"}
     },
     {
-      "name": "y", "range": "height", "nice": true,
+      "name": "y", "range": "height", "nice": false,
       "domain": {"data": "table", "field": "data.y"}
     }
   ],
@@ -349,15 +374,6 @@ $(document).ready(function() {
             {
                 'name':"phyloTree", 
                 'url': buildStudyFetchURL( 'pg_2584' ), 
-                /*
-                'format':{
-                    "type":"treejson",
-                    "children": function(node) {
-                        // blah
-                        debugger;
-                    }
-                }, 
-                */
                 'format':{
                     "type":"treejson",   // necessary to ingest a JS object (vs. array)
                     //"property":"data.nexml.trees.0.tree.0.node"       // find node array
@@ -386,7 +402,15 @@ $(document).ready(function() {
                        for import, so one compatible tree w/o context is probably best.
                      */
                 ]
+            },
+            /* This seems like a perfect solution to a second data-set for links, but it
+               chokes while cloning phyloTree (post-transform) due to circular references:
+                "Uncaught RangeError: Maximum call stack size exceeded vega.js:32"
+            {
+                'name':"phyloEdges", 
+                'source':'phyloTree'
             }
+            */
         ],
         illustrationID: null,  // TODO: assign a key/ID when saved?
         illustrationName: "Untitled"

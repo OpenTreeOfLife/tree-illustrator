@@ -47,11 +47,14 @@ console.log(data);
         return false;
     }
 
-    data = layout
+    data = {};
+
+    data.phyloNodes = layout
       //.size(vg.data.size(size, group))
       //.value(value)
       .nodes(rootNode);
     
+    data.phyloEdges = layout.links(data.phyloNodes);
 /* translate incoming keys to their output names?
     var keys = vg.keys(output),
         len = keys.length;
