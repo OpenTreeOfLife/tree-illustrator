@@ -2363,7 +2363,12 @@ var vg_gradient_id = 0;vg.canvas = {};vg.canvas.path = (function() {
   function group(o) {
     var x = o.x || 0,
         y = o.y || 0;
-    this.setAttribute("transform", "translate("+x+","+y+")");
+    if (o.transform) {
+        // append any specified transforms (SVG only)
+        this.setAttribute("transform", "translate("+x+","+y+"),"+ o.transform);
+    } else {
+        this.setAttribute("transform", "translate("+x+","+y+")");
+    }
 
     if (o.clip) {
       var c = {width: o.width || 0, height: o.height || 0},
