@@ -25,6 +25,22 @@ var availableStyles = [
           "padding": {"top": 50, "left": 30, "bottom": 60, "right": 10},
           //, "viewport": [350, 350],
           //"data": [{"name": "table"}],
+          "marks": [
+            {
+              "type": "group",
+              "properties": {
+                "enter": {
+                  "x": {"value": 0.5},
+                  "y": {"value": 10}, // {"scale": "g", "field": "key"},
+                  "height": {"value": 300}, // {"group": "height"}, // {"scale": "g", "band": true},
+                  "width": {"value": 600}, // {"group": "width"},
+                  "stroke": {"value": "#ccc"}
+                },
+                "update": {
+                  "transform": {"value":"rotate(-25)"}  // ???
+                }
+              },
+
           "scales": [
 /*
             {
@@ -51,6 +67,7 @@ var availableStyles = [
               //"domain": {"data": "phyloTree", transform: {"type": "pluck", "field": "phyloNodes"}, "field": "y"}
             }
           ],
+
           "axes": [
             {
               "type": "x", 
@@ -86,7 +103,9 @@ var availableStyles = [
             },
             {"type": "y", "scale": "y"}
           ],
-          "marks": [
+              //"from": {"data": "series"},
+              "marks": [
+
             { /* N.B. This expects pre-existing links with 'source' and 'target' properties! The 'link' transform is 
                  just to provide a rendered path of the desired type. */
               "type": "path",
@@ -96,15 +115,15 @@ var availableStyles = [
                 "transform": [
                   {"type":"pluck", "field":"phyloEdges" },
                 // how do apply the 'time' scale here? TRY brute-forcing x and y properties
-                  {"type":"formula", "field":"x", "expr":"d.x * 100"},
-                  {"type":"formula", "field":"y", "expr":"400"},
-                  {"type":"link", "shape":"line" }
+                  {"type":"formula", "field":"source.x", "expr":"d.source.y"},
+                  {"type":"formula", "field":"target.x", "expr":"d.target.y"},
+                  {"type":"link", "shape":"diagonal" }  // line | curve | diagonal | diagonalX | diagonalY
                 ]
               },
               "properties": {
                 "update": {
-                  "path": {"field": "path", "transform":{"scale":"x"}},
-                  "stroke": {"value": "#ccc"},
+                  "path": {"field": "path"}, // , "transform":{"scale":"x"}},
+                  "stroke": {"value": "#999"},
                   "strokeWidth": {"value": 0.5}
                 },
                 "hover": {
@@ -152,6 +171,10 @@ var availableStyles = [
               }
             },
 */
+
+              ]
+            }
+
 
           ]
         }
@@ -384,28 +407,16 @@ $(document).ready(function() {
                     // TODO: Specify nth trees collection, and nth tree inside!
                 },
                 'transform':[
-                    //{'type':'array', 'fields':["data.trees.0.tree.length", "data.otus.0.otu.length"]}
-                    //{'type':'treemap', 'value':"testTransform(data)"}
-                    //{"type": "facet", "keys": ["data.nexml.trees.0.tree.0.edge.0.@source"]}
-                        // TODO: Generalize this to capture properties of *all* edges? No, assumes simple tabular data!
-                    {"type": "nexson", "treesCollectionPosition":0, "treePosition":0}
+                    // N.B. that this can include layout properties (size, etc)
+                    {"type": "nexson", "treesCollectionPosition":0, "treePosition":0}       // , "size": [230, 90]}
                     //, {"type": "phylogram"}
-                    /* TODO: Allow for multiple trees? mapped to their 'roles' in the viz? EXAMPLE:
-                    {
-                        "type": "nexson", 
-                         "trees": {
-                            "primary": {"treeID":"tree43"}, 
-                            "conflicts": {"treesCollectionPosition":0, "treePosition":0}
-                         }
-                    }
-                       MAYBE not such a good idea. These transforms are really
-                       for import, so one compatible tree w/o context is probably best.
-                     */
                 ]
             },
-            /* This seems like a perfect solution to a second data-set for links, but it
-               chokes while cloning phyloTree (post-transform) due to circular references:
-                "Uncaught RangeError: Maximum call stack size exceeded vega.js:32"
+            /* A second dataset from the same source. This seems like a perfect
+             * solution for links vs. nodes, but it chokes while cloning
+             * phyloTree (post-transform) due to circular references:
+             *  "Uncaught RangeError: Maximum call stack size exceeded vega.js:32"
+             * 
             {
                 'name':"phyloEdges", 
                 'source':'phyloTree'

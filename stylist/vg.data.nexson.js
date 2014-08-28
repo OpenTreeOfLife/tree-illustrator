@@ -19,7 +19,7 @@ vg.data.nexson = function() {
       fullNexson = null,
       nexml = null,
       //size = ["width", "height"],
-      params = [ ],  // ["round", "sticky", "ratio", "padding"],
+      params = [ 'size' ],  // ["round", "sticky", "ratio", "padding"],
       output = {
         //"x": "x",
         //"y": "y",
