@@ -13,7 +13,7 @@
 vg.data.nexson = function() {
   var layout = d3.layout.cluster()  // or tree (seems most basic)
                  //.children(function(d) { return d.values; }),
-                 .size([800,800])
+                 //.size([20,20])  // defaults to [1.0, 1.0]
                  .children(getNexsonChildren),  // below
       value = vg.accessor("data"),
       fullNexson = null,
@@ -34,8 +34,10 @@ vg.data.nexson = function() {
       treePosition = 0;
 
   function nexson(data, db, group) {
+/*
 console.log("INCOMING data to nexson transform:");
 console.log(data);
+*/
 
     fullNexson = data['data'];  // stash the complete NEXson!
     nexml = fullNexson.data.nexml;
@@ -74,9 +76,10 @@ console.log(data);
     });
 */
     
+/*
     console.log("OUTGOING data from nexson transform:");
     console.log(data);
-
+*/
     return data;
   }
 

@@ -37,7 +37,7 @@ var availableStyles = [
                   "stroke": {"value": "#ccc"}
                 },
                 "update": {
-                  "transform": {"value":"rotate(-25)"}  // ???
+                  //"transform": {"value":"rotate(-25)"}  // ???
                 }
               },
 
@@ -106,6 +106,16 @@ var availableStyles = [
               //"from": {"data": "series"},
               "marks": [
 
+        { 
+            "type": "group",
+            "properties": {
+                "update": {
+                    //"transform": {"value":"scale(800,300)"}
+                    //"transform": {"value":"rotate(25) scale(20,20)"}
+                }
+            },
+            "marks": [
+
             { /* N.B. This expects pre-existing links with 'source' and 'target' properties! The 'link' transform is 
                  just to provide a rendered path of the desired type. */
               "type": "path",
@@ -115,9 +125,10 @@ var availableStyles = [
                 "transform": [
                   {"type":"pluck", "field":"phyloEdges" },
                 // how do apply the 'time' scale here? TRY brute-forcing x and y properties
-                  {"type":"formula", "field":"source.x", "expr":"d.source.y"},
-                  {"type":"formula", "field":"target.x", "expr":"d.target.y"},
-                  {"type":"link", "shape":"diagonal" }  // line | curve | diagonal | diagonalX | diagonalY
+                  //{"type":"formula", "field":"source.x", "expr":"d.source.y"},
+                  //{"type":"formula", "field":"target.x", "expr":"d.target.y"},
+                  // {"type":"link", "shape":"line" }  // line | curve | diagonal | diagonalX | diagonalY
+                  {"type":"phylogramLink", "shape":"rightAngleDiagonal" }  // rightAngleDiagonal | radialRightAngleDiagonal
                 ]
               },
               "properties": {
@@ -171,14 +182,16 @@ var availableStyles = [
               }
             },
 */
+                ] /* end of inner group marks */
+            } /* end of inner group */
 
-              ]
-            }
+              ] /* end of outer group marks */
+            } /* end of outer group */
 
 
-          ]
-        }
-    },
+          ] /* end of Basic marks */
+        } /* end of Basic style */
+    }, /* end of Basic */
 /*
     {
         name: "Nature", 
@@ -409,19 +422,18 @@ $(document).ready(function() {
                 'transform':[
                     // N.B. that this can include layout properties (size, etc)
                     {"type": "nexson", "treesCollectionPosition":0, "treePosition":0}       // , "size": [230, 90]}
-                    //, {"type": "phylogram"}
+                    ,
+                    { 
+                        "type": "phylogram", 
+                        // consolidate all other interesting phylogram choices here?
+                        "branchStyle": "diagonal",
+                        "branchLengths": "",  // empty/false, or a property name to compare?
+                        "width": 400, 
+                        "height": 400, 
+                        "orientation": 270
+                    }
                 ]
-            },
-            /* A second dataset from the same source. This seems like a perfect
-             * solution for links vs. nodes, but it chokes while cloning
-             * phyloTree (post-transform) due to circular references:
-             *  "Uncaught RangeError: Maximum call stack size exceeded vega.js:32"
-             * 
-            {
-                'name':"phyloEdges", 
-                'source':'phyloTree'
             }
-            */
         ],
         illustrationID: null,  // TODO: assign a key/ID when saved?
         illustrationName: "Untitled"
