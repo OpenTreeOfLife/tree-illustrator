@@ -1,0 +1,730 @@
+/*
+  (Heavily) adapted from Ken-ichi Ueda's 'd3.phylogram.js'
+
+  Wrapper around a d3-based phylogram (tree where branch lengths are scaled),
+  refactored into a Vega transform. What does this change?
+    - Returns transformed data (an object with nodes and links, projected to
+      the coordinate space based on the chosen layout).
+    - Assumes all incoming data has proportional x/y values (0.0 to 1.0).
+    - Doesn't render anything! Just passes the projected data for downstream
+      rendering.
+
+  This includes new and modified layouts, including
+    - radial (circular) layout with *scaled* branch lengths
+    - a traditional cladogram with straight, diagonal edges
+
+  Copyright (c) 2014, Jim Allman
+  Copyright (c) 2013, Ken-ichi Ueda
+
+  All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+  Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer. Redistributions in binary
+  form must reproduce the above copyright notice, this list of conditions and
+  the following disclaimer in the documentation and/or other materials
+  provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  POSSIBILITY OF SUCH DAMAGE.
+
+  DOCUMENTATION
+
+  buildCartesian(nodes, links, options)
+    Creates a phylogram.
+    Arguments:
+      nodes: JS array of nodes
+      links: JS array of links
+    Options:
+      tree
+        Pre-constructed d3 tree layout.
+      diagonal
+        Function that creates the d attribute for an svg:path. Defaults to a
+        right-angle diagonal.
+      skipTicks
+        Skip the tick rule.
+      skipBranchLengthScaling
+        Make a dendrogram instead of a phylogram.
+  
+  buildRadial(nodes, links, options)
+    Creates a radial dendrogram.
+    Options: same as build, but without diagonal, skipTicks, and 
+      skipBranchLengthScaling
+  
+  buildCladogram(nodes, links, options)
+    Creates a radial dendrogram.
+    Options: same as build, but without diagonal, skipTicks, and 
+      skipBranchLengthScaling
+
+  rightAngleDiagonal()
+    Similar to d3.diagonal except it create an orthogonal crook instead of a
+    smooth Bezier curve.
+    
+  radialRightAngleDiagonal()
+    d3.phylogram.rightAngleDiagonal for radial layouts.
+*/
+
+vg.data.phylogram = function() {
+    // caller-defined properties
+    var layout = 'cartesian';  // 'cartesian' | 'radial' | 'cladogram' | ???
+    // Typically we will maintain proportional coordinates and distances;
+    // these will be scaled downstream using SVG group transforms.
+    var width = 1.0;
+    var height = 1.0;
+    var branchStyle = ''; 
+        // 'rightAngleDiagonal', 'radialRightAngleDiagonal', or a standard
+        // D3 diagonal; by default, this will be based on the chosen layout
+    var branchLengths = '';
+    var orientation = 90; 
+        // degrees of rotation from default (0, 90, 180, 270)
+    // TODO: add more from options below
+  
+    function phylogram(data) {
+      // Expecting incoming data in the 'phylotree' format described here:
+      //  https://github.com/OpenTreeOfLife/tree-illustrator/wiki/Building-on-D3-and-Vega
+      console.log('STARTING phylogram transform...');
+
+      var layoutMethod = null;
+      switch(layout) {
+        case 'cartesian':
+          layoutMethod = buildCartesian;
+          break;
+        case 'radial':
+          layoutMethod = buildRadial;
+          break;
+        case 'cladogram':
+          layoutMethod = buildCladogram;
+          break;
+        default:
+          vg.log("ERROR: phylogram transform doesn't support '"+ layout +"' layout (expected 'cartesian'|'radial'|'cladogram')");
+          return data;
+      }
+      // data = layoutMethod(data.phyloNnodes, data.phyloLinks);
+
+      // apply the chosen layout
+      var layoutGenerator;
+      switch(layout) {
+          case 'radial':
+              layoutGenerator = radialLayout;
+              break;
+          case 'cladogram':
+              layoutGenerator = cladogramLayout;
+              break;
+          case 'cartesian':
+          default:
+              layoutGenerator = cartesianLayout;
+      }
+
+      if (width !== 1) {
+          // rotate all nodes by n degrees
+          data.phyloNodes.map(scalePoint);
+      }
+
+      if (orientation !== 0) {
+          // rotate all nodes by n degrees
+          data.phyloNodes.map(rotatePoint);
+      }
+
+      /* set (or revise) paths for all links
+      var pathGenerator;
+      switch(branchStyle) {
+        case '':
+            // if none specified, match the layout
+            switch(layout) {
+                case 'radial':
+                    pathGenerator = radialRightAngleDiagonal;
+                    break;
+                case 'cladogram':
+                    pathGenerator = d3.svg.line;
+                    break;
+                case 'cartesian':
+                default:
+                    pathGenerator = rightAngleDiagonal;
+            }
+            break;
+        case 'rightAngleDiagonal':
+            pathGenerator = rightAngleDiagonal;
+            break;
+        case 'radialRightAngleDiagonal':
+        default:
+            pathGenerator = radialRightAngleDiagonal;
+            break;
+      }
+      */
+/*
+      data.phyloEdges.map(function(d) { 
+        d.diagonal = pathGenerator;
+        return d; 
+      });
+*/
+
+      return data;
+    }
+      
+    // Setters (called from Vega spec)
+    
+    phylogram.layout = function(s) {
+      layout = s;
+      return phylogram;
+    };
+      
+    phylogram.branchStyle = function(s) {
+      branchStyle = s;
+      return phylogram;
+    };
+      
+    phylogram.width = function(i) {
+      width = i;
+      return phylogram;
+    };
+      
+    phylogram.height = function(i) {
+      height = i;
+      return phylogram;
+    };
+      
+    phylogram.orientation = function(i) {
+      orientation = i;
+      return phylogram;
+    };
+      
+    phylogram.branchLengths = function(s) {
+      branchLengths = s;
+      return phylogram;
+    };
+
+    var scalePoint = function(point) {
+        // where point is any object having x and y properties
+        // NOTE that we're scaling up from fractional values (0.0 - 1.0), so
+        // the nominal width+height are also our scaling multipliers
+        point.x *= width;
+        point.y *= height;
+        return point;
+    }
+
+    var rotatePoint = function(point) {
+        // where point is any object having x and y properties
+        var cos = Math.cos,
+            sin = Math.sin,
+            angle = orientation * Math.PI / 180, // convert to radians
+            xm = (width/2.0),   // TODO: midpoint is always 0.5 (half of 1.0)
+            ym = (height/2.0),
+            x = point.x,    // capture old x and y for this point
+            y = point.y;
+
+        // subtract midpoints, rotate from origin, then restore them
+        point.x = (x - xm) * cos(angle) - (y - ym) * sin(angle) + xm; 
+        point.y = (x - xm) * sin(angle) + (y - ym) * cos(angle) + ym; 
+        return point;
+    }
+
+  // Convert XY and radius to angle of a circle centered at 0,0
+  var coordinateToAngle = function(coord, radius) {
+    var wholeAngle = 2 * Math.PI,
+        quarterAngle = wholeAngle / 4;
+    
+    var coordQuad = coord[0] >= 0 ? 
+            (coord[1] >= 0 ? 1 : 2) : 
+            (coord[1] >= 0 ? 4 : 3),
+        coordBaseAngle = Math.abs(Math.asin(coord[1] / radius));
+    
+    // Since this is just based on the angle of the right triangle formed
+    // by the coordinate and the origin, each quad will have different 
+    // offsets
+    switch (coordQuad) {
+      case 1:
+        coordAngle = quarterAngle - coordBaseAngle;
+        break;
+      case 2:
+        coordAngle = quarterAngle + coordBaseAngle;
+        break;
+      case 3:
+        coordAngle = 2*quarterAngle + quarterAngle - coordBaseAngle;
+        break
+      case 4:
+        coordAngle = 3*quarterAngle + coordBaseAngle;
+    }
+    return coordAngle;
+  }
+
+    var cartesianLayout = function() {
+    }
+    var radialLayout = function() {
+    }
+    var cladogramLayout = function() {
+    }
+
+    return phylogram;
+}
+
+
+/* Adapt Vega's vg.data.link (src/data/link.js) for our distinct
+   branch styles. NOTE that you can also specify traditional "line",
+   "diagonal", etc. using Vega's main "link" transform.
+ */
+vg.data.phylogramLink = function() {
+  var shape = "rightAngleDiagonal",
+      source = vg.accessor("source"),
+      target = vg.accessor("target"),
+      output = {"path": "path"};
+  
+  /* path generators */
+
+  // This is an example of the format used in Vega's 'link' transform
+  var bogus = function(d) {
+   var s = source(d),
+        t = target(d),
+        dx = t.x - s.x,
+        dy = t.y - s.y,
+        ix = tension * (dx + dy),
+        iy = tension * (dy - dx);
+    return "M" + s.x + "," + s.y
+         + "C" + (s.x+ix) + "," + (s.y+iy)
+         + " " + (t.x+iy) + "," + (t.y-ix)
+         + " " + t.x + "," + t.y;
+  }
+
+  var rightAngleDiagonal = function(d) {
+    // do-nothing projection (just isolates x and y)
+    var projection = function(d) { return [d.x, d.y]; }
+    
+    var path = function(pathData) {
+      return "M" + pathData[0] + ' ' + pathData[1] + " " + pathData[2];
+    }
+    
+    function diagonal(d) {
+      ///console.log("calculating path "+ diagonalPath.target['@id']);
+      var midpointX = (d.source.x + d.target.x) / 2,
+          midpointY = (d.source.y + d.target.y) / 2,
+          pathData = [d.source, {x: d.source.x, y: d.target.y}, d.target];
+      pathData = pathData.map(projection);
+      return path(pathData)
+    }
+    
+    diagonal.projection = function(x) {
+      if (!arguments.length) return projection;
+      projection = x;
+      return diagonal;
+    };
+    
+    diagonal.path = function(x) {
+      if (!arguments.length) return path;
+      path = x;
+      return diagonal;
+    };
+    
+    return diagonal(d);
+  }
+  
+  var radialRightAngleDiagonal = function() {
+    return rightAngleDiagonal()
+      .path(function(pathData) {
+        var src = pathData[0],
+            mid = pathData[1],
+            dst = pathData[2],
+            radius = Math.sqrt(src[0]*src[0] + src[1]*src[1]),
+            srcAngle = coordinateToAngle(src, radius),
+            midAngle = coordinateToAngle(mid, radius),
+            clockwise = Math.abs(midAngle - srcAngle) > Math.PI ? midAngle <= srcAngle : midAngle > srcAngle,
+            rotation = 0,
+            largeArc = 0,
+            sweep = clockwise ? 0 : 1;
+        return 'M' + src + ' ' +
+          "A" + [radius,radius] + ' ' + rotation + ' ' + largeArc+','+sweep + ' ' + mid +
+          'L' + dst;
+      })
+      .projection(function(d) {
+        var r = d.y, a = (d.x - 90) / 180 * Math.PI;
+        return [r * Math.cos(a), r * Math.sin(a)];
+      })
+  }
+  var shapes = {
+    rightAngleDiagonal: rightAngleDiagonal,
+    radialRightAngleDiagonal:    radialRightAngleDiagonal,
+    // alternate names, if preferred
+    cartesian: rightAngleDiagonal,
+    radial:    radialRightAngleDiagonal
+  };
+  
+  function phylogramLink(data) {
+    var path = shapes[shape];
+        
+    data.forEach(function(d) {
+      d[output.path] = path(d);
+    });
+    
+    return data;
+  }
+
+  phylogramLink.shape = function(val) {
+    shape = val;
+    return phylogramLink;
+  };
+
+  phylogramLink.output = function(map) {
+    vg.keys(output).forEach(function(k) {
+      if (map[k] !== undefined) {
+        output[k] = map[k];
+      }
+    });
+    return phylogramLink;
+  };
+  
+  
+  return phylogramLink;
+};
+
+
+
+
+/***** SCRAP AREA *****/
+
+/*
+  styleTreeNodes = function(vis) {
+
+    vis.selectAll('g.node circle')
+        .attr("r", 2.5);
+
+    vis.selectAll('g.leaf.node circle')
+        .attr("r", 4.5);
+    
+    vis.selectAll('g.root.node circle')
+        .attr("r", 4.5);
+  }
+*/
+  
+  function scaleBranchLengths(nodes, w) {
+    // Visit all nodes and adjust y pos width distance metric
+    var visitPreOrder = function(root, callback) {
+      callback(root)
+      if (root.children) {
+        for (var i = root.children.length - 1; i >= 0; i--){
+          visitPreOrder(root.children[i], callback)
+        };
+      }
+    }
+    visitPreOrder(nodes[0], function(node) {
+      // TODO: if we have mixed trees (some edges with lengths), consider 1
+      // as default length versus 0?
+      node.rootDist = (node.parent ? node.parent.rootDist : 0) + (node.length || 0)
+    })
+    var rootDists = nodes.map(function(n) { return n.rootDist; });
+    var yscale = d3.scale.linear()
+      .domain([0, d3.max(rootDists)])
+      .range([0, w]);
+    visitPreOrder(nodes[0], function(node) {
+      node.y = yscale(node.rootDist)
+    })
+    return yscale
+  }
+  
+  
+  var buildCartesian = function(selector, nodes, options) {
+debugger;
+    options = options || {}
+    var w = options.width || d3.select(selector).style('width') || d3.select(selector).attr('width'),
+        h = options.height || d3.select(selector).style('height') || d3.select(selector).attr('height'),
+        w = parseInt(w),
+        h = parseInt(h);
+    var tree = options.tree || d3.layout.cluster()
+      .size([h, w])
+      .sort(function(node) { return node.children ? node.children.length : -1; })
+    var diagonal = options.diagonal || rightAngleDiagonal();
+    var vis = options.vis || d3.select(selector).append("svg:svg")
+        .attr("width", w + 300)
+        .attr("height", h + 30)
+      .append("svg:g")
+        .attr("transform", "translate(120, 20)");
+
+    if (!options.vis) {
+      // add any special filters (once only)
+      d3.select(selector).selectAll('svg')
+       .append('defs')
+         .append("svg:filter")
+           .attr("id", "highlight")
+           .each(function(d) {
+               // add multiple elements to this parent
+               d3.select(this).append("svg:feFlood")
+                 //.attr("flood-color", "#ffeedd")  // matches .help-box bg color!
+                 .attr("flood-color", "#ffb265")    // darkened to allow tint
+                 .attr("flood-opacity", "0.5")
+                 .attr("result", "tint");
+               d3.select(this).append("svg:feBlend")
+                 .attr("mode", "multiply")
+                 .attr("in", "SourceGraphic")
+                 .attr("in2", "tint")
+                 .attr("in3", "BackgroundImage");
+               /* ALTERNATIVE SOLUTION, using feComposite
+               d3.select(this).append("svg:feComposite")
+                 .attr("in", "SourceGraphic");
+                */
+           });
+    }
+
+    var nodes = tree(nodes);
+    
+    if (options.skipBranchLengthScaling) {
+      var yscale = d3.scale.linear()
+        .domain([0, w])
+        .range([0, w]);
+    } else {
+      var yscale = scaleBranchLengths(nodes, w)
+    }
+    
+    if (!options.skipTicks) {
+      var lines = vis.selectAll('line')
+          .data(yscale.ticks(10));
+      
+      lines
+        .enter().append('svg:line')
+          .attr('y1', 0)
+          .attr('y2', h)
+          .attr('x1', yscale)
+          .attr('x2', yscale)
+          .attr("stroke", "#eee");
+
+      lines
+        .exit().remove();
+
+      var text_rules = vis.selectAll("text.rule")
+          .data(yscale.ticks(10));
+
+      text_rules
+        .enter().append("svg:text")
+          .attr("class", "rule")
+          .attr("x", yscale)
+          .attr("y", 0)
+          .attr("dy", -3)
+          .attr("text-anchor", "middle")
+          .attr('font-size', '8px')
+          .attr('fill', '#ccc')
+          .text(function(d) { return Math.round(d*100) / 100; });
+
+      text_rules
+        .exit().remove();
+    }
+        
+    
+    // DATA JOIN
+    /* more interactions and styles on final marks
+    var path_links = vis.selectAll("path.link")
+        .data(tree.links(nodes), function(d) { return d.source['@id'] +'_'+ d.target['@id']; });
+
+    var path_link_triggers = vis.selectAll("path.link-trigger")
+        .data(tree.links(nodes), function(d) { return d.source['@id'] +'_'+ d.target['@id'] +'_trigger'; });
+
+    var g_nodes = vis.selectAll("g.node")
+        .data(nodes, function(d) { return d['@id']; });
+
+    // UPDATE (only affects existing links)
+    path_links
+        .attr("stroke", "#aaa");
+    
+    path_link_triggers
+        .attr("stroke", "orange");
+
+    
+    // ENTER (only affects new links; do one-time initialization here)
+    path_links
+      .enter()
+          .append("svg:path")                   // styled (visible) edge
+            .attr("class", "link")
+            .attr("fill", "none")
+            .attr("stroke", "#f33")
+            .attr("stroke-width", "4px");
+    
+    path_link_triggers
+      .enter()
+          .append("svg:path")                   // "hit area" for clicking edge
+            .attr("class", "link-trigger")
+            .attr("fill", "none")
+            .attr("stroke", "red")
+            .attr("stroke-width", "4px")
+            //.attr('pointer-events', 'all')
+
+    g_nodes
+      .enter()
+        .append("svg:g")
+          .append("svg:circle")
+            .attr("r", 2.5)
+            .attr('stroke', 'red')
+            .attr('pointer-events', 'all')      // detect on invisible stuff
+            .attr('stroke-opacity', '0.0')
+            .attr('stroke-width', '8px');
+
+    // ENTER + UPDATE (affects all new AND existing links)
+    path_links
+        .attr("d", diagonal)
+        .attr("class", function(d) { return "link "+ (d.source.ingroup ? "ingroup" : "outgroup"); });
+        
+    path_link_triggers
+        .attr("d", diagonal)
+        .attr("class", function(d) { return "link-trigger "+ (d.source.ingroup ? "ingroup" : "outgroup"); });
+
+    g_nodes
+        .attr("class", function(n) {
+          // N.B. These classes are overridden by study-editor.js!
+          if (n.children) {
+            if (n.depth == 0) {
+              return "root node";
+            } else {
+              return "inner node";
+            }
+          } else {
+            return "leaf node";
+          }
+        })
+        .attr("id", function(d) { return ("nodebox-"+ d['@id']); })
+        .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
+
+    // EXIT
+    path_links
+      .exit()
+        .remove();
+
+    path_link_triggers
+      .exit()
+        .remove();
+
+    g_nodes
+      .exit().remove();
+
+    */
+    // any dynamic readjustments of non-CSS attributes
+    ///styleTreeNodes(vis);
+    
+    /* node labeling 
+    // TODO: why is this SUPER-SLOW with large trees? like MINUTES to run...
+    // Is there a faster/cruder way to clear the decks?
+    vis.selectAll('g.node text').remove();
+
+    // provide an empty label as last resort, so we can see highlights
+    var defaultNodeLabel = "unnamed";
+
+    if (!options.skipLabels) {
+      // refresh all labels based on tree position
+      vis.selectAll('g.node')
+        .append("svg:text")
+          .attr('font-family', 'Helvetica Neue, Helvetica, sans-serif')
+          .attr("dx", -6)
+          .attr("dy", -6)
+          .attr("text-anchor", 'end')
+          .attr('font-size', '10px')
+          .attr('fill', function(d) {
+              switch(d.labelType) {
+                  case ('mapped label'):
+                      return '#000';
+                  case ('node id'):
+                      if (d.ambiguousLabel) {
+                          return '#b94a48';  // show ambiguous labels, match red prompts
+                      } else if (d.adjacentEdgeLabel) {
+                          return '#888';
+                      } else {
+                          return '#888';
+                      }
+                  default:
+                      return '#888';
+              }
+          })
+          ///.text(function(d) { return d.length; });
+          .attr('font-style', function(d) {
+              return (d.labelType === 'mapped label' ? 'inherit' : 'italic');
+          })
+          .text(function(d) {
+              // return (d.name + ' ('+d.length+')'); 
+              var nodeLabel = '';
+              if (d.labelType === 'node id') {
+                  nodeLabel = '';  // hide these
+              } else {
+                  nodeLabel = d.name || defaultNodeLabel;
+              }
+              var supplementalLabel = d.ambiguousLabel || d.adjacentEdgeLabel;
+              if (supplementalLabel) {
+                  if (nodeLabel === '') {
+                      nodeLabel = supplementalLabel;
+                  } else {
+                      nodeLabel = nodeLabel +" ["+ supplementalLabel +"]";
+                  }
+              }
+              return nodeLabel; 
+          });
+
+      vis.selectAll('g.root.node text')
+          .attr("dx", -8)
+          .attr("dy", 3);
+
+      vis.selectAll('g.leaf.node text')
+        .attr("dx", 8)
+        .attr("dy", 3)
+        .attr("text-anchor", "start");
+    }
+    
+    */ 
+
+    return {tree: tree, vis: vis}
+  }
+  
+  var buildRadial = function(nodes, links, options) {
+    options = options || {}
+    /* set width, radius, space for edge labels
+    var w = options.width || d3.select(selector).style('width') || d3.select(selector).attr('width'),
+        r = w / 2,
+        // NOTE the fudge factor here; longer labels will be clipped!
+        labelWidth = options.skipLabels ? 10 : options.labelWidth || 120;
+    */
+    
+    /* build SVG, set size and offet (center is 0,0)
+    var vis = d3.select(selector).append("svg:svg")
+        .attr("width", r * 2)
+        .attr("height", r * 2)
+      .append("svg:g")
+        .attr("transform", "translate(" + r + "," + r + ")");
+    */
+        
+    /* set space with x as polar coordinates (360 degrees), y = 1.0 */
+    var tree = d3.layout.tree()  // TODO: use cluster here?
+      .size([360, 500])   // WAS ([360, r - labelWidth])
+      // sort populous to sparse branches
+      .sort(function(node) { return node.children ? node.children.length : -1; })
+      .separation(function(a, b) { return (a.parent == b.parent ? 1 : 2) / a.depth; });
+    
+    var phylogram = buildCartesian(selector, nodes, {
+      vis: vis,
+      tree: tree,
+      skipBranchLengthScaling: true,
+      skipTicks: true,
+      skipLabels: options.skipLabels,
+      diagonal: radialRightAngleDiagonal()
+    })
+    vis.selectAll('g.node')
+      .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; })
+    
+    if (!options.skipLabels) {
+      vis.selectAll('g.leaf.node text')
+        .attr("dx", function(d) { return d.x < 180 ? 8 : -8; })
+        .attr("dy", ".31em")
+        .attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
+        .attr("transform", function(d) { return d.x < 180 ? null : "rotate(180)"; })
+        .attr('font-family', 'Helvetica Neue, Helvetica, sans-serif')
+        .attr('font-size', '10px')
+        .attr('fill', 'black');
+
+      vis.selectAll('g.inner.node text')
+        .attr("dx", function(d) { return d.x < 180 ? -6 : 6; })
+        .attr("text-anchor", function(d) { return d.x < 180 ? "end" : "start"; })
+        .attr("transform", function(d) { return d.x < 180 ? null : "rotate(180)"; });
+    }
+    
+    return {tree: tree, vis: vis}
+  }
