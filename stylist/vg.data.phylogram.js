@@ -86,8 +86,12 @@ vg.data.phylogram = function() {
         // 'rightAngleDiagonal', 'radialRightAngleDiagonal', or a standard
         // D3 diagonal; by default, this will be based on the chosen layout
     var branchLengths = '';
-    var orientation = 90; 
-        // degrees of rotation from default (0, 90, 180, 270)
+    var tipsAlignment = 'right';
+        // disregard for radial layouts?
+    var orientation = -90; 
+        // degrees of rotation from default (0, -90, 90, 180)
+    var descentAxis = 'x'; // x|y
+        // needed to render paths correctly
     // TODO: add more from options below
   
     function phylogram(data) {
@@ -95,6 +99,7 @@ vg.data.phylogram = function() {
       //  https://github.com/OpenTreeOfLife/tree-illustrator/wiki/Building-on-D3-and-Vega
       console.log('STARTING phylogram transform...');
 
+/*
       var layoutMethod = null;
       switch(layout) {
         case 'cartesian':
@@ -111,6 +116,7 @@ vg.data.phylogram = function() {
           return data;
       }
       // data = layoutMethod(data.phyloNnodes, data.phyloLinks);
+*/
 
       // apply the chosen layout
       var layoutGenerator;
@@ -125,49 +131,92 @@ vg.data.phylogram = function() {
           default:
               layoutGenerator = cartesianLayout;
       }
+      layoutGenerator(data);
 
+      // scale all coordinates as directed
       if (width !== 1) {
-          // rotate all nodes by n degrees
           data.phyloNodes.map(scalePoint);
       }
 
       if (orientation !== 0) {
           // rotate all nodes by n degrees
-          data.phyloNodes.map(rotatePoint);
+          data.phyloNodes.map(rotatePointByOrientation);
       }
 
-      /* set (or revise) paths for all links
+      // set (or revise) paths for all links
       var pathGenerator;
       switch(branchStyle) {
         case '':
             // if none specified, match the layout
             switch(layout) {
                 case 'radial':
-                    pathGenerator = radialRightAngleDiagonal;
+                    pathGenerator = radialRightAngleDiagonal();
                     break;
                 case 'cladogram':
-                    pathGenerator = d3.svg.line;
+                    pathGenerator = d3.svg.line();
                     break;
                 case 'cartesian':
+                    pathGenerator = rightAngleDiagonal();
+                    break;
                 default:
-                    pathGenerator = rightAngleDiagonal;
+                    // allow for moretraditional paths
+                    pathGenerator = d3.svg[branchStyle]();
             }
             break;
-        case 'rightAngleDiagonal':
-            pathGenerator = rightAngleDiagonal;
-            break;
         case 'radialRightAngleDiagonal':
+            pathGenerator = radialRightAngleDiagonal();
+            break;
+        case 'rightAngleDiagonal':
+            pathGenerator = rightAngleDiagonal();
+            break;
+        case 'diagonal':
+            // intercept and switch its x/y bias
+            if (descentAxis === 'x') {
+                pathGenerator = function(d) {
+                    // copied from vg.data.link > diagonalX
+                    var s = d.source,
+                        t = d.target,
+                        m = (s.x + t.x) / 2;
+                    return "M" + s.x + "," + s.y
+                         + "C" + m   + "," + s.y
+                         + " " + m   + "," + t.y
+                         + " " + t.x + "," + t.y;
+                }
+            } else {
+                pathGenerator = function(d) {
+                    // copied from vg.data.link > diagonalY
+                    var s = d.source,
+                        t = d.target,
+                        m = (s.y + t.y) / 2;
+                    return "M" + s.x + "," + s.y
+                         + "C" + s.x + "," + m
+                         + " " + t.x + "," + m
+                         + " " + t.x + "," + t.y;
+                }
+            }
+            break;
+        case 'radial':
+            // intercept and switch its x/y bias
+            pathGenerator = d3.svg.diagonal.radial();
+                //.projection(function (d) { return [d.y, d.x]; });
+            break;
         default:
-            pathGenerator = radialRightAngleDiagonal;
+            pathGenerator = d3.svg[branchStyle]();
             break;
       }
-      */
-/*
-      data.phyloEdges.map(function(d) { 
-        d.diagonal = pathGenerator;
-        return d; 
+      data.phyloEdges.forEach(function(d) {
+        d.path = pathGenerator(d);
       });
-*/
+
+      // copy layout properties to the phylotree, for possible use downstream
+      data.layout = layout;
+      data.tipsAlignment = tipsAlignment;
+      data.descentAxis = descentAxis;  // implicit in tipsAlignment?
+      data.orientation = orientation;  // implicit in tipsAlignment?
+      data.width = width;
+      data.height = height;
+      data.branchStyle = branchStyle;
+      data.branchLengths = branchLengths;
 
       return data;
     }
@@ -194,8 +243,34 @@ vg.data.phylogram = function() {
       return phylogram;
     };
       
-    phylogram.orientation = function(i) {
-      orientation = i;
+    phylogram.tipsAlignment = function(s) {
+      // This places the tips on the specified edge, and sets the 
+      // orientation (rotation angle)
+      // N.B. Ignore this when making for radial layouts!
+      var expectedValues = ['top','right','bottom','left'];
+      s = $.trim(s).toLowerCase();
+      if ($.inArray(s, expectedValues) === -1) {
+        s = 'right';
+      }
+      tipsAlignment = s;
+      switch(tipsAlignment) {
+        case 'top':
+          orientation = 180;
+          descentAxis = 'y';
+          break;
+        case 'right':
+          orientation = -90;
+          descentAxis = 'x';
+          break;
+        case 'bottom':
+          orientation = 0;
+          descentAxis = 'y';
+          break;
+        case 'left':
+          orientation = 90;
+          descentAxis = 'x';
+          break;
+      }
       return phylogram;
     };
       
@@ -213,11 +288,20 @@ vg.data.phylogram = function() {
         return point;
     }
 
-    var rotatePoint = function(point) {
+    var rotatePointByOrientation = function(point) {
+        return rotatePoint(point, orientation);
+    }
+    var rotatePointByY = function(point) {
+        var yAngle = point.y - 90;
+        return rotatePoint(point, yAngle);
+    }
+
+    var rotatePoint = function(point, angle) {
+console.log("angle:"+ angle);
         // where point is any object having x and y properties
         var cos = Math.cos,
             sin = Math.sin,
-            angle = orientation * Math.PI / 180, // convert to radians
+            angle = (angle || orientation) * Math.PI / 180, // convert to radians
             xm = (width/2.0),   // TODO: midpoint is always 0.5 (half of 1.0)
             ym = (height/2.0),
             x = point.x,    // capture old x and y for this point
@@ -258,42 +342,7 @@ vg.data.phylogram = function() {
     return coordAngle;
   }
 
-    var cartesianLayout = function() {
-    }
-    var radialLayout = function() {
-    }
-    var cladogramLayout = function() {
-    }
-
-    return phylogram;
-}
-
-
-/* Adapt Vega's vg.data.link (src/data/link.js) for our distinct
-   branch styles. NOTE that you can also specify traditional "line",
-   "diagonal", etc. using Vega's main "link" transform.
- */
-vg.data.phylogramLink = function() {
-  var shape = "rightAngleDiagonal",
-      source = vg.accessor("source"),
-      target = vg.accessor("target"),
-      output = {"path": "path"};
-  
   /* path generators */
-
-  // This is an example of the format used in Vega's 'link' transform
-  var bogus = function(d) {
-   var s = source(d),
-        t = target(d),
-        dx = t.x - s.x,
-        dy = t.y - s.y,
-        ix = tension * (dx + dy),
-        iy = tension * (dy - dx);
-    return "M" + s.x + "," + s.y
-         + "C" + (s.x+ix) + "," + (s.y+iy)
-         + " " + (t.x+iy) + "," + (t.y-ix)
-         + " " + t.x + "," + t.y;
-  }
 
   var rightAngleDiagonal = function(d) {
     // do-nothing projection (just isolates x and y)
@@ -307,7 +356,9 @@ vg.data.phylogramLink = function() {
       ///console.log("calculating path "+ diagonalPath.target['@id']);
       var midpointX = (d.source.x + d.target.x) / 2,
           midpointY = (d.source.y + d.target.y) / 2,
-          pathData = [d.source, {x: d.source.x, y: d.target.y}, d.target];
+          pathData = (descentAxis === 'x') ? 
+                    [d.source, {x: d.source.x, y: d.target.y}, d.target] :
+                    [d.source, {x: d.target.x, y: d.source.y}, d.target];
       pathData = pathData.map(projection);
       return path(pathData)
     }
@@ -324,11 +375,11 @@ vg.data.phylogramLink = function() {
       return diagonal;
     };
     
-    return diagonal(d);
+    return diagonal;
   }
   
-  var radialRightAngleDiagonal = function() {
-    return rightAngleDiagonal()
+  var radialRightAngleDiagonal = function(d) {
+    return rightAngleDiagonal(d)
       .path(function(pathData) {
         var src = pathData[0],
             mid = pathData[1],
@@ -349,42 +400,22 @@ vg.data.phylogramLink = function() {
         return [r * Math.cos(a), r * Math.sin(a)];
       })
   }
-  var shapes = {
-    rightAngleDiagonal: rightAngleDiagonal,
-    radialRightAngleDiagonal:    radialRightAngleDiagonal,
-    // alternate names, if preferred
-    cartesian: rightAngleDiagonal,
-    radial:    radialRightAngleDiagonal
-  };
   
-  function phylogramLink(data) {
-    var path = shapes[shape];
-        
-    data.forEach(function(d) {
-      d[output.path] = path(d);
-    });
-    
-    return data;
-  }
 
-  phylogramLink.shape = function(val) {
-    shape = val;
-    return phylogramLink;
-  };
+    /* layout generators (position points in 1.0, 1.0 space) */
+    var cartesianLayout = function(data) {
+        // do nothing
+    }
+    var radialLayout = function(data) {
+        // project points (nodes) to radiate out from center
+        data.phyloNodes.map(rotatePointByY);
+    }
+    var cladogramLayout = function(data) {
+        // TODO: support branch lengths?
+    }
 
-  phylogramLink.output = function(map) {
-    vg.keys(output).forEach(function(k) {
-      if (map[k] !== undefined) {
-        output[k] = map[k];
-      }
-    });
-    return phylogramLink;
-  };
-  
-  
-  return phylogramLink;
-};
-
+    return phylogram;
+}
 
 
 

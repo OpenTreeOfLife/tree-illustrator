@@ -123,19 +123,19 @@ var availableStyles = [
               "from": {
                 "data": "phyloTree", 
                 "transform": [
-                  {"type":"pluck", "field":"phyloEdges" },
+                  {"type":"pluck", "field":"phyloEdges" }
                 // how do apply the 'time' scale here? TRY brute-forcing x and y properties
                   //{"type":"formula", "field":"source.x", "expr":"d.source.y"},
                   //{"type":"formula", "field":"target.x", "expr":"d.target.y"},
                   // {"type":"link", "shape":"line" }  // line | curve | diagonal | diagonalX | diagonalY
-                  {"type":"phylogramLink", "shape":"rightAngleDiagonal" }  // rightAngleDiagonal | radialRightAngleDiagonal
+                  // {"type":"phylogramLink", "shape":"rightAngleDiagonal" }  // rightAngleDiagonal | radialRightAngleDiagonal
                 ]
               },
               "properties": {
                 "update": {
                   "path": {"field": "path"}, // , "transform":{"scale":"x"}},
-                  "stroke": {"value": "#999"},
-                  "strokeWidth": {"value": 0.5}
+                  "stroke": {"value": "#888"},
+                  "strokeWidth": {"value": 1.0}
                 },
                 "hover": {
                   "stroke": {"value": "red"}
@@ -154,8 +154,8 @@ var availableStyles = [
                 },
                 "update": {
                   "shape": {"value":"circle"},
-                  "size": {"value": 5},
-                  "fill": {"value": "maroon"}
+                  "size": {"value": 8},
+                  "fill": {"value": "black"}
                 },
                 "hover": {
                   "fill": {"value": "red"}
@@ -409,7 +409,7 @@ $(document).ready(function() {
         data: [
             {
                 'name':"phyloTree", 
-                'url': buildStudyFetchURL( 'pg_2584' ), 
+                'url': buildStudyFetchURL( 'pg_10' ), 
                 'format':{
                     "type":"treejson",   // necessary to ingest a JS object (vs. array)
                     //"property":"data.nexml.trees.0.tree.0.node"       // find node array
@@ -426,11 +426,13 @@ $(document).ready(function() {
                     { 
                         "type": "phylogram", 
                         // consolidate all other interesting phylogram choices here?
-                        "branchStyle": "diagonal",
+                        "layout": "cartesian",
+                        //"branchStyle": "diagonal",  // other options here?
                         "branchLengths": "",  // empty/false, or a property name to compare?
-                        "width": 400, 
-                        "height": 400, 
-                        "orientation": 270
+                        "width": 800,   // TODO: FIX these dimensions (they rotate)
+                        "height": 600, 
+                        //"orientation": 0 
+                        "tipsAlignment": 'right'
                     }
                 ]
             }
@@ -450,7 +452,7 @@ $(document).ready(function() {
 
 function buildStudyFetchURL( studyID ) {
     // ASSUMES we're using the phylesystem API to load studies from the OpenTree dev site
-    var template = "http://devapi.opentreeoflife.org/phylesystem/v1/study/{STUDY_ID}?output_nexml2json=1.0.0&auth_token=ANONYMOUS"
+    var template = "http://api.opentreeoflife.org/phylesystem/v1/study/{STUDY_ID}?output_nexml2json=1.0.0&auth_token=ANONYMOUS"
     return template.replace('{STUDY_ID}', studyID);
 }
 
