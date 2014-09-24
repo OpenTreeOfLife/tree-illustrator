@@ -186,19 +186,8 @@ vg.data.phylogram = function() {
             break;
       }
 
-console.log("how many edges? " + data.phyloEdges.length); 
-///colors = ['pink', 'orange', 'mint', 'purple', 'green', 'yellow', 'blue', 'brown', 'black'];
       data.phyloEdges.forEach(function(d, i) {
-console.log("\nedge "+i);
-console.log("BEFORE: "+ d.path);
-        ///d.path = rightAngleDiagonal(d);
-console.log(" source x="+ d.source.x +", y="+ d.source.y);
-console.log(" target x="+ d.target.x +", y="+ d.target.y);
-console.log(" source cx="+ d.source.cartesian_x +", cy="+ d.source.cartesian_y);
-console.log(" target cx="+ d.target.cartesian_x +", cy="+ d.target.cartesian_y);
         d.path = pathGenerator(d);
-        ///$(d).css('stroke', colors[i]);
-console.log("AFTER: "+ d.path);
       });
 
       // copy layout properties to the phylotree, for possible use downstream
@@ -289,7 +278,6 @@ console.log("AFTER: "+ d.path);
         if ('cartesian_x' in point) {
             point.cartesian_x *= width;
             point.cartesian_y *= height;
-console.log("SCALED: x="+ point.x +", y="+ point.y +", cx="+ point.cartesian_x +", cy="+ point.cartesian_y);
         }
         return point;
     }
@@ -300,11 +288,7 @@ console.log("SCALED: x="+ point.x +", y="+ point.y +", cx="+ point.cartesian_x +
     }
     var rotatePointByY = function(point) {
         // Y coordinate should be between 0.0 and 1.0
-        //var yAngle = point.y - 90;
-//console.log("point.y="+ point.x);
-var yAngle = 360.0 * point.x;
-///yAngle = 15; // TODO: cleanup
-//console.log("yAngle="+ yAngle);
+        var yAngle = 360.0 * point.x;
         return rotatePoint(point, yAngle);
     }
 
@@ -329,7 +313,6 @@ var yAngle = 360.0 * point.x;
             point.cartesian_x = (cx - xm) * cos(angle) - (cy - ym) * sin(angle) + xm; 
             point.cartesian_y = (cx - xm) * sin(angle) + (cy - ym) * cos(angle) + ym; 
         }
-console.log("ROTATED: x="+ point.x +", y="+ point.y +", cx="+ point.cartesian_x +", cy="+ point.cartesian_y);
         return point;
     }
 
@@ -373,14 +356,12 @@ console.log("ROTATED: x="+ point.x +", y="+ point.y +", cx="+ point.cartesian_x 
     }
     
     function diagonal(d) {
-      ///console.log("calculating path "+ diagonalPath.target['@id']);
       var midpointX = (d.source.x + d.target.x) / 2,
           midpointY = (d.source.y + d.target.y) / 2,
           pathData = (descentAxis === 'x') ? 
                     [d.source, {x: d.source.x, y: d.target.y}, d.target] :
                     [d.source, {x: d.target.x, y: d.source.y}, d.target];
       pathData = pathData.map(projection);
-console.log("RAG path: "+ path(pathData));
       return path(pathData)
     }
     
@@ -413,7 +394,6 @@ console.log("RAG path: "+ path(pathData));
     var projection = cartesianToPolarProjection;
             
     var path = function(pathData) {
-        console.log("PATH starting pathData: "+ pathData);
         var src = pathData[0],
             mid = pathData[1],
             dst = pathData[2],
@@ -427,12 +407,10 @@ console.log("RAG path: "+ path(pathData));
         var pathString = 'M' + src + ' ' +
           "A" + [radius,radius] + ' ' + rotation + ' ' + largeArc+','+sweep + ' ' + mid +
           'L' + dst;
-console.log("PATH ending pathString: "+ pathString);
         return pathString;
     }
             
     function diagonal(d) {
-      ///console.log("calculating path "+ diagonalPath.target['@id']);
       var midpointX = (d.source.cartesian_x + d.target.cartesian_x) / 2,
           midpointY = (d.source.cartesian_y + d.target.cartesian_y) / 2,
           pathData = (descentAxis === 'x') ? 
@@ -447,50 +425,18 @@ console.log("PATH ending pathString: "+ pathString);
                         {x: d.target.cartesian_x, y: d.target.cartesian_y}
                     ];
       pathData = pathData.map(projection);
-console.log("RAG path: "+ path(pathData));
       return path(pathData)
     }
             
     return diagonal;
   }
   
-/*
-  var radialRightAngleDiagonal = function(d) {
-    // Does this assume a *prior* path generated with rightAngleDiagonal?
-    return rightAngleDiagonal(d)
-      .path(function(pathData) {
-console.log("PATH starting pathData: "+ pathData);
-        var src = pathData[0],
-            mid = pathData[1],
-            dst = pathData[2],
-            radius = Math.sqrt(src[0]*src[0] + src[1]*src[1]),
-            srcAngle = coordinateToAngle(src, radius),
-            midAngle = coordinateToAngle(mid, radius),
-            clockwise = Math.abs(midAngle - srcAngle) > Math.PI ? midAngle <= srcAngle : midAngle > srcAngle,
-            rotation = 0,
-            largeArc = 0,
-            sweep = clockwise ? 0 : 1;
-        var pathString = 'M' + src + ' ' +
-          "A" + [radius,radius] + ' ' + rotation + ' ' + largeArc+','+sweep + ' ' + mid +
-          'L' + dst;
-console.log("PATH ending pathString: "+ pathString);
-        return pathString;
-      })
-      .projection(function(d) {
-        return [d.x, d.y]; // TODO: cleanup
-        var r = d.x, a = (d.y - 0) / 180 * Math.PI;
-        return [r * Math.cos(a), r * Math.sin(a)];
-      })
-  }
-*/  
-
     /* layout generators (position points in 1.0, 1.0 space) */
     var cartesianLayout = function(data) {
         // do nothing
     }
     var radialLayout = function(data) {
         // project points (nodes) to radiate out from center
-console.log("@@@@@@@@@@@@@@@@@@@@@@");
 
         // move all points to put the root node at origin (0.0)
         var rootNode = data.phyloNodes[0];  // I believe this is always true
@@ -503,7 +449,6 @@ console.log("@@@@@@@@@@@@@@@@@@@@@@");
         var preserveCartesianCoordinates = function(point) {
             point.cartesian_x = point.x;
             point.cartesian_y = point.y;
-console.log("SET: cx="+ point.cartesian_x +", cy="+ point.cartesian_y);
         }
         data.phyloNodes.map(preserveCartesianCoordinates);
 

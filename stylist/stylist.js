@@ -72,11 +72,10 @@ var availableStyles = [
             {
               "type": "x", 
               "scale": "x",
-              "grid": true,
+              //"grid": true,
               "orient": "top",
               //"title": "Time",
               "ticks": 10,  // MISSING? what's up with that?
-              //"grid": true,
               "properties": {
                 "ticks": {
                   "stroke": {"value": "steelblue"}
@@ -102,7 +101,7 @@ var availableStyles = [
                 }
               }
             },
-            {"type": "y", "grid": true, "scale": "y"}
+            {"type": "y", "grid": false, "scale": "y"}
 
                         ],
               //"from": {"data": "series"},
@@ -402,13 +401,12 @@ function refreshViz() {
         .update();
 
         // populate temporary vars for SVG-tree group, nodes, paths, root node
-        console.log( "There are "+ $('svg').length +" SVG elements on this page");
-        console.log( "There are "+ $('svg g').length +" SVG groups on this page");
         tg  = $('svg g g g g g g:eq(0) g')
         tn = tg.find('g.type-symbol');
         te = tg.find('g.type-path');
         rn = tn.find('path').eq(0);
 
+/*
         // what are the visual extents of all nodes?
         var top = Number.MAX_VALUE;
         var right = Number.MIN_VALUE;
@@ -442,19 +440,20 @@ function refreshViz() {
         console.log("  right="+ right);
         console.log("  bottom="+ bottom);
         console.log("  left="+ left);
-
-        // bring stuff into view //TODO: cleanup
-        tn.attr('transform','translate(100,100)')
-        te.attr('transform','translate(100,100)')
+*/
 
         // colorize nodes and edges to ROYGBV
-        colors = ['red','orange','yellow','green','blue','violet'];
+        colors = ['red','orange','#cc0','green','blue','violet'];
         $.each(tn.find('path'), function(i, n) {
             $(n).css('stroke', colors[i]);
         });
         $.each(te.find('path'), function(i, e) {
             $(e).css('stroke', colors[i]);
         });
+
+        // bring stuff into view //TODO: cleanup
+        tn.attr('transform','translate(100,100)')
+        te.attr('transform','translate(100,100)')
         
     });
 }
