@@ -467,7 +467,8 @@ $(document).ready(function() {
         data: [
             {
                 'name':"phyloTree", 
-                'url': buildStudyFetchURL( 'pg_2823' ), 
+                //'url': buildStudyFetchURL( 'pg_2823' ),   // TINY TREE
+                'url': buildStudyFetchURL( 'pg_2818' ),     // BIG TREE
                 'format':{
                     "type":"treejson",   // necessary to ingest a JS object (vs. array)
                     //"property":"data.nexml.trees.0.tree.0.node"       // find node array
@@ -485,6 +486,9 @@ $(document).ready(function() {
                         "type": "phylogram", 
                         // consolidate all other interesting phylogram choices here?
                         "layout": "radial",
+                        //"radialArc": [90, 0],
+                        //"radialSweep": 'CLOCKWISE',
+                        "radialSweep": 'COUNTERCLOCKWISE',
                         //"branchStyle": "diagonal",  // other options here?
                         "branchLengths": "",  // empty/false, or a property name to compare?
                         "width": 100,   // TODO: FIX these dimensions (they rotate)

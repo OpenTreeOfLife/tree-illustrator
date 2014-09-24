@@ -82,6 +82,8 @@ vg.data.phylogram = function() {
     // these will be scaled downstream using SVG group transforms.
     var width = 1.0;
     var height = 1.0;
+    var radialArc = [0, 360];  // angles of arc for a circular layout
+    var radialSweep = 'CLOCKWISE';  // 'CLOCKWISE' or 'COUNTERCLOCKWISE'
     var branchStyle = ''; 
         // 'rightAngleDiagonal', 'radialRightAngleDiagonal', or a standard
         // D3 diagonal; by default, this will be based on the chosen layout
@@ -217,6 +219,28 @@ vg.data.phylogram = function() {
       
     phylogram.width = function(i) {
       width = i;
+      return phylogram;
+    };
+      
+    phylogram.radialArc = function(a) {
+      // expects an array of start and end angle; if we get an integer, convert it
+      if (vg.isArray(a)) {
+        radialArc = a;
+      } else {
+        radialArc = [0, a];
+      } 
+      return phylogram;
+    };
+      
+    phylogram.radialSweep = function(s) {
+      switch(s) {
+        case 'COUNTERCLOCKWISE':
+        case 'CLOCKWISE':
+          radialSweep = s;
+          break;
+        default:
+          radialSweep = 'CLOCKWISE';
+      } 
       return phylogram;
     };
       
@@ -381,8 +405,46 @@ vg.data.phylogram = function() {
   }
   
   var cartesianToPolarProjection = function(d) {
-    ///return [d.x, d.y]; // TODO: cleanup
-    var r = d.x, a = (d.y - 0) / 180 * Math.PI;
+    // radius is simply the x coordinate
+    var r = d.x;
+
+    ///var a = (d.y - 0) / 180 * Math.PI;
+    // a = angle? or something else?
+
+    // Angle is influenced by the specified size, arc and sweep.
+    // map Y coordinate to total spedified width
+    var totalArcDegrees;
+    // force both angles to positive numbers
+    var startAngle = (radialArc[0] + 360) % 360;
+    var endAngle = (radialArc[1] + 360) % 360;
+    // check for arcs that cross the zero line
+    var shiftAngle;
+    if (radialSweep === 'COUNTERCLOCKWISE') {
+        if (endAngle > startAngle) {
+            totalArcDegrees = endAngle - startAngle;
+        } else {
+            totalArcDegrees = (endAngle+360) - startAngle;
+        }
+        shiftAngle = startAngle;
+    } else { // assumes 'CLOCKWISE')
+        if (startAngle > endAngle) {
+            totalArcDegrees = startAngle - endAngle;
+        } else {
+            totalArcDegrees = (startAngle+360) - endAngle;
+        }
+        shiftAngle = endAngle;
+    }
+    var proportionalY = ((d.y / width) * totalArcDegrees);
+    // shift angle 90 degrees (from 0=down to 0=right)
+    ///proportionalY -= 90;
+
+    // OR rotate angle to the start or end angle?
+    ///proportionalY = (proportionalY + shiftAngle + 360) % 360;
+
+    var a = proportionalY / 180 * Math.PI;
+    // remap angle to the specified arc, in the sweep direction
+
+    // TODO: reckon angle based on height/width and sweep
     return [r * Math.cos(a), r * Math.sin(a)];
   }
 
@@ -511,7 +573,6 @@ vg.data.phylogram = function() {
   
   
   var buildCartesian = function(selector, nodes, options) {
-debugger;
     options = options || {}
     var w = options.width || d3.select(selector).style('width') || d3.select(selector).attr('width'),
         h = options.height || d3.select(selector).style('height') || d3.select(selector).attr('height'),
