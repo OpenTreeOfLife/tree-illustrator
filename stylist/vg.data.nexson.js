@@ -38,7 +38,6 @@ vg.data.nexson = function() {
 console.log("INCOMING data to nexson transform:");
 console.log(data);
 */
-
     fullNexson = data['data'];  // stash the complete NEXson!
     nexml = fullNexson.data.nexml;
     var rootNode = getRootNode();  // defined below

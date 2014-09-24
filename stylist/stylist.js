@@ -60,7 +60,7 @@ var availableStyles = [
             },
             {
               "name": "y", 
-              "type": "linear",
+              //"type": "linear",
               "range": "height", 
               "nice": false,
               "domain": [0, 1]  // {"data": "phyloTree", "field": "data.trees.length"}
@@ -72,6 +72,7 @@ var availableStyles = [
             {
               "type": "x", 
               "scale": "x",
+              "grid": true,
               "orient": "top",
               //"title": "Time",
               "ticks": 10,  // MISSING? what's up with that?
@@ -101,8 +102,9 @@ var availableStyles = [
                 }
               }
             },
-            {"type": "y", "scale": "y"}
-          ],
+            {"type": "y", "grid": true, "scale": "y"}
+
+                        ],
               //"from": {"data": "series"},
               "marks": [
 
@@ -398,8 +400,65 @@ function refreshViz() {
           });
         })
         .update();
+
+        // populate temporary vars for SVG-tree group, nodes, paths, root node
+        console.log( "There are "+ $('svg').length +" SVG elements on this page");
+        console.log( "There are "+ $('svg g').length +" SVG groups on this page");
+        tg  = $('svg g g g g g g:eq(0) g')
+        tn = tg.find('g.type-symbol');
+        te = tg.find('g.type-path');
+        rn = tn.find('path').eq(0);
+
+        // what are the visual extents of all nodes?
+        var top = Number.MAX_VALUE;
+        var right = Number.MIN_VALUE;
+        var bottom = Number.MIN_VALUE;
+        var left = Number.MAX_VALUE;
+        $.each(tn.children(), function(index, n) {
+            var $n = $(n);
+            var os = $n.offset();
+            top = Math.min(top, os.top);
+            right = Math.max(right, os.left + $n.width());
+            bottom = Math.max(bottom, os.top + $n.height());
+            left = Math.min(left, os.left);
+        });
+        console.log("BOUNDS for all nodes:");
+        console.log("  top="+ top);
+        console.log("  right="+ right);
+        console.log("  bottom="+ bottom);
+        console.log("  left="+ left);
+
+        // what are the visual extents of all edges?
+        $.each(te.children(), function(index, e) {
+            var $e = $(e);
+            var os = $e.offset();
+            top = Math.min(top, os.top);
+            right = Math.max(right, os.left + $e.width());
+            bottom = Math.max(bottom, os.top + $e.height());
+            left = Math.min(left, os.left);
+        });
+        console.log("BOUNDS for all edges:");
+        console.log("  top="+ top);
+        console.log("  right="+ right);
+        console.log("  bottom="+ bottom);
+        console.log("  left="+ left);
+
+        // bring stuff into view //TODO: cleanup
+        tn.attr('transform','translate(100,100)')
+        te.attr('transform','translate(100,100)')
+
+        // colorize nodes and edges to ROYGBV
+        colors = ['red','orange','yellow','green','blue','violet'];
+        $.each(tn.find('path'), function(i, n) {
+            $(n).css('stroke', colors[i]);
+        });
+        $.each(te.find('path'), function(i, e) {
+            $(e).css('stroke', colors[i]);
+        });
+        
     });
 }
+var tg, tn, te, rn; 
 
 var viewModel;
 $(document).ready(function() {
@@ -409,7 +468,7 @@ $(document).ready(function() {
         data: [
             {
                 'name':"phyloTree", 
-                'url': buildStudyFetchURL( 'pg_10' ), 
+                'url': buildStudyFetchURL( 'pg_2823' ), 
                 'format':{
                     "type":"treejson",   // necessary to ingest a JS object (vs. array)
                     //"property":"data.nexml.trees.0.tree.0.node"       // find node array
@@ -426,12 +485,12 @@ $(document).ready(function() {
                     { 
                         "type": "phylogram", 
                         // consolidate all other interesting phylogram choices here?
-                        "layout": "cartesian",
+                        "layout": "radial",
                         //"branchStyle": "diagonal",  // other options here?
                         "branchLengths": "",  // empty/false, or a property name to compare?
-                        "width": 800,   // TODO: FIX these dimensions (they rotate)
-                        "height": 600, 
-                        //"orientation": 0 
+                        "width": 100,   // TODO: FIX these dimensions (they rotate)
+                        "height": 100, 
+                        //"orientation": 0,
                         "tipsAlignment": 'right'
                     }
                 ]
