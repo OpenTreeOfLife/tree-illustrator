@@ -2,19 +2,71 @@
 
 var availableTrees = [
     {
-        name: "Jansen, 2007", 
-        url: "./pg_10.json"
-       /* TODO: just provide IDs here?
+        name: "Gazis, 2014", 
+        url: buildStudyFetchURL( 'pg_2818' )
+       /* TODO: provide more IDs here?
         studyID: 'pg_10',
         treeID: 'tree5',
         otusID: 'otus2'
         */ 
     },
     {
-        name: "Springer M., 2012", 
-        url: "./pg_2584.json"
+        name: "Jansen, 2007", 
+        url: buildStudyFetchURL( 'pg_10' ), // "./pg_10.json"
+    },
+    {
+        name: "Drew BT, 2014", 
+        url: buildStudyFetchURL( 'pg_2821' )
     }
+
 ];
+
+
+/* Conversion utilities for physical units */
+var cm_per_inch = 2.54;
+function inchesToCentimeters( inches ) {
+    return inches * cm_per_inch;
+}
+function centimetersToInches( cm ) {
+    return cm / cm_per_inch;
+}
+
+function pixelsToInches( px ) {
+    return px / ppi;
+}
+function inchesToPixels( inches ) {
+    return inches * ppi;
+}
+function pixelsToCentimeters( px ) {
+    return inchesToCentimeters(px / ppi);
+}
+function centimetersToPixels( cm ) {
+    return centimetersToInches( cm ) * ppi;
+}
+/*
+console.log("CONVERSION TESTS");
+console.log(inchesToCentimeters(1));
+console.log(inchesToCentimeters(0.1));
+console.log(inchesToCentimeters(8.5));
+console.log("--");
+console.log(centimetersToInches(2.54));
+console.log(centimetersToInches(1));
+console.log(centimetersToInches(100));
+console.log("--");
+console.log(inchesToPixels(1));
+console.log(pixelsToInches(90));
+console.log("--");
+console.log(centimetersToPixels(1));
+console.log(pixelsToCentimeters(90));
+console.log("--");
+*/
+
+
+
+var physicalWidth = 4.0;
+var physicalHeight = 5.0;
+var physicalUnits = 'INCHES';   // or 'CENTIMETERS'
+var ppi = 90;  // SVG default pixels per inch (can be modified to suit printing device)
 
 var availableStyles = [
     {
@@ -22,7 +74,7 @@ var availableStyles = [
         style:  { 
           "width": 800,
           "height": 800,
-          "padding": {"top": 50, "left": 30, "bottom": 60, "right": 10},
+          "padding": {"top": 50, "left": 50, "bottom": 60, "right": 10},
           //, "viewport": [350, 350],
           //"data": [{"name": "table"}],
           "marks": [
@@ -32,8 +84,8 @@ var availableStyles = [
                 "enter": {
                   "x": {"value": 0.5},
                   "y": {"value": 10}, // {"scale": "g", "field": "key"},
-                  "height": {"value": 300}, // {"group": "height"}, // {"scale": "g", "band": true},
-                  "width": {"value": 600}, // {"group": "width"},
+                  "height": {"value": (physicalUnits === 'INCHES' ? inchesToPixels(physicalHeight) : centimetersToPixels(physicalHeight)) },  // {"group": "height"}, // {"scale": "g", "band": true},
+                  "width": {"value": (physicalUnits === 'INCHES' ? inchesToPixels(physicalWidth) : centimetersToPixels(physicalWidth))},      // {"group": "width"},
                   "stroke": {"value": "#ccc"}
                 },
                 "update": {
@@ -59,41 +111,61 @@ var availableStyles = [
               "domain": [0, 1]  // {"data": "phyloTree", "field": "data.trees.length"}
             },
             {
-              "name": "y", 
-              //"type": "linear",
-              "range": "height", 
+              // height in cm
+              "name": "height-cm", 
+              "type": "linear",
               "nice": false,
-              "domain": [0, 1]  // {"data": "phyloTree", "field": "data.trees.length"}
+              "domain": [0, (physicalUnits === 'INCHES' ? inchesToCentimeters(physicalHeight) : physicalHeight) ],  // {"data": "phyloTree", "field": "data.trees.length"}
+              "range": "height",
+              "TEST": [physicalUnits, inchesToCentimeters(5.0), inchesToCentimeters(physicalHeight), physicalHeight, inchesToCentimeters]
+
               //"domain": {"data": "phyloTree", transform: {"type": "pluck", "field": "phyloNodes"}, "field": "y"}
+            }
+            ,
+            {
+              "name": "inches-across", 
+              "nice": true,
+              "domain": [0, (physicalUnits === 'INCHES' ? physicalWidth : centimetersToInches(physicalWidth)) ],  // {"data": "phyloTree", "field": "data.trees.length"}
+              "range": "width"
+              //"domain": {"data": "phyloTree", transform: [{"type": "pluck", "field": "phyloNodes"}], "field": "x" }
+              //"domain": [0, 1]  // {"data": "phyloTree", "field": "data.trees.length"}
+            }
+            ,
+            {
+              "name": "cm-down", 
+              "range": "height", 
+              "nice": true//,
+              //"domain": {"data": "phyloTree", transform: [{"type": "pluck", "field": "phyloNodes"}], "field": "x" }
+              //"domain": [0, 1]  // {"data": "phyloTree", "field": "data.trees.length"}
             }
           ],
 
           "axes": [
             {
               "type": "x", 
-              "scale": "x",
+              "scale": "inches-across",
               //"grid": true,
               "orient": "top",
-              //"title": "Time",
-              "ticks": 10,  // MISSING? what's up with that?
+              "title": "Inches",
+              //"ticks": 10,  // MISSING? what's up with that?
               "properties": {
                 "ticks": {
-                  "stroke": {"value": "steelblue"}
+                  //"stroke": {"value": "steelblue"}
                 },
                 "majorTicks": {
-                  "strokeWidth": {"value": 2}
+                  //"strokeWidth": {"value": 2}
                 },
                 "labels": {
-                  "fill": {"value": "steelblue"},
-                  "angle": {"value": 50},
-                  "fontSize": {"value": 14},
-                  "align": {"value": "left"},
-                  "baseline": {"value": "middle"}
+                  //"fill": {"value": "steelblue"},
+                  //"angle": {"value": 50},
+                  //"fontSize": {"value": 14},
+                  //"align": {"value": "left"},
+                  //"baseline": {"value": "middle"}
                   //"dx": {"value": 3}
                 },
                 "title": {
-                  "fill": {"value": "steelblue"},
-                  "fontSize": {"value": 16}
+                  //"fill": {"value": "steelblue"},
+                  "fontSize": {"value": 10}
                 },
                 "axis": {
                   "stroke": {"value": "#333"},
@@ -101,9 +173,17 @@ var availableStyles = [
                 }
               }
             },
-            {"type": "y", "grid": false, "scale": "y"}
+            {
+                "type": "y", 
+                "scale": "height-cm",
+                "grid": false,
+                "orient": "left",
+                "title": "cm"
+            }
+          ],
 
-                        ],
+
+
               //"from": {"data": "series"},
               "marks": [
 
@@ -193,6 +273,7 @@ var availableStyles = [
           ] /* end of Basic marks */
         } /* end of Basic style */
     }, /* end of Basic */
+
 /*
     {
         name: "Nature", 
@@ -262,8 +343,7 @@ var availableStyles = [
 */
     {
         name: "Phylogram test", 
-        style:  { 
-        }
+        style:  { }
     },
     {
         name: "Systematic Biology", 
@@ -468,16 +548,9 @@ $(document).ready(function() {
             {
                 'name':"phyloTree", 
                 //'url': buildStudyFetchURL( 'pg_2823' ),   // TINY TREE
-                'url': buildStudyFetchURL( 'pg_2818' ),     // BIG TREE
-                'format':{
-                    "type":"treejson",   // necessary to ingest a JS object (vs. array)
-                    //"property":"data.nexml.trees.0.tree.0.node"       // find node array
-                    "children": function(node) {
-                        // blah
-                        debugger;
-                    }
-                    // TODO: Specify nth trees collection, and nth tree inside!
-                },
+                //'url': buildStudyFetchURL( 'pg_2818' ),     // BIG TREE
+                'url': availableTrees[0].url,
+                'format':{ "type":"treejson" },  // necessary to ingest a JS object (vs. array)
                 'transform':[
                     // N.B. that this can include layout properties (size, etc)
                     {"type": "nexson", "treesCollectionPosition":0, "treePosition":0}       // , "size": [230, 90]}
@@ -530,17 +603,31 @@ function useChosenData() {
         return;
     }
     //viewModel.data.table = [treeInfo]; // TODO: switch from 'table' to 'tree'?
-    viewModel.data = {
+    viewModel.data = [{
         'name':'phyloTree', 
         'url':treeInfo.url, 
         'format':{"type":"treejson"},  // initial match for JSON object, vs. array
         'transform':[
             {"type": "nexson", "treesCollectionPosition":0, "treePosition":0}  // to generic tree?
+                    ,
+                    { 
+                        "type": "phylogram", 
+                        "layout": "radial",
+                        //"radialArc": [90, 0],
+                        //"radialSweep": 'CLOCKWISE',
+                        "radialSweep": 'COUNTERCLOCKWISE',
+                        //"branchStyle": "diagonal",  // other options here?
+                        "branchLengths": "",  // empty/false, or a property name to compare?
+                        "width": 100,   // TODO: FIX these dimensions (they rotate)
+                        "height": 100, 
+                        //"orientation": 0,
+                        "tipsAlignment": 'right'
+                    }
             // TODO: add all possible properties (common to by all formats?)
             // TODO: merge supporting data from other files? or do that downstream?
             // TODO: final tailoring to phylogram layout (one, or several?)
         ]
-    };
+    }];
     refreshViz();
 }
 
@@ -567,3 +654,4 @@ function testTransform(arg1, arg2, arg3) {
     console.log(arg3);
     return true;
 }
+
