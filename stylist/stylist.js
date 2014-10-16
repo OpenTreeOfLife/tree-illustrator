@@ -66,7 +66,7 @@ console.log("--");
 var physicalWidth = 4.0;
 var physicalHeight = 5.0;
 var physicalUnits = 'INCHES';   // or 'CENTIMETERS'
-var ppi = 90;  // SVG default pixels per inch (can be modified to suit printing device)
+var ppi;  // SVG default pixels per inch (can be modified to suit printing device)
 
 var availableStyles = [
     {
@@ -116,9 +116,7 @@ var availableStyles = [
               "type": "linear",
               "nice": false,
               "domain": [0, (physicalUnits === 'INCHES' ? inchesToCentimeters(physicalHeight) : physicalHeight) ],  // {"data": "phyloTree", "field": "data.trees.length"}
-              "range": "height",
-              "TEST": [physicalUnits, inchesToCentimeters(5.0), inchesToCentimeters(physicalHeight), physicalHeight, inchesToCentimeters]
-
+              "range": "height"
               //"domain": {"data": "phyloTree", transform: {"type": "pluck", "field": "phyloNodes"}, "field": "y"}
             }
             ,
@@ -541,6 +539,36 @@ var tg, tn, te, rn;
 
 var viewModel;
 $(document).ready(function() {
+    // correct the active ppi (pixels / inch) in this browser
+    ppi = $('#ppi-test').width();
+    $('#ppi-indicator').text(ppi);
+
+    // update some of our available styles
+    var mainGroupProperties = availableStyles[0].style.marks[0].properties.enter;
+    if (mainGroupProperties) {
+        mainGroupProperties.height.value = physicalUnits === 'INCHES' ? 
+            inchesToPixels(physicalHeight) : 
+            centimetersToPixels(physicalHeight);
+        mainGroupProperties.width.value = physicalUnits === 'INCHES' ? 
+            inchesToPixels(physicalWidth) : 
+            centimetersToPixels(physicalWidth);
+    }
+    var cmHeightScale = availableStyles[0].style.marks[0].scales[1];
+    if (cmHeightScale) {
+        cmHeightScale.domain = [
+            0, 
+            (physicalUnits === 'INCHES' ? inchesToCentimeters(physicalHeight) : physicalHeight) 
+        ];
+    }
+    var inWidthScale = availableStyles[0].style.marks[0].scales[2];
+    if (inWidthScale) {
+        inWidthScale.domain = [
+            0, 
+            (physicalUnits === 'INCHES' ? physicalWidth : centimetersToInches(physicalWidth))
+        ];
+    }
+
+
     // create the viewModel (a full vega spec?) and build a matching UI
     viewModel = {
         style: availableStyles[0].style,  // see above

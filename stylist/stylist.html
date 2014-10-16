@@ -15,7 +15,10 @@
     <link rel="stylesheet" type="text/css" href="stylist.css"/>
   </head>
   <body>
-    <p><strong>Cascading stylist</strong></p>
+    <div style="margin-bottom: 0.5em;">
+        <h2 style="margin: 0 0 4px;">Cascading stylist</h2>
+        <em>Pixels/inch in this browser: <strong id="ppi-indicator">-</strong></em>
+    </div>
     <div id="editor">
         <form action="#" onsubmit="return false;">
             <div class="button-bar" style="margin-bottom: 1em;">
@@ -87,6 +90,12 @@
                 <button style="float: right;">Save</button>
             </div>
     </div>
+    
+    <!-- add an SVG element sized using physical units, to determine the active ppi -->
+    <svg id="ppi-test" width="1in" height="1in" 
+         style="position: absolute; top: -2in; background-color: orange;">
+    </svg>
+
     <div id="view" class="view"></div>
     <button onclick="refreshViz(); return false;">Refresh</button>
 
