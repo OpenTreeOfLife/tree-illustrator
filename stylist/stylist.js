@@ -459,7 +459,7 @@ function refreshViz() {
     // build the "full" specification, adding study data to preset style
     fullSpec = $.extend(true, {}, viewModel.style, {'data': viewModel.data});
     vg.parse.spec(fullSpec, function(chart) {
-      var view = chart({el:"#view", renderer:"svg"})  // , data:viewModel.data})  <== MUST BE INLINE, NOT URL!
+      var view = chart({el:"#viz-vega-fo", renderer:"svg"})  // , data:viewModel.data})  <== MUST BE INLINE, NOT URL!
         .on("mouseover", function(event, item) {
           // invoke hover properties on cousin one hop forward in scenegraph
           view.update({
@@ -483,7 +483,6 @@ function refreshViz() {
         tn = tg.find('g.type-symbol');
         te = tg.find('g.type-path');
         rn = tn.find('path').eq(0);
-
 /*
         // what are the visual extents of all nodes?
         var top = Number.MAX_VALUE;
@@ -519,7 +518,6 @@ function refreshViz() {
         console.log("  bottom="+ bottom);
         console.log("  left="+ left);
 */
-
         // colorize nodes and edges to ROYGBV
         colors = ['red','orange','#cc0','green','blue','violet'];
         $.each(tn.find('path'), function(i, n) {
@@ -532,7 +530,9 @@ function refreshViz() {
         // bring stuff into view //TODO: cleanup
         tn.attr('transform','translate(100,100)')
         te.attr('transform','translate(100,100)')
-        
+
+        // ugly hack to remove the intervening FOREIGNOBJECT and DIV between our outer SVG and vega's SVG
+        $('#viz-vega-fo').replaceWith($('div.vega').contents());
     });
 }
 var tg, tn, te, rn; 
