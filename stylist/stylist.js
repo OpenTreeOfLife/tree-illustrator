@@ -67,6 +67,8 @@ var physicalWidth = 4.0;
 var physicalHeight = 5.0;
 var physicalUnits = 'INCHES';   // or 'CENTIMETERS'
 var ppi;  // SVG default pixels per inch (can be modified to suit printing device)
+var viewportPaddingTop = 50;
+var viewportPaddingLeft = 50;
 
 var availableStyles = [
     {
@@ -74,7 +76,7 @@ var availableStyles = [
         style:  { 
           "width": 800,
           "height": 800,
-          "padding": {"top": 50, "left": 50, "bottom": 60, "right": 10},
+          "padding": {"top": viewportPaddingTop, "left": viewportPaddingLeft, "bottom": 60, "right": 10},
           //, "viewport": [350, 350],
           //"data": [{"name": "table"}],
           "marks": [
@@ -82,8 +84,8 @@ var availableStyles = [
               "type": "group",
               "properties": {
                 "enter": {
-                  "x": {"value": 0.5},
-                  "y": {"value": 10}, // {"scale": "g", "field": "key"},
+                  "x": {"value": 0},
+                  "y": {"value": 0}, // {"scale": "g", "field": "key"},
                   "height": {"value": (physicalUnits === 'INCHES' ? inchesToPixels(physicalHeight) : centimetersToPixels(physicalHeight)) },  // {"group": "height"}, // {"scale": "g", "band": true},
                   "width": {"value": (physicalUnits === 'INCHES' ? inchesToPixels(physicalWidth) : centimetersToPixels(physicalWidth))},      // {"group": "width"},
                   "stroke": {"value": "#ccc"}
@@ -116,7 +118,7 @@ var availableStyles = [
               "type": "linear",
               "nice": false,
               "domain": [0, (physicalUnits === 'INCHES' ? inchesToCentimeters(physicalHeight) : physicalHeight) ],  // {"data": "phyloTree", "field": "data.trees.length"}
-              "range": "height"
+              "range": [0, (physicalUnits === 'INCHES' ? inchesToPixels(physicalHeight) : centimetersToPixels(physicalHeight))] //"height"
               //"domain": {"data": "phyloTree", transform: {"type": "pluck", "field": "phyloNodes"}, "field": "y"}
             }
             ,
@@ -560,6 +562,10 @@ $(document).ready(function() {
             0, 
             (physicalUnits === 'INCHES' ? inchesToCentimeters(physicalHeight) : physicalHeight) 
         ];
+        cmHeightScale.range = [
+            0, 
+            (physicalUnits === 'INCHES' ? inchesToPixels(physicalHeight) : centimetersToPixels(physicalHeight)) 
+        ];
     }
     var inWidthScale = availableStyles[0].style.marks[0].scales[2];
     if (inWidthScale) {
@@ -709,32 +715,63 @@ function initTreeIllustratorWindow() {
     $scrollingViewport.unbind('scroll').on('scroll', function() {
     //TODO: delegate these for one-time call!
     //$outerFrame.on('scroll', 'div.vega', function() {
-        console.log("SCROLLING, left="+$scrollingViewport.scrollLeft()+", top="+$scrollingViewport.scrollTop());
         $topRuler.scrollLeft($scrollingViewport.scrollLeft());
         $leftRuler.scrollTop($scrollingViewport.scrollTop());
     });
     
     // sync resizing of rulers to viewport
     // (no event for this except on the window, it's an on-demand thing)
+    var mainGroupProperties = availableStyles[0].style.marks[0].properties.enter;
+
     var topRulerScale = d3.scale.linear()
-        .domain([0,100])
-        .range([0,300]);
+        .domain([
+            -(pixelsToInches(viewportPaddingLeft)),
+            (physicalUnits === 'INCHES' ? 
+                physicalWidth : 
+                centimetersToInches(physicalWidth)
+            )
+        ])
+        .range([
+            0,
+            viewportPaddingLeft + mainGroupProperties.width.value
+        ]);
     var topRulerAxis = d3.svg.axis()
         .scale(topRulerScale)
         .orient('top');
     var topRuler = d3.select("#fixed-ruler-top svg")
         .attr("width", $scrollingViewport.children()[0].scrollWidth+'px')
         .attr("height", '20px')
+    var xaxisg = topRuler
         .append("g")
         .attr("class",'outer-axis')
         .attr("transform", "translate(0, 19)")
         .call(topRulerAxis);
+    // hideous addition of minor ticks, see
+    // http://stackoverflow.com/questions/19242674/major-and-minor-ticks-with-v3-of-d3
+    xaxisg.selectAll("line").data(topRulerScale.ticks(64), function(d) { return d; })
+        .enter()
+        .append("line")
+        .attr("class", "minor")
+        .attr("y1", 0)
+        .attr("y2", -2)
+        .attr("x1", topRulerScale)
+        .attr("x2", topRulerScale);
 
     var leftRulerScale = d3.scale.linear()
-        .domain([0,100])
-        .range([0,300]);
+        .domain([
+            -(pixelsToCentimeters(viewportPaddingTop)),
+            (physicalUnits === 'INCHES' ? 
+                inchesToCentimeters(physicalHeight) : 
+                physicalHeight
+            )
+        ])
+        .range([
+            0,
+            viewportPaddingTop + mainGroupProperties.height.value
+        ]);
     var leftRulerAxis = d3.svg.axis()
         .scale(leftRulerScale)
+        .ticks(20)
         .orient('left');
     var leftRuler = d3.select("#fixed-ruler-left svg")
         .attr("width", '20px')
