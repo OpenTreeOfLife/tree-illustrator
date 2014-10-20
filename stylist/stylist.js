@@ -459,7 +459,7 @@ function refreshViz() {
     // build the "full" specification, adding study data to preset style
     fullSpec = $.extend(true, {}, viewModel.style, {'data': viewModel.data});
     vg.parse.spec(fullSpec, function(chart) {
-      var view = chart({el:"#viz-vega-fo", renderer:"svg"})  // , data:viewModel.data})  <== MUST BE INLINE, NOT URL!
+      var view = chart({el:"#viz-outer-frame", renderer:"svg"})  // , data:viewModel.data})  <== MUST BE INLINE, NOT URL!
         .on("mouseover", function(event, item) {
           // invoke hover properties on cousin one hop forward in scenegraph
           view.update({
@@ -532,7 +532,8 @@ function refreshViz() {
         te.attr('transform','translate(100,100)')
 
         // ugly hack to remove the intervening FOREIGNOBJECT and DIV between our outer SVG and vega's SVG
-        $('#viz-vega-fo').replaceWith($('div.vega').contents());
+        ///$('#viz-vega-fo').replaceWith($('div.vega').contents());
+        initTreeIllustratorWindow();
     });
 }
 var tg, tn, te, rn; 
@@ -610,6 +611,7 @@ $(document).ready(function() {
     // TODO: Add JSON support for older IE?
     // TODO: Add bootstrap for style+behavior?
 
+    //initTreeIllustratorWindow();
     refreshViz();
 });
 
@@ -683,3 +685,64 @@ function testTransform(arg1, arg2, arg3) {
     return true;
 }
 
+function toggleFixedRulers(toggle) {
+    var rulersAreHidden = $('#viz-outer-frame').hasClass('hide-rulers');
+    var $toggleBtn = $(toggle);
+    if (rulersAreHidden) {
+        // show them now
+        $('#viz-outer-frame').removeClass('hide-rulers');
+        $toggleBtn.text('Hide rulers');
+    } else {
+        // hide them now
+        $('#viz-outer-frame').addClass('hide-rulers');
+        $toggleBtn.text('Show rulers');
+    }
+}
+
+function initTreeIllustratorWindow() {
+    var $outerFrame = $("#viz-outer-frame");
+    var $scrollingViewport = $outerFrame.find('div.vega');
+    var $topRuler = $outerFrame.find('#fixed-ruler-top');
+    var $leftRuler = $outerFrame.find('#fixed-ruler-left');
+    
+    // sync scrolling of rulers to viewport
+    $scrollingViewport.unbind('scroll').on('scroll', function() {
+    //TODO: delegate these for one-time call!
+    //$outerFrame.on('scroll', 'div.vega', function() {
+        console.log("SCROLLING, left="+$scrollingViewport.scrollLeft()+", top="+$scrollingViewport.scrollTop());
+        $topRuler.scrollLeft($scrollingViewport.scrollLeft());
+        $leftRuler.scrollTop($scrollingViewport.scrollTop());
+    });
+    
+    // sync resizing of rulers to viewport
+    // (no event for this except on the window, it's an on-demand thing)
+    var topRulerScale = d3.scale.linear()
+        .domain([0,100])
+        .range([0,300]);
+    var topRulerAxis = d3.svg.axis()
+        .scale(topRulerScale)
+        .orient('top');
+    var topRuler = d3.select("#fixed-ruler-top svg")
+        .attr("width", $scrollingViewport.children()[0].scrollWidth+'px')
+        .attr("height", '20px')
+        .append("g")
+        .attr("class",'outer-axis')
+        .attr("transform", "translate(0, 19)")
+        .call(topRulerAxis);
+
+    var leftRulerScale = d3.scale.linear()
+        .domain([0,100])
+        .range([0,300]);
+    var leftRulerAxis = d3.svg.axis()
+        .scale(leftRulerScale)
+        .orient('left');
+    var leftRuler = d3.select("#fixed-ruler-left svg")
+        .attr("width", '20px')
+        .attr("height", $scrollingViewport.children()[0].scrollHeight+'px')
+        .append("g")
+        .attr("class",'outer-axis')
+        .attr("transform", "translate(19, 0)")
+        .call(leftRulerAxis);
+    
+    // TODO: sync scaling (axes) of rulers to viewport
+}

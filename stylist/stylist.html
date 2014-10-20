@@ -96,17 +96,15 @@
          style="position: absolute; top: -2in; background-color: orange;">
     </svg>
 
-    <div id="viz-container">
-        <div id="fixed-ruler-units" class="viz-fixed-ruler" style="float: left; padding: 4px; text-align: center; font-size: 12px; line-height: 12px; width: 12px; height: 12px;">in</div>
-        <svg id="fixed-ruler-top" class="viz-fixed-ruler" style="height: 20px; float: left; background-color: #f5ffff;"></svg>
-        <svg id="fixed-ruler-left" class="viz-fixed-ruler" style="width: 20px; float: left; clear: left; background-color: #fff5ff;"></svg>
-        <svg id="viz-workarea" style="float: left; background-color: #fffff5;">
-            <!-- this is a kludge that should allow vega to append a DIV here -->
-            <foreignobject id="viz-vega-fo" x="10" y="10" width="100" height="150">
-            </foreignobject>
-        </svg>
+    <div id="viz-outer-frame">
+        <div id="fixed-ruler-units" class="viz-fixed-ruler">in</div>
+        <div id="fixed-ruler-top" class="viz-fixed-ruler"><svg></svg></div>
+        <div id="fixed-ruler-left" class="viz-fixed-ruler"><svg></svg></div>
     </div>
-    <button onclick="refreshViz(); return false;">Refresh</button>
+    <div style="float:left; margin-top: 3em;">
+        <button onclick="toggleFixedRulers(this); return false;">Hide rulers</button>
+        <button onclick="refreshViz(); return false;">Refresh</button>
+    </div>
 
     <hr style="clear: left;"/>
     <p>TODO here:</p>

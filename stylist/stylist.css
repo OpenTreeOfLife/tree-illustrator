@@ -1,11 +1,8 @@
 #editor {
     float: left;
     width: 45%;
-    padding-right: 5%;
-}
-#editor {
     border-right: 1px solid #ddd;
-    margin-right: -1px;
+    margin-right: 5%;
 }
 .button-bar {
     background-color: #ddd;
@@ -13,14 +10,31 @@
     border-radius: 4px;
 }
 
-#viz-container {
+#viz-outer-frame {
     /* size and position will likely vary in different host applications */
     float: left;
     width: 50%;
     height: 400px;
     /* max-height: 600px;*/
+    margin-left: -4%;
+    padding-right: 20px;
+}
+#viz-outer-frame div.vega {
+    width: 100%;
     border: 1px solid #ddd;
     margin: -1px;
+    margin-right: -21px;
+    float: left;
+    height: 100%;
+    overflow: scroll;
+}
+#viz-outer-frame.hide-rulers div.vega {
+    margin-right: -1px;
+}
+#viz-outer-frame.hide-rulers #fixed-ruler-units,
+#viz-outer-frame.hide-rulers #fixed-ruler-top,
+#viz-outer-frame.hide-rulers #fixed-ruler-left {
+    display: none;
 }
 
 #fixed-ruler-units {
@@ -39,6 +53,7 @@
     float: left; 
     background-color: #f5ffff;
     margin-right: -20px;
+    overflow: hidden;
 }
 #fixed-ruler-left {
     height: 100%;
@@ -47,7 +62,21 @@
     clear: left; 
     background-color: #fff5ff;
     margin-bottom: -20px;
+    overflow: hidden;
 }
+
+/* styling for the SVG elements in the outer rulers */
+g.outer-axis path,
+g.outer-axis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+g.outer-axis text {
+    font-family: sans-serif;
+    font-size: 11px;
+}
+
 #viz-workarea {
     float: left; 
     background-color: #fffff5;
