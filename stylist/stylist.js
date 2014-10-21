@@ -544,6 +544,8 @@ var viewModel;
 $(document).ready(function() {
     // correct the active ppi (pixels / inch) in this browser
     ppi = $('#ppi-test').width();
+    // NOTE that this is still unlikely to match the physical size of any particular monitor!
+    // If that's important, we might want to let the user tweak this value.
     $('#ppi-indicator').text(ppi);
 
     // update some of our available styles
@@ -737,6 +739,11 @@ function initTreeIllustratorWindow() {
         ]);
     var topRulerAxis = d3.svg.axis()
         .scale(topRulerScale)
+        .tickValues(d3.range(
+            roundToNearest(1.0, topRulerScale.domain()[0]), 
+            roundToNearest(1.0, topRulerScale.domain()[1] + 1), 
+            1))
+        .tickFormat(d3.format('d'))  // whole numbers
         .orient('top');
     var topRuler = d3.select("#fixed-ruler-top svg")
         .attr("width", $scrollingViewport.children()[0].scrollWidth+'px')
@@ -746,16 +753,36 @@ function initTreeIllustratorWindow() {
         .attr("class",'outer-axis')
         .attr("transform", "translate(0, 19)")
         .call(topRulerAxis);
-    // hideous addition of minor ticks, see
-    // http://stackoverflow.com/questions/19242674/major-and-minor-ticks-with-v3-of-d3
-    xaxisg.selectAll("line").data(topRulerScale.ticks(64), function(d) { return d; })
-        .enter()
-        .append("line")
-        .attr("class", "minor")
-        .attr("y1", 0)
-        .attr("y2", -2)
-        .attr("x1", topRulerScale)
-        .attr("x2", topRulerScale);
+    // trying subticks, using additional axes on the same scale
+    var topRulerSubticksAxis = d3.svg.axis()
+        .scale(topRulerScale)
+        .tickValues(d3.range(
+            roundToNearest(0.5, topRulerScale.domain()[0]), 
+            roundToNearest(0.5, topRulerScale.domain()[1]), 
+            0.5))
+        .tickFormat('') // unlabeled
+        .tickSize(6)
+        .orient('top');
+    var xaxisg_sub = topRuler
+        .append("g")
+        .attr("class",'outer-axis')
+        .attr("transform", "translate(0, 19)")
+        .call(topRulerSubticksAxis);
+    var topRulerSubsubticksAxis = d3.svg.axis()
+        .scale(topRulerScale)
+        .tickValues(d3.range(
+            roundToNearest(0.25, topRulerScale.domain()[0]), 
+            roundToNearest(0.25, topRulerScale.domain()[1]), 
+            0.25))
+        .tickFormat('') // unlabeled
+        .tickSize(3)
+        .orient('top');
+    var xaxisg_subsub = topRuler
+        .append("g")
+        .attr("class",'outer-axis subsubticks')
+        .attr("transform", "translate(0, 19)")
+        .call(topRulerSubsubticksAxis);
+
 
     var leftRulerScale = d3.scale.linear()
         .domain([
@@ -782,4 +809,11 @@ function initTreeIllustratorWindow() {
         .call(leftRulerAxis);
     
     // TODO: sync scaling (axes) of rulers to viewport
+}
+
+function roundToNearest( interval, input ) {
+    // round to something more interesting than "any integer"
+    // EXAMPLE: roundToNearest( 0.125, -0.52 ) ==>  -0.5
+    // EXAMPLE: roundToNearest( 7, 46 ) ==>  49
+    return Math.round(input / interval) * interval;
 }
