@@ -43,6 +43,21 @@ function pixelsToCentimeters( px ) {
 function centimetersToPixels( cm ) {
     return centimetersToInches( cm ) * ppi;
 }
+
+function pixelsToPhysicalUnits( px ) {
+    if (physicalUnits === 'INCHES') {
+        return pixelsToInches( px );
+    } else {
+        return pixelsToCentimeters( px );
+    }
+}
+function physicalUnitsToPixels( units ) {
+    if (physicalUnits === 'INCHES') {
+        return inchesToPixels( units );
+    } else {
+        return centimetersToPixels( units );
+    }
+}
 /*
 console.log("CONVERSION TESTS");
 console.log(inchesToCentimeters(1));
@@ -61,14 +76,16 @@ console.log(pixelsToCentimeters(90));
 console.log("--");
 */
 
+/* ruler metrics (adjust for legibility) */
+var rulerWidth = 25;  // px
 
-
-var physicalWidth = 4.0;
+var physicalUnits = 'INCHES'; // 'CENTIMETERS' | 'INCHES'
+var physicalWidth = 4.0;      // in the chosen units
 var physicalHeight = 5.0;
-var physicalUnits = 'INCHES';   // or 'CENTIMETERS'
+
 var ppi;  // SVG default pixels per inch (can be modified to suit printing device)
-var viewportPaddingTop = 50;
-var viewportPaddingLeft = 50;
+var viewportPaddingTop = 50;   // px
+var viewportPaddingLeft = 50;  // px
 
 var availableStyles = [
     {
@@ -86,8 +103,8 @@ var availableStyles = [
                 "enter": {
                   "x": {"value": 0},
                   "y": {"value": 0}, // {"scale": "g", "field": "key"},
-                  "height": {"value": (physicalUnits === 'INCHES' ? inchesToPixels(physicalHeight) : centimetersToPixels(physicalHeight)) },  // {"group": "height"}, // {"scale": "g", "band": true},
-                  "width": {"value": (physicalUnits === 'INCHES' ? inchesToPixels(physicalWidth) : centimetersToPixels(physicalWidth))},      // {"group": "width"},
+                  "height": {"value": physicalUnitsToPixels(physicalHeight) },  // {"group": "height"}, // {"scale": "g", "band": true},
+                  "width": {"value": physicalUnitsToPixels(physicalWidth) },      // {"group": "width"},
                   "stroke": {"value": "#ccc"}
                 },
                 "update": {
@@ -118,7 +135,7 @@ var availableStyles = [
               "type": "linear",
               "nice": false,
               "domain": [0, (physicalUnits === 'INCHES' ? inchesToCentimeters(physicalHeight) : physicalHeight) ],  // {"data": "phyloTree", "field": "data.trees.length"}
-              "range": [0, (physicalUnits === 'INCHES' ? inchesToPixels(physicalHeight) : centimetersToPixels(physicalHeight))] //"height"
+              "range": [0, physicalUnitsToPixels(physicalHeight)] //"height"
               //"domain": {"data": "phyloTree", transform: {"type": "pluck", "field": "phyloNodes"}, "field": "y"}
             }
             ,
@@ -551,12 +568,8 @@ $(document).ready(function() {
     // update some of our available styles
     var mainGroupProperties = availableStyles[0].style.marks[0].properties.enter;
     if (mainGroupProperties) {
-        mainGroupProperties.height.value = physicalUnits === 'INCHES' ? 
-            inchesToPixels(physicalHeight) : 
-            centimetersToPixels(physicalHeight);
-        mainGroupProperties.width.value = physicalUnits === 'INCHES' ? 
-            inchesToPixels(physicalWidth) : 
-            centimetersToPixels(physicalWidth);
+        mainGroupProperties.height.value = physicalUnitsToPixels(physicalHeight);
+        mainGroupProperties.width.value = physicalUnitsToPixels(physicalWidth);
     }
     var cmHeightScale = availableStyles[0].style.marks[0].scales[1];
     if (cmHeightScale) {
@@ -566,7 +579,7 @@ $(document).ready(function() {
         ];
         cmHeightScale.range = [
             0, 
-            (physicalUnits === 'INCHES' ? inchesToPixels(physicalHeight) : centimetersToPixels(physicalHeight)) 
+            physicalUnitsToPixels(physicalHeight) 
         ];
     }
     var inWidthScale = availableStyles[0].style.marks[0].scales[2];
@@ -619,7 +632,6 @@ $(document).ready(function() {
     // TODO: Add JSON support for older IE?
     // TODO: Add bootstrap for style+behavior?
 
-    //initTreeIllustratorWindow();
     refreshViz();
 });
 
@@ -707,11 +719,50 @@ function toggleFixedRulers(toggle) {
     }
 }
 
+function togglePhysicalUnits(toggle) {
+    var $toggleBtn = $(toggle);
+    if (physicalUnits === 'INCHES') {
+        physicalUnits = 'CENTIMETERS';
+        physicalWidth = inchesToCentimeters(physicalWidth);
+        physicalHeight = inchesToCentimeters(physicalHeight);
+        $toggleBtn.text('Work in inches');
+    } else {
+        physicalUnits = 'INCHES';
+        physicalWidth = centimetersToInches(physicalWidth);
+        physicalHeight = centimetersToInches(physicalHeight);
+        $toggleBtn.text('Work in cm');
+    }
+    refreshViz();
+}
+
 function initTreeIllustratorWindow() {
     var $outerFrame = $("#viz-outer-frame");
     var $scrollingViewport = $outerFrame.find('div.vega');
+    var $rulerUnitsDisplay = $outerFrame.find('#fixed-ruler-units');
     var $topRuler = $outerFrame.find('#fixed-ruler-top');
     var $leftRuler = $outerFrame.find('#fixed-ruler-left');
+    var $innerFrame = $outerFrame.find('div.vega');
+
+    $rulerUnitsDisplay.css({
+        'width': rulerWidth +"px",
+        'height': rulerWidth +"px",
+        'line-height': rulerWidth +"px",
+        'font-size': Math.floor(rulerWidth / 2.5) +"px"
+    });
+    $topRuler.css({
+        'height': rulerWidth+"px",
+        'margin-right': -rulerWidth+"px"
+    });
+    $leftRuler.css({
+        'width': rulerWidth+"px",
+        'margin-bottom': -rulerWidth+"px",
+    });
+    $innerFrame.css('margin-right', -(rulerWidth+1)+"px");
+
+    // reset units display; clear old rulers
+    $rulerUnitsDisplay.text( physicalUnits === 'INCHES' ? "in" : "cm" );
+    $topRuler.empty();
+    $leftRuler.empty();
     
     // sync scrolling of rulers to viewport
     $scrollingViewport.unbind('scroll').on('scroll', function() {
@@ -727,16 +778,17 @@ function initTreeIllustratorWindow() {
 
     var topRulerScale = d3.scale.linear()
         .domain([
-            -(pixelsToInches(viewportPaddingLeft)),
-            (physicalUnits === 'INCHES' ? 
-                physicalWidth : 
-                centimetersToInches(physicalWidth)
-            )
+            -(pixelsToPhysicalUnits(viewportPaddingLeft)),
+            physicalWidth
         ])
         .range([
             0,
             viewportPaddingLeft + mainGroupProperties.width.value
         ]);
+console.log("topRulerScale.domain():");
+console.log(topRulerScale.domain());
+console.log("topRulerScale.range():");
+console.log(topRulerScale.range());
     var topRulerAxis = d3.svg.axis()
         .scale(topRulerScale)
         .tickValues(d3.range(
@@ -745,43 +797,46 @@ function initTreeIllustratorWindow() {
             1))
         .tickFormat(d3.format('d'))  // whole numbers
         .orient('top');
-    var topRuler = d3.select("#fixed-ruler-top svg")
+    var topRuler = d3.select("#fixed-ruler-top")
+        .append('svg')
         .attr("width", $scrollingViewport.children()[0].scrollWidth+'px')
-        .attr("height", '20px')
+        .attr("height", rulerWidth+"px")
     var xaxisg = topRuler
         .append("g")
         .attr("class",'outer-axis')
-        .attr("transform", "translate(0, 19)")
+        .attr("transform", "translate(0, "+ (rulerWidth - 1) +")")
         .call(topRulerAxis);
-    // trying subticks, using additional axes on the same scale
-    var topRulerSubticksAxis = d3.svg.axis()
-        .scale(topRulerScale)
-        .tickValues(d3.range(
-            roundToNearest(0.5, topRulerScale.domain()[0]), 
-            roundToNearest(0.5, topRulerScale.domain()[1]), 
-            0.5))
-        .tickFormat('') // unlabeled
-        .tickSize(6)
-        .orient('top');
-    var xaxisg_sub = topRuler
-        .append("g")
-        .attr("class",'outer-axis')
-        .attr("transform", "translate(0, 19)")
-        .call(topRulerSubticksAxis);
-    var topRulerSubsubticksAxis = d3.svg.axis()
-        .scale(topRulerScale)
-        .tickValues(d3.range(
-            roundToNearest(0.25, topRulerScale.domain()[0]), 
-            roundToNearest(0.25, topRulerScale.domain()[1]), 
-            0.25))
-        .tickFormat('') // unlabeled
-        .tickSize(3)
-        .orient('top');
-    var xaxisg_subsub = topRuler
-        .append("g")
-        .attr("class",'outer-axis subsubticks')
-        .attr("transform", "translate(0, 19)")
-        .call(topRulerSubsubticksAxis);
+    if (physicalUnits === 'INCHES') {
+        // trying subticks, using additional axes on the same scale
+        var topRulerSubticksAxis = d3.svg.axis()
+            .scale(topRulerScale)
+            .tickValues(d3.range(
+                roundToNearest(0.5, topRulerScale.domain()[0]), 
+                roundToNearest(0.5, topRulerScale.domain()[1]), 
+                0.5))
+            .tickFormat('') // unlabeled
+            .tickSize(6)
+            .orient('top');
+        var xaxisg_sub = topRuler
+            .append("g")
+            .attr("class",'outer-axis')
+            .attr("transform", "translate(0, "+ (rulerWidth - 1) +")")
+            .call(topRulerSubticksAxis);
+        var topRulerSubsubticksAxis = d3.svg.axis()
+            .scale(topRulerScale)
+            .tickValues(d3.range(
+                roundToNearest(0.25, topRulerScale.domain()[0]), 
+                roundToNearest(0.25, topRulerScale.domain()[1]), 
+                0.25))
+            .tickFormat('') // unlabeled
+            .tickSize(3)
+            .orient('top');
+        var xaxisg_subsub = topRuler
+            .append("g")
+            .attr("class",'outer-axis subsubticks')
+            .attr("transform", "translate(0, "+ (rulerWidth - 1) +")")
+            .call(topRulerSubsubticksAxis);
+    }
 
 
     var leftRulerScale = d3.scale.linear()
@@ -800,12 +855,13 @@ function initTreeIllustratorWindow() {
         .scale(leftRulerScale)
         .ticks(20)
         .orient('left');
-    var leftRuler = d3.select("#fixed-ruler-left svg")
-        .attr("width", '20px')
+    var leftRuler = d3.select("#fixed-ruler-left")
+        .append('svg')
+        .attr("width", rulerWidth+"px")
         .attr("height", $scrollingViewport.children()[0].scrollHeight+'px')
         .append("g")
         .attr("class",'outer-axis')
-        .attr("transform", "translate(19, 0)")
+        .attr("transform", "translate("+ (rulerWidth - 1) +", 0)")
         .call(leftRulerAxis);
     
     // TODO: sync scaling (axes) of rulers to viewport

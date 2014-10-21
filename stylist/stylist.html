@@ -18,6 +18,10 @@
     <div style="margin-bottom: 0.5em;">
         <h2 style="margin: 0 0 4px;">Cascading stylist</h2>
         <em>Pixels/inch in this browser: <strong id="ppi-indicator">-</strong></em>
+        <div style="float: right;">
+            <button onclick="toggleFixedRulers(this); return false;">Hide rulers</button>
+            <button onclick="togglePhysicalUnits(this); return false;">Work in cm</button>
+        </div>
     </div>
     <div id="editor">
         <form action="#" onsubmit="return false;">
@@ -97,12 +101,11 @@
     </svg>
 
     <div id="viz-outer-frame">
-        <div id="fixed-ruler-units" class="viz-fixed-ruler">in</div>
+        <div id="fixed-ruler-units" class="viz-fixed-ruler">&nbsp;</div>
         <div id="fixed-ruler-top" class="viz-fixed-ruler"><svg></svg></div>
         <div id="fixed-ruler-left" class="viz-fixed-ruler"><svg></svg></div>
     </div>
     <div style="float:left; margin-top: 3em;">
-        <button onclick="toggleFixedRulers(this); return false;">Hide rulers</button>
         <button onclick="refreshViz(); return false;">Refresh</button>
     </div>
 
