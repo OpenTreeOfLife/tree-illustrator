@@ -85,16 +85,27 @@ var physicalHeight = 5.0;
 
 var default_ppi;  // SVG default pixels per inch (can be modified to suit printing device)
 var ppi;  // current pixels per inch (adjusted via zoom level)
-var viewportPaddingTop = 50;   // px
-var viewportPaddingLeft = 50;  // px
+
+// padding around the designated illustration area, in pixels (default zoom)
+var viewportPadding = {
+    'top': 50,
+    'right': 50,
+    'bottom': 50,
+    'left': 50
+}
 
 var availableStyles = [
     {
         name: "Basic", 
         style:  { 
           "width": 800,
-          "height": 800,
-          "padding": {"top": viewportPaddingTop, "left": viewportPaddingLeft, "bottom": 60, "right": 10},
+          "height": 900,
+          "padding": {
+            "top": viewportPadding.top, 
+            "left": viewportPadding.left, 
+            "bottom": viewportPadding.bottom, 
+            "right": viewportPadding.right
+          },
           //, "viewport": [350, 350],
           //"data": [{"name": "table"}],
           "marks": [
@@ -480,6 +491,7 @@ function refreshViz() {
     fullSpec = $.extend(true, {}, viewModel.style, {'data': viewModel.data});
     vg.parse.spec(fullSpec, function(chart) {
       var view = chart({el:"#viz-outer-frame", renderer:"svg"})  // , data:viewModel.data})  <== MUST BE INLINE, NOT URL!
+/*
         .on("mouseover", function(event, item) {
           // invoke hover properties on cousin one hop forward in scenegraph
           view.update({
@@ -496,6 +508,7 @@ function refreshViz() {
             ease: "linear"
           });
         })
+*/
         .update();
 
         // populate temporary vars for SVG-tree group, nodes, paths, root node
@@ -684,8 +697,14 @@ function useChosenData() {
 }
 
 function useChosenStyle() {
-    //var styleName = $('#style-chooser option:selected').val();
+    viewModel.style = getChosenStyle();
+    refreshViz();
+}
+function getChosenStyle() {
     var styleName = $('#style-chooser').val();
+    return getStyleByName( styleName );
+}
+function getStyleByName( styleName ) {
     var selectedStyles = $.grep(availableStyles, function(o) {return o.name === styleName;});
     var styleInfo = null;
     if (selectedStyles.length > 0) {
@@ -693,10 +712,9 @@ function useChosenStyle() {
     }
     if (!styleName || !styleInfo) {
         console.warn("No style found under '"+ styleName +"'!");
-        return;
+        return null;
     }
-    viewModel.style = styleInfo.style;
-    refreshViz();
+    return styleInfo.style;
 }
 
 function testTransform(arg1, arg2, arg3) {
@@ -743,7 +761,6 @@ function initTreeIllustratorWindow() {
     var $rulerUnitsDisplay = $outerFrame.find('#fixed-ruler-units');
     var $topRuler = $outerFrame.find('#fixed-ruler-top');
     var $leftRuler = $outerFrame.find('#fixed-ruler-left');
-    var $innerFrame = $outerFrame.find('div.vega');
 
     $rulerUnitsDisplay.css({
         'width': rulerWidth +"px",
@@ -759,11 +776,30 @@ function initTreeIllustratorWindow() {
         'width': rulerWidth+"px",
         'margin-bottom': -rulerWidth+"px",
     });
-    $innerFrame.css('margin-right', -(rulerWidth+1)+"px");
+    $scrollingViewport.css('margin-right', -(rulerWidth+1)+"px");
 
     // reset units display; clear old rulers
     $rulerUnitsDisplay.text( physicalUnits === 'INCHES' ? "in" : "cm" );
     
+    // TODO: adjust viewport/viewbox to reflect current magnification (ppi)
+    
+    // NOTE that we need to use el.setAttribute to keep mixed-case attribute names
+    var svg = $scrollingViewport.find('svg')[0];
+    var style = getChosenStyle();
+    var w = 'width' in style ? style['width'] : 600;
+    var h = 'height' in style ? style['height'] : 800;
+    svg.setAttribute('viewBox', "0 0 "+ w +" "+ h);
+    // adjust for current zoom level
+    w *= viewportMagnification;
+    h *= viewportMagnification;
+    svg.setAttribute('width', w);
+    svg.setAttribute('height', h);
+    /* Surprisingly, none of these attributes is useful here!
+    el.setAttribute('clip', "0 "+ w +" "+ h +" 0");
+    el.setAttribute('preserveAspectRatio', "xMidYMid slice");
+    el.setAttribute('overflow', "scroll");
+    */
+
     // sync scrolling of rulers to viewport
     $scrollingViewport.unbind('scroll').on('scroll', function() {
     //TODO: delegate these for one-time call!
@@ -780,8 +816,8 @@ function initTreeIllustratorWindow() {
     var viewportHeight = $scrollingViewport.children()[0].scrollHeight;
     var topRulerScale = d3.scale.linear()
         .domain([
-            -(pixelsToPhysicalUnits(viewportPaddingLeft)),
-            pixelsToPhysicalUnits(viewportWidth - viewportPaddingLeft)
+            -(pixelsToPhysicalUnits(viewportPadding.left * viewportMagnification)),
+            pixelsToPhysicalUnits(viewportWidth - (viewportPadding.left * viewportMagnification))
         ])
         .range([
             0,
@@ -794,8 +830,8 @@ function initTreeIllustratorWindow() {
 
     var leftRulerScale = d3.scale.linear()
         .domain([
-            -(pixelsToPhysicalUnits(viewportPaddingTop)),
-            pixelsToPhysicalUnits(viewportHeight - viewportPaddingTop)
+            -(pixelsToPhysicalUnits(viewportPadding.top * viewportMagnification)),
+            pixelsToPhysicalUnits(viewportHeight - (viewportPadding.top * viewportMagnification))
         ])
         .range([
             0,
@@ -915,45 +951,25 @@ function drawRuler( svgParent, orientation, units, scale ) {
 
 var viewportMagnification = 1.0;
 function zoomViewport( directionOrZoomLevel ) {
-    // let's step through a series of doubled scales, from 1:16 to 16:1
-    var commonLevels = [0.0625, 0.125, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0];
-    // find the nearest of these (in case we're at a custom zoom level)
-    var currentZoomPos = 0;
-    while(viewportMagnification > commonLevels[currentZoomPos]) {
-        currentZoomPos++;
-    }
-    if( currentZoomPos === (commonLevels.length - 1) ) {
-        // we're closest to maximum zoom, stay here
-    } else {
-        // are we closer to the zoom level above, or below
-        var lowDiff = Math.abs( viewportMagnification - commonLevels[currentZoomPos] );
-        var highDiff = Math.abs( viewportMagnification - commonLevels[currentZoomPos + 1] );
-        if (highDiff < lowDiff) {
-            currentZoomPos++; // nudge up to the level above
-        }
-    }
+    // let's use simple, proportional steps up and down
+    var stepUp = 1.25;
+    var stepDown = 0.8;  // should be inverse of stepUp
 
     switch(directionOrZoomLevel) {
         case 'IN':
-            if (currentZoomPos !== (commonLevels.length - 1)) {
-                currentZoomPos++;
-            }
-            viewportMagnification = commonLevels[currentZoomPos];
+            viewportMagnification *= stepUp;
             break;
         case 'OUT':
-            if (currentZoomPos !== 0) {
-                currentZoomPos--;
-            }
-            viewportMagnification = commonLevels[currentZoomPos];
+            viewportMagnification *= stepDown;
             break;
         default: 
             // assume it's an explicit zoom level, where 1.0 means "actual size"
             viewportMagnification = directionOrZoomLevel;
             break;
     }
-    ///console.log("currentZoomPos: "+ currentZoomPos);
-    console.log("viewportMagnification: "+ viewportMagnification);
+    ///console.log("viewportMagnification: "+ viewportMagnification);
     ppi = default_ppi * viewportMagnification;
     $('#current-ppi-indicator').text(ppi);
-    refreshViz();
+    //refreshViz();
+    initTreeIllustratorWindow();
 }
