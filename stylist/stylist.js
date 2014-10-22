@@ -761,8 +761,6 @@ function initTreeIllustratorWindow() {
 
     // reset units display; clear old rulers
     $rulerUnitsDisplay.text( physicalUnits === 'INCHES' ? "in" : "cm" );
-    $topRuler.empty();
-    $leftRuler.empty();
     
     // sync scrolling of rulers to viewport
     $scrollingViewport.unbind('scroll').on('scroll', function() {
@@ -785,84 +783,24 @@ function initTreeIllustratorWindow() {
             0,
             viewportPaddingLeft + mainGroupProperties.width.value
         ]);
-console.log("topRulerScale.domain():");
-console.log(topRulerScale.domain());
-console.log("topRulerScale.range():");
-console.log(topRulerScale.range());
-    var topRulerAxis = d3.svg.axis()
-        .scale(topRulerScale)
-        .tickValues(d3.range(
-            roundToNearest(1.0, topRulerScale.domain()[0]), 
-            roundToNearest(1.0, topRulerScale.domain()[1] + 1), 
-            1))
-        .tickFormat(d3.format('d'))  // whole numbers
-        .orient('top');
-    var topRuler = d3.select("#fixed-ruler-top")
-        .append('svg')
+    var topRuler = d3.select("#fixed-ruler-top svg")
         .attr("width", $scrollingViewport.children()[0].scrollWidth+'px')
         .attr("height", rulerWidth+"px")
-    var xaxisg = topRuler
-        .append("g")
-        .attr("class",'outer-axis')
-        .attr("transform", "translate(0, "+ (rulerWidth - 1) +")")
-        .call(topRulerAxis);
-    if (physicalUnits === 'INCHES') {
-        // trying subticks, using additional axes on the same scale
-        var topRulerSubticksAxis = d3.svg.axis()
-            .scale(topRulerScale)
-            .tickValues(d3.range(
-                roundToNearest(0.5, topRulerScale.domain()[0]), 
-                roundToNearest(0.5, topRulerScale.domain()[1]), 
-                0.5))
-            .tickFormat('') // unlabeled
-            .tickSize(6)
-            .orient('top');
-        var xaxisg_sub = topRuler
-            .append("g")
-            .attr("class",'outer-axis')
-            .attr("transform", "translate(0, "+ (rulerWidth - 1) +")")
-            .call(topRulerSubticksAxis);
-        var topRulerSubsubticksAxis = d3.svg.axis()
-            .scale(topRulerScale)
-            .tickValues(d3.range(
-                roundToNearest(0.25, topRulerScale.domain()[0]), 
-                roundToNearest(0.25, topRulerScale.domain()[1]), 
-                0.25))
-            .tickFormat('') // unlabeled
-            .tickSize(3)
-            .orient('top');
-        var xaxisg_subsub = topRuler
-            .append("g")
-            .attr("class",'outer-axis subsubticks')
-            .attr("transform", "translate(0, "+ (rulerWidth - 1) +")")
-            .call(topRulerSubsubticksAxis);
-    }
-
+    drawRuler(topRuler, 'HORIZONTAL', physicalUnits, topRulerScale);
 
     var leftRulerScale = d3.scale.linear()
         .domain([
-            -(pixelsToCentimeters(viewportPaddingTop)),
-            (physicalUnits === 'INCHES' ? 
-                inchesToCentimeters(physicalHeight) : 
-                physicalHeight
-            )
+            -(pixelsToPhysicalUnits(viewportPaddingTop)),
+            physicalHeight
         ])
         .range([
             0,
             viewportPaddingTop + mainGroupProperties.height.value
         ]);
-    var leftRulerAxis = d3.svg.axis()
-        .scale(leftRulerScale)
-        .ticks(20)
-        .orient('left');
-    var leftRuler = d3.select("#fixed-ruler-left")
-        .append('svg')
+    var leftRuler = d3.select("#fixed-ruler-left svg")
         .attr("width", rulerWidth+"px")
         .attr("height", $scrollingViewport.children()[0].scrollHeight+'px')
-        .append("g")
-        .attr("class",'outer-axis')
-        .attr("transform", "translate("+ (rulerWidth - 1) +", 0)")
-        .call(leftRulerAxis);
+    drawRuler(leftRuler, 'VERTICAL', physicalUnits, leftRulerScale);
     
     // TODO: sync scaling (axes) of rulers to viewport
 }
@@ -872,4 +810,101 @@ function roundToNearest( interval, input ) {
     // EXAMPLE: roundToNearest( 0.125, -0.52 ) ==>  -0.5
     // EXAMPLE: roundToNearest( 7, 46 ) ==>  49
     return Math.round(input / interval) * interval;
+}
+
+function drawRuler( svgParent, orientation, units, scale ) {
+    /* Draw a ruler in the chosen context (assumes SVG or child of an SVG), with
+        - appropriate units
+        - sensible/legible subticks (eg, millimeters or sixteenths of an inch) 
+        - size and adjust based on orientation (HORIZONTAL | VERTICAL)
+     */
+    // clear any prior ruler group
+    svgParent.selectAll('*').remove();
+    var nudgeTop = orientation === 'VERTICAL' ? 0 : rulerWidth - 1;
+    var nudgeLeft = orientation === 'VERTICAL' ? rulerWidth - 1 : 0;
+
+    var rulerAxis = d3.svg.axis()
+        .scale(scale)
+        .tickValues(d3.range(
+            roundToNearest(1.0, scale.domain()[0]), 
+            roundToNearest(1.0, scale.domain()[1] + 1), 
+            1))
+        .tickFormat(d3.format('d'))  // whole numbers
+        .orient( orientation === 'VERTICAL' ? 'left' : 'top' );
+
+    svgParent
+        .append("g")
+        .attr("class",'outer-axis')
+        .attr("transform", "translate("+ nudgeLeft +", "+ nudgeTop +")")
+        .call(rulerAxis);
+
+    if (units === 'INCHES') {
+        // trying subticks, using additional axes on the same scale
+        var inchWidth = inchesToPixels(1);
+        subticksAxis = d3.svg.axis()
+            .scale(scale)
+            .tickValues(d3.range(
+                roundToNearest(0.5, scale.domain()[0]), 
+                roundToNearest(0.5, scale.domain()[1]), 
+                0.5))
+            .tickFormat('') // unlabeled
+            .tickSize(6)
+            .orient( orientation === 'VERTICAL' ? 'left' : 'top' );
+        svgParent
+            .append("g")
+            .attr("class",'outer-axis')
+            .attr("transform", "translate("+ nudgeLeft +", "+ nudgeTop +")")
+            .call(subticksAxis);
+
+        subticksAxis = d3.svg.axis()
+            .scale(scale)
+            .tickValues(d3.range(
+                roundToNearest(0.25, scale.domain()[0]), 
+                roundToNearest(0.25, scale.domain()[1]), 
+                0.25))
+            .tickFormat('') // unlabeled
+            .tickSize(4)
+            .orient( orientation === 'VERTICAL' ? 'left' : 'top' );
+        svgParent
+            .append("g")
+            .attr("class",'outer-axis subticks')
+            .attr("transform", "translate("+ nudgeLeft +", "+ nudgeTop +")")
+            .call(subticksAxis);
+
+        if (inchWidth > 20) {
+            subticksAxis = d3.svg.axis()
+                .scale(scale)
+                .tickValues(d3.range(
+                    roundToNearest(0.125, scale.domain()[0]), 
+                    roundToNearest(0.125, scale.domain()[1]), 
+                    0.125))
+                .tickFormat('') // unlabeled
+                .tickSize(2)
+                .orient( orientation === 'VERTICAL' ? 'left' : 'top' );
+            svgParent
+                .append("g")
+                .attr("class",'outer-axis subticks')
+                .attr("transform", "translate("+ nudgeLeft +", "+ nudgeTop +")")
+                .call(subticksAxis);
+        }
+    } else {
+        // draw ticks for millimeters
+        var cmWidth = centimetersToPixels(1);
+        if (cmWidth > 30) {
+            subticksAxis = d3.svg.axis()
+                .scale(scale)
+                .tickValues(d3.range(
+                    roundToNearest(0.1, scale.domain()[0]), 
+                    roundToNearest(0.1, scale.domain()[1]), 
+                    0.1))
+                .tickFormat('') // unlabeled
+                .tickSize(3)
+                .orient( orientation === 'VERTICAL' ? 'left' : 'top' );
+            svgParent
+                .append("g")
+                .attr("class",'outer-axis subticks')
+                .attr("transform", "translate("+ nudgeLeft +", "+ nudgeTop +")")
+                .call(subticksAxis);
+        }
+    }
 }
