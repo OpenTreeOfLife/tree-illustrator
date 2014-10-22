@@ -774,32 +774,34 @@ function initTreeIllustratorWindow() {
     // (no event for this except on the window, it's an on-demand thing)
     var mainGroupProperties = availableStyles[0].style.marks[0].properties.enter;
 
+    var viewportWidth = $scrollingViewport.children()[0].scrollWidth;
+    var viewportHeight = $scrollingViewport.children()[0].scrollHeight;
     var topRulerScale = d3.scale.linear()
         .domain([
             -(pixelsToPhysicalUnits(viewportPaddingLeft)),
-            physicalWidth
+            pixelsToPhysicalUnits(viewportWidth - viewportPaddingLeft)
         ])
         .range([
             0,
-            viewportPaddingLeft + mainGroupProperties.width.value
+            viewportWidth
         ]);
     var topRuler = d3.select("#fixed-ruler-top svg")
-        .attr("width", $scrollingViewport.children()[0].scrollWidth+'px')
+        .attr("width", viewportWidth+"px")
         .attr("height", rulerWidth+"px")
     drawRuler(topRuler, 'HORIZONTAL', physicalUnits, topRulerScale);
 
     var leftRulerScale = d3.scale.linear()
         .domain([
             -(pixelsToPhysicalUnits(viewportPaddingTop)),
-            physicalHeight
+            pixelsToPhysicalUnits(viewportHeight - viewportPaddingTop)
         ])
         .range([
             0,
-            viewportPaddingTop + mainGroupProperties.height.value
+            viewportHeight
         ]);
     var leftRuler = d3.select("#fixed-ruler-left svg")
         .attr("width", rulerWidth+"px")
-        .attr("height", $scrollingViewport.children()[0].scrollHeight+'px')
+        .attr("height", viewportHeight+"px")
     drawRuler(leftRuler, 'VERTICAL', physicalUnits, leftRulerScale);
     
     // TODO: sync scaling (axes) of rulers to viewport
