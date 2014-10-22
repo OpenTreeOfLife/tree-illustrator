@@ -83,7 +83,8 @@ var physicalUnits = 'INCHES'; // 'CENTIMETERS' | 'INCHES'
 var physicalWidth = 4.0;      // in the chosen units
 var physicalHeight = 5.0;
 
-var ppi;  // SVG default pixels per inch (can be modified to suit printing device)
+var default_ppi;  // SVG default pixels per inch (can be modified to suit printing device)
+var ppi;  // current pixels per inch (adjusted via zoom level)
 var viewportPaddingTop = 50;   // px
 var viewportPaddingLeft = 50;  // px
 
@@ -560,10 +561,11 @@ var tg, tn, te, rn;
 var viewModel;
 $(document).ready(function() {
     // correct the active ppi (pixels / inch) in this browser
-    ppi = $('#ppi-test').width();
+    default_ppi = ppi = $('#ppi-test').width();
     // NOTE that this is still unlikely to match the physical size of any particular monitor!
     // If that's important, we might want to let the user tweak this value.
-    $('#ppi-indicator').text(ppi);
+    $('#default-ppi-indicator').text(default_ppi);
+    $('#current-ppi-indicator').text(ppi);
 
     // update some of our available styles
     var mainGroupProperties = availableStyles[0].style.marks[0].properties.enter;
@@ -909,4 +911,49 @@ function drawRuler( svgParent, orientation, units, scale ) {
                 .call(subticksAxis);
         }
     }
+}
+
+var viewportMagnification = 1.0;
+function zoomViewport( directionOrZoomLevel ) {
+    // let's step through a series of doubled scales, from 1:16 to 16:1
+    var commonLevels = [0.0625, 0.125, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0];
+    // find the nearest of these (in case we're at a custom zoom level)
+    var currentZoomPos = 0;
+    while(viewportMagnification > commonLevels[currentZoomPos]) {
+        currentZoomPos++;
+    }
+    if( currentZoomPos === (commonLevels.length - 1) ) {
+        // we're closest to maximum zoom, stay here
+    } else {
+        // are we closer to the zoom level above, or below
+        var lowDiff = Math.abs( viewportMagnification - commonLevels[currentZoomPos] );
+        var highDiff = Math.abs( viewportMagnification - commonLevels[currentZoomPos + 1] );
+        if (highDiff < lowDiff) {
+            currentZoomPos++; // nudge up to the level above
+        }
+    }
+
+    switch(directionOrZoomLevel) {
+        case 'IN':
+            if (currentZoomPos !== (commonLevels.length - 1)) {
+                currentZoomPos++;
+            }
+            viewportMagnification = commonLevels[currentZoomPos];
+            break;
+        case 'OUT':
+            if (currentZoomPos !== 0) {
+                currentZoomPos--;
+            }
+            viewportMagnification = commonLevels[currentZoomPos];
+            break;
+        default: 
+            // assume it's an explicit zoom level, where 1.0 means "actual size"
+            viewportMagnification = directionOrZoomLevel;
+            break;
+    }
+    ///console.log("currentZoomPos: "+ currentZoomPos);
+    console.log("viewportMagnification: "+ viewportMagnification);
+    ppi = default_ppi * viewportMagnification;
+    $('#current-ppi-indicator').text(ppi);
+    refreshViz();
 }
