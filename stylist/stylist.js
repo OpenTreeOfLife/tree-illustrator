@@ -170,7 +170,7 @@ var availableStyles = [
           ],
 
           "axes": [
-/* */
+/* HIDING the internal rulers
             {
               "type": "x", 
               "scale": "inches-across",
@@ -211,7 +211,7 @@ var availableStyles = [
                 "orient": "left",
                 "title": "cm"
             }
-/* */
+*/
          ],
 
 
