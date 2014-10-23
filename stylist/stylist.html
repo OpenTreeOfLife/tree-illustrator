@@ -103,9 +103,15 @@
             </div>
     </div>
     
-    <!-- add an SVG element sized using physical units, to determine the active ppi -->
-    <svg id="ppi-test" width="1in" height="1in" 
+    <!-- Add a persistent SVG element to hold re-usable parts that we don't
+         want vega to clobber. NOTE that we also use its size (in physical
+         units) to determine the default ppi for this browser.
+     -->
+    <svg id="svg-toolbox" width="1in" height="1in" 
          style="position: absolute; top: -2in; background-color: orange;">
+        <defs>
+            <!-- TODO: move volatile masks, backdrops, etc. here -->
+        </defs>
     </svg>
 
     <div id="viz-outer-frame">

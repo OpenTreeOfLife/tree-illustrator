@@ -170,6 +170,7 @@ var availableStyles = [
           ],
 
           "axes": [
+/* */
             {
               "type": "x", 
               "scale": "inches-across",
@@ -201,7 +202,8 @@ var availableStyles = [
                   "strokeWidth": {"value": 0.5}
                 }
               }
-            },
+            }
+            ,
             {
                 "type": "y", 
                 "scale": "height-cm",
@@ -209,7 +211,8 @@ var availableStyles = [
                 "orient": "left",
                 "title": "cm"
             }
-          ],
+/* */
+         ],
 
 
 
@@ -248,7 +251,7 @@ var availableStyles = [
                   "strokeWidth": {"value": 1.0}
                 },
                 "hover": {
-                  "stroke": {"value": "red"}
+                 // "stroke": {"value": "red"}
                 }
               }
             },
@@ -268,7 +271,7 @@ var availableStyles = [
                   "fill": {"value": "black"}
                 },
                 "hover": {
-                  "fill": {"value": "red"}
+                 // "fill": {"value": "red"}
                 }
               }
             }
@@ -426,7 +429,7 @@ var spec = {
           "fill": {"value": "steelblue"}
         },
         "hover": {
-          "fill": {"value": "red"}
+         // "fill": {"value": "red"}
         }
       }
     },
@@ -448,7 +451,7 @@ var spec = {
           "strokeOpacity": {"value": 0}
         },
         "hover": {
-          "strokeOpacity": {"value": 1}
+          //"strokeOpacity": {"value": 1}
         }
       }
     }
@@ -574,7 +577,7 @@ var tg, tn, te, rn;
 var viewModel;
 $(document).ready(function() {
     // correct the active ppi (pixels / inch) in this browser
-    default_ppi = ppi = $('#ppi-test').width();
+    default_ppi = ppi = $('#svg-toolbox').width();
     // NOTE that this is still unlikely to match the physical size of any particular monitor!
     // If that's important, we might want to let the user tweak this value.
     $('#default-ppi-indicator').text(default_ppi);
@@ -842,7 +845,7 @@ function initTreeIllustratorWindow() {
         .attr("height", viewportHeight+"px")
     drawRuler(leftRuler, 'VERTICAL', physicalUnits, leftRulerScale);
     
-    // TODO: sync scaling (axes) of rulers to viewport
+    applyViewportMask();
 }
 
 function roundToNearest( interval, input ) {
@@ -972,4 +975,110 @@ function zoomViewport( directionOrZoomLevel ) {
     $('#current-ppi-indicator').text(ppi);
     //refreshViz();
     initTreeIllustratorWindow();
+}
+
+/* Manage re-usable SVG elements in the viewport. These are typically defined
+   in the SVG defs element; once defined, they can be modified and re-used
+   (multiple instances) for masking, clipping, and optional printed output like
+   crop marks and diagnostic rulers.
+
+   NOTE that we need to use d3 to create these elements; jQuery flubs the
+   namespaces.
+*/
+function getViewportDefs() {
+    var svg = d3.selectAll("#viz-outer-frame div.vega svg");
+    if (svg.empty()) {
+        console.warn("getViewportDefs(): vega svg not found!");
+        return null;
+    }
+    var defs = d3.selectAll("#viz-outer-frame div.vega svg defs");
+    // if it doesn't exist, add it now
+    switch (defs.size()) {
+        case 1:
+            return defs.node();  // returns first node
+        case 0: 
+            return svg.insert('defs',':first-child').node();  // prepends
+        default:
+            console.warn("getViewportDefs(): multiple defs elements found!");
+            return defs.node();
+    }
+}
+function getViewportMask() {
+    var defs = getViewportDefs();
+    if (!defs) {
+        console.warn("getViewportMask(): vega defs not found!");
+        return null;
+    }
+    // wrap in d3 selection
+    var defs = d3.select(defs);
+    var mask = defs.selectAll('mask[id=viewport-mask]');
+    if (mask.empty()) {
+        var shapesGroup = defs
+            .append('mask')
+                .attr('id', 'viewport-mask')
+                .attr('x', 0)
+                .attr('y', 0)
+                .attr('width', 100)
+                .attr('height', 200)
+                //.attr('maskContentUnits', 'objectBoundingBox')
+            .append('g')
+                .attr('id', 'mask-shapes');
+        shapesGroup
+            .append('rect') 
+                .attr('id', 'viewport-bounds')
+                .attr('width', '100%')
+                .attr('height', '100%')
+                .attr('fill', '#888');
+        shapesGroup
+            .append('rect') 
+                .attr('id', 'illustration-bounds')
+                .attr('x', viewportPadding.left)
+                .attr('y', viewportPadding.top)
+                .attr('width', 100)
+                .attr('height', 100)
+                .attr('fill', '#fff');
+
+        mask = defs.selectAll('mask[id=viewport-mask]');
+    }
+    return mask.node();
+}
+function getViewportCliparea() {
+}
+function getViewportCropMarks() {
+}
+function getViewportTestRulers() {
+}
+
+function applyViewportMask() {
+    var svg = d3.selectAll("#viz-outer-frame div.vega svg");
+    if (svg.empty()) {
+        console.warn("getViewportDefs(): vega svg not found!");
+        return null;
+    }
+    var mask = getViewportMask();      // creates it if not found
+
+    // match the mask's illustration-bounds to the current illustration size
+    d3.select("#illustration-bounds")
+        .attr('width', physicalUnitsToPixels(physicalWidth))
+        .attr('height', physicalUnitsToPixels(physicalHeight));
+
+    // assign the mask to the main viewport (fades stuff outside the print area)
+    svg.attr('mask', 'url(#viewport-mask)')
+
+    if (svg.selectAll("#viewport-background").empty()) {
+        // add milder backdrop for work area (outside the print area)
+        svg.insert('rect', 'svg > g')
+                .attr('id', 'viewport-background')
+                .attr('width', '100%')
+                .attr('height', '100%')
+                .style('fill', '#ccc');
+        // add a white background for the print area
+        svg.insert('use', 'svg > g')
+                .attr('xlink:href', '#illustration-bounds')
+                .style('stroke','#bbb');
+    }
+}
+function disableViewportMask() {
+    var $svg = $("#viz-outer-frame div.vega svg");
+    $svg.find('#active-mask').remove();
 }
