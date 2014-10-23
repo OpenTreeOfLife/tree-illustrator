@@ -109,9 +109,15 @@
      -->
     <svg id="svg-toolbox" width="1in" height="1in" 
          style="position: absolute; top: -2in; background-color: orange;">
-        <defs>
-            <!-- TODO: move volatile masks, backdrops, etc. here -->
-        </defs>
+      <defs>
+        <!-- Keep volatile masks, backdrops, etc. here -->
+        <mask id="viewport-mask">
+          <g id="mask-shapes">
+            <rect id="viewport-bounds" fill="#888"></rect>
+            <rect id="illustration-bounds" fill="#fff"></rect>
+          </g>
+        </mask>
+      </defs>
     </svg>
 
     <div id="viz-outer-frame">
