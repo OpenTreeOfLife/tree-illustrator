@@ -22,3 +22,6 @@ body * {
     left: 0;
     top: 0;
 }
+#viz-outer-frame div.vega svg {
+    clip: url(#illustration-background)
+}

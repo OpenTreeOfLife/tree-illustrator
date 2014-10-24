@@ -58,6 +58,14 @@ function physicalUnitsToPixels( units ) {
         return centimetersToPixels( units );
     }
 }
+
+function getPhysicalUnitSuffix() {
+    if (physicalUnits === 'INCHES') {
+        return 'in';
+    } else {
+        return 'cm';
+    }
+}
 /*
 console.log("CONVERSION TESTS");
 console.log(inchesToCentimeters(1));
@@ -845,7 +853,7 @@ function initTreeIllustratorWindow() {
         .attr("height", viewportHeight+"px")
     drawRuler(leftRuler, 'VERTICAL', physicalUnits, leftRulerScale);
     
-    applyViewportMask();
+    enableViewportMask();
 }
 
 function roundToNearest( interval, input ) {
@@ -985,11 +993,11 @@ function zoomViewport( directionOrZoomLevel ) {
    NOTE that we need to use d3 to create SVG elements. jQuery flubs the
    namespaces!
 */
-function applyViewportMask() {
+function enableViewportMask() {
     //var toolboxSVG = d3.selectAll("#svg-toolbox");
     var viewportSVG = d3.selectAll("#viz-outer-frame div.vega svg");
     if (viewportSVG.empty()) {
-        console.warn("applyViewportMask(): viewport SVG not found!");
+        console.warn("enableViewportMask(): viewport SVG not found!");
         return null;
     }
     var mask = d3.select('#viewport-mask');
@@ -1028,4 +1036,105 @@ function disableViewportMask() {
     viewportSVG.attr('mask', null);
     viewportSVG.selectAll("#viewport-background").remove();
     viewportSVG.selectAll("#illustration-background").remove();
+}
+
+function enablePrintingCropArea() {
+}
+function disablePrintingCropArea() {
+}
+
+/* Manage diagnostic markings (crop marks, description, rulers) for printed output */
+function showPrintingDiagnostics() {
+    showPrintingCropMarks();
+    showPrintingDescription();
+    showPrintingRulers();
+}
+function hidePrintingDiagnostics() {
+    hidePrintingCropMarks();
+    hidePrintingDescription();
+    hidePrintingRulers();
+}
+function showPrintingCropMarks() {
+}
+function hidePrintingCropMarks() {
+}
+function showPrintingDescription() {
+}
+function hidePrintingDescription() {
+}
+function showPrintingRulers() {
+}
+function hidePrintingRulers() {
+}
+
+function getPrintableSVG( options ) {
+    if (!options) options = {};
+
+/*
+    // force an adjustment to "natural" print resolution (90 ppi)
+    var chosenMagnification = viewportMagnification;
+    var printMagnification = 90 / default_ppi;
+    zoomViewport( printMagnification );
+*/
+
+    // shift SVG from editing to printing
+    disableViewportMask();
+    enablePrintingCropArea();
+    if (options.INCLUDE_DIAGNOSTICS) {
+        showPrintingDiagnostics();
+    }
+
+    // shift the main SVG dimensions to physical units (for more accurate print size)
+    var illustration = d3.select('#viz-outer-frame div.vega svg');
+    var pxWidth = illustration.attr("width");
+    var pxHeight = illustration.attr("height");
+    var unitSuffix = getPhysicalUnitSuffix();
+    var chosenPpi = ppi;
+    // temporarily swap to a standard ppi to "freeze" the pixel size of the top-level SVG
+    var print_ppi = 90;
+    ppi *= (default_ppi/print_ppi);  // we're actually compensating for likely over- or under-sized pixels
+    illustration
+        .attr("width", pixelsToPhysicalUnits(pxWidth) + unitSuffix)
+        .attr("height", pixelsToPhysicalUnits(pxHeight) + unitSuffix);
+    // restore the active ppi for the illustration editor
+    ppi = chosenPpi;
+
+    // momentarily "splice" persistent defs into the illustration, capture the result
+    var toolbox = d3.select('#svg-toolbox');
+    var defs = toolbox.select('defs');
+    $(illustration.node()).prepend(defs);
+    var combinedSVG = $('#viz-outer-frame div.vega').html();
+    // replace the persistent defs
+    $(toolbox.node()).prepend(defs);
+
+    // restore pixel dimensions (in deference to Vega)
+    illustration
+        .attr("width", pxWidth)
+        .attr("height", pxHeight);
+
+    // reverse all the previous steps
+    if (options.INCLUDE_DIAGNOSTICS) {
+        hidePrintingDiagnostics();
+    }
+    disablePrintingCropArea();
+    enableViewportMask();
+
+/*
+    // restore prior magnification
+    zoomViewport( chosenMagnification );
+*/
+
+    return combinedSVG;
+}
+
+function printIllustration() {
+    // print standalone SVG as a simple document
+    var w=window.open();
+    if (!w) {
+        alert("Please allow popups for this domain.");
+        return;
+    }
+    w.document.write(getPrintableSVG());
+    w.print();
+    w.close();
 }
