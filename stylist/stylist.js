@@ -31,31 +31,31 @@ function centimetersToInches( cm ) {
     return cm / cm_per_inch;
 }
 
-function pixelsToInches( px ) {
+function pixelsToInches( px, ppi ) {
     return px / ppi;
 }
-function inchesToPixels( inches ) {
+function inchesToPixels( inches, ppi ) {
     return inches * ppi;
 }
-function pixelsToCentimeters( px ) {
+function pixelsToCentimeters( px, ppi ) {
     return inchesToCentimeters(px / ppi);
 }
-function centimetersToPixels( cm ) {
+function centimetersToPixels( cm, ppi ) {
     return centimetersToInches( cm ) * ppi;
 }
 
-function pixelsToPhysicalUnits( px ) {
+function pixelsToPhysicalUnits( px, ppi ) {
     if (physicalUnits === 'INCHES') {
-        return pixelsToInches( px );
+        return pixelsToInches( px, ppi );
     } else {
-        return pixelsToCentimeters( px );
+        return pixelsToCentimeters( px, ppi );
     }
 }
-function physicalUnitsToPixels( units ) {
+function physicalUnitsToPixels( units, ppi ) {
     if (physicalUnits === 'INCHES') {
-        return inchesToPixels( units );
+        return inchesToPixels( units, ppi );
     } else {
-        return centimetersToPixels( units );
+        return centimetersToPixels( units, ppi );
     }
 }
 
@@ -66,23 +66,6 @@ function getPhysicalUnitSuffix() {
         return 'cm';
     }
 }
-/*
-console.log("CONVERSION TESTS");
-console.log(inchesToCentimeters(1));
-console.log(inchesToCentimeters(0.1));
-console.log(inchesToCentimeters(8.5));
-console.log("--");
-console.log(centimetersToInches(2.54));
-console.log(centimetersToInches(1));
-console.log(centimetersToInches(100));
-console.log("--");
-console.log(inchesToPixels(1));
-console.log(pixelsToInches(90));
-console.log("--");
-console.log(centimetersToPixels(1));
-console.log(pixelsToCentimeters(90));
-console.log("--");
-*/
 
 /* ruler metrics (adjust for legibility) */
 var rulerWidth = 25;  // px
@@ -91,8 +74,9 @@ var physicalUnits = 'INCHES'; // 'CENTIMETERS' | 'INCHES'
 var physicalWidth = 4.0;      // in the chosen units
 var physicalHeight = 5.0;
 
-var default_ppi;  // SVG default pixels per inch (can be modified to suit printing device)
-var ppi;  // current pixels per inch (adjusted via zoom level)
+var browser_ppi;  // SVG resolution in current browser (not reliable!)
+var internal_ppi = 90;  // SVG default pixels per inch (can be modified to suit printing device)
+var display_ppi = internal_ppi;  // pixels per inch at current magnification (zoom level)
 
 // padding around the designated illustration area, in pixels (default zoom)
 var viewportPadding = {
@@ -123,8 +107,8 @@ var availableStyles = [
                 "enter": {
                   "x": {"value": 0},
                   "y": {"value": 0}, // {"scale": "g", "field": "key"},
-                  "height": {"value": physicalUnitsToPixels(physicalHeight) },  // {"group": "height"}, // {"scale": "g", "band": true},
-                  "width": {"value": physicalUnitsToPixels(physicalWidth) },      // {"group": "width"},
+                  "height": {"value": physicalUnitsToPixels(physicalHeight, internal_ppi) },  // {"group": "height"}, // {"scale": "g", "band": true},
+                  "width": {"value": physicalUnitsToPixels(physicalWidth, internal_ppi) },      // {"group": "width"},
                   "stroke": {"value": "#ccc"}
                 },
                 "update": {
@@ -155,14 +139,14 @@ var availableStyles = [
               "type": "linear",
               "nice": false,
               "domain": [0, (physicalUnits === 'INCHES' ? inchesToCentimeters(physicalHeight) : physicalHeight) ],  // {"data": "phyloTree", "field": "data.trees.length"}
-              "range": [0, physicalUnitsToPixels(physicalHeight)] //"height"
+              "range": [0, physicalUnitsToPixels(physicalHeight, internal_ppi)] //"height"
               //"domain": {"data": "phyloTree", transform: {"type": "pluck", "field": "phyloNodes"}, "field": "y"}
             }
             ,
             {
               "name": "inches-across", 
               "nice": true,
-              "domain": [0, (physicalUnits === 'INCHES' ? physicalWidth : centimetersToInches(physicalWidth)) ],  // {"data": "phyloTree", "field": "data.trees.length"}
+              "domain": [0, (physicalUnits === 'INCHES' ? physicalWidth : centimetersToInches(physicalWidth, internal_ppi)) ],  // {"data": "phyloTree", "field": "data.trees.length"}
               "range": "width"
               //"domain": {"data": "phyloTree", transform: [{"type": "pluck", "field": "phyloNodes"}], "field": "x" }
               //"domain": [0, 1]  // {"data": "phyloTree", "field": "data.trees.length"}
@@ -584,28 +568,28 @@ var tg, tn, te, rn;
 
 var viewModel;
 $(document).ready(function() {
-    // correct the active ppi (pixels / inch) in this browser
-    default_ppi = ppi = $('#svg-toolbox').width();
+    // test for the preset ppi (pixels / inch) in this browser
+    browser_ppi = $('#svg-toolbox').width();
     // NOTE that this is still unlikely to match the physical size of any particular monitor!
     // If that's important, we might want to let the user tweak this value.
-    $('#default-ppi-indicator').text(default_ppi);
-    $('#current-ppi-indicator').text(ppi);
+    $('#browser-ppi-indicator').text(browser_ppi);
+    $('#display-ppi-indicator').text(display_ppi);
 
     // update some of our available styles
     var mainGroupProperties = availableStyles[0].style.marks[0].properties.enter;
     if (mainGroupProperties) {
-        mainGroupProperties.height.value = physicalUnitsToPixels(physicalHeight);
-        mainGroupProperties.width.value = physicalUnitsToPixels(physicalWidth);
+        mainGroupProperties.height.value = physicalUnitsToPixels(physicalHeight, internal_ppi);
+        mainGroupProperties.width.value = physicalUnitsToPixels(physicalWidth, internal_ppi);
     }
     var cmHeightScale = availableStyles[0].style.marks[0].scales[1];
     if (cmHeightScale) {
         cmHeightScale.domain = [
             0, 
-            (physicalUnits === 'INCHES' ? inchesToCentimeters(physicalHeight) : physicalHeight) 
+            (physicalUnits === 'INCHES' ? inchesToCentimeters(physicalHeight, internal_ppi) : physicalHeight) 
         ];
         cmHeightScale.range = [
             0, 
-            physicalUnitsToPixels(physicalHeight) 
+            physicalUnitsToPixels(physicalHeight, display_ppi) 
         ];
     }
     var inWidthScale = availableStyles[0].style.marks[0].scales[2];
@@ -792,7 +776,7 @@ function initTreeIllustratorWindow() {
     // reset units display; clear old rulers
     $rulerUnitsDisplay.text( physicalUnits === 'INCHES' ? "in" : "cm" );
     
-    // TODO: adjust viewport/viewbox to reflect current magnification (ppi)
+    // TODO: adjust viewport/viewbox to reflect current magnification (display_ppi)
     
     // NOTE that we need to use el.setAttribute to keep mixed-case attribute names
     var svg = $scrollingViewport.find('svg')[0];
@@ -827,8 +811,8 @@ function initTreeIllustratorWindow() {
     var viewportHeight = $scrollingViewport.children()[0].scrollHeight;
     var topRulerScale = d3.scale.linear()
         .domain([
-            -(pixelsToPhysicalUnits(viewportPadding.left * viewportMagnification)),
-            pixelsToPhysicalUnits(viewportWidth - (viewportPadding.left * viewportMagnification))
+            -(pixelsToPhysicalUnits(viewportPadding.left * viewportMagnification, display_ppi)),
+            pixelsToPhysicalUnits(viewportWidth - (viewportPadding.left * viewportMagnification), display_ppi)
         ])
         .range([
             0,
@@ -841,8 +825,8 @@ function initTreeIllustratorWindow() {
 
     var leftRulerScale = d3.scale.linear()
         .domain([
-            -(pixelsToPhysicalUnits(viewportPadding.top * viewportMagnification)),
-            pixelsToPhysicalUnits(viewportHeight - (viewportPadding.top * viewportMagnification))
+            -(pixelsToPhysicalUnits(viewportPadding.top * viewportMagnification, display_ppi)),
+            pixelsToPhysicalUnits(viewportHeight - (viewportPadding.top * viewportMagnification), display_ppi)
         ])
         .range([
             0,
@@ -891,7 +875,7 @@ function drawRuler( svgParent, orientation, units, scale ) {
 
     if (units === 'INCHES') {
         // trying subticks, using additional axes on the same scale
-        var inchWidth = inchesToPixels(1);
+        var inchWidth = inchesToPixels(1, display_ppi);
         subticksAxis = d3.svg.axis()
             .scale(scale)
             .tickValues(d3.range(
@@ -940,7 +924,7 @@ function drawRuler( svgParent, orientation, units, scale ) {
         }
     } else {
         // draw ticks for millimeters
-        var cmWidth = centimetersToPixels(1);
+        var cmWidth = centimetersToPixels(1, display_ppi);
         if (cmWidth > 30) {
             subticksAxis = d3.svg.axis()
                 .scale(scale)
@@ -979,8 +963,8 @@ function zoomViewport( directionOrZoomLevel ) {
             break;
     }
     ///console.log("viewportMagnification: "+ viewportMagnification);
-    ppi = default_ppi * viewportMagnification;
-    $('#current-ppi-indicator').text(ppi);
+    display_ppi = internal_ppi * viewportMagnification;
+    $('#display-ppi-indicator').text(display_ppi);
     //refreshViz();
     initTreeIllustratorWindow();
 }
@@ -1010,8 +994,8 @@ function enableViewportMask() {
     d3.select("#illustration-bounds")
         .attr('x', viewportPadding.left) // scales along with zoom
         .attr('y', viewportPadding.top)  // scales along with zoom
-        .attr('width', physicalUnitsToPixels(physicalWidth) / viewportMagnification)
-        .attr('height', physicalUnitsToPixels(physicalHeight) / viewportMagnification);
+        .attr('width', physicalUnitsToPixels(physicalWidth, internal_ppi))
+        .attr('height', physicalUnitsToPixels(physicalHeight, internal_ppi));
 
     // assign the mask to the main viewport (fades stuff outside the print area)
     viewportSVG.attr('mask', 'url(#viewport-mask)');
@@ -1070,13 +1054,6 @@ function hidePrintingRulers() {
 function getPrintableSVG( options ) {
     if (!options) options = {};
 
-/*
-    // force an adjustment to "natural" print resolution (90 ppi)
-    var chosenMagnification = viewportMagnification;
-    var printMagnification = 90 / default_ppi;
-    zoomViewport( printMagnification );
-*/
-
     // shift SVG from editing to printing
     disableViewportMask();
     enablePrintingCropArea();
@@ -1089,15 +1066,16 @@ function getPrintableSVG( options ) {
     var pxWidth = illustration.attr("width");
     var pxHeight = illustration.attr("height");
     var unitSuffix = getPhysicalUnitSuffix();
-    var chosenPpi = ppi;
-    // temporarily swap to a standard ppi to "freeze" the pixel size of the top-level SVG
-    var print_ppi = 90;
-    ppi *= (default_ppi/print_ppi);  // we're actually compensating for likely over- or under-sized pixels
+    // reckon physical size in default (print-ready) ppi to "freeze" the pixel size of the top-level SVG
     illustration
-        .attr("width", pixelsToPhysicalUnits(pxWidth) + unitSuffix)
-        .attr("height", pixelsToPhysicalUnits(pxHeight) + unitSuffix);
-    // restore the active ppi for the illustration editor
-    ppi = chosenPpi;
+        .attr("width", pixelsToPhysicalUnits(pxWidth, display_ppi) + unitSuffix)
+        .attr("height", pixelsToPhysicalUnits(pxHeight, display_ppi) + unitSuffix);
+    /* TODO: Overhaul this to use: 
+     *  > internal_ppi
+     *  > the defined illustration size 
+     *  > modified viewbox (restrict to the illustration area!)
+     *  > optional padding for diagnostic markings, if (options.INCLUDE_DIAGNOSTICS) { ... }
+     */
 
     // momentarily "splice" persistent defs into the illustration, capture the result
     var toolbox = d3.select('#svg-toolbox');
@@ -1118,11 +1096,6 @@ function getPrintableSVG( options ) {
     }
     disablePrintingCropArea();
     enableViewportMask();
-
-/*
-    // restore prior magnification
-    zoomViewport( chosenMagnification );
-*/
 
     return combinedSVG;
 }
