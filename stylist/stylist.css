@@ -15,9 +15,11 @@
     float: left;
     width: 50%;
     height: 400px;
+    background-color: #eee;
     /* max-height: 600px;*/
     margin-left: -4%;
-    padding-right: 35px;
+    padding-right: 11px;
+    padding-bottom: 9px;
     border: 1px solid #ccc;
 }
 #viz-outer-frame div.vega {

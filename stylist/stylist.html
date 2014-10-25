@@ -25,8 +25,10 @@
         </em>
         <div style="float: right;">
             <button onclick="zoomViewport('IN', this); return false;">Zoom in</button>
-            <button onclick="zoomViewport(1.0, this); return false;">Actual size</button>
             <button onclick="zoomViewport('OUT', this); return false;">Zoom out</button>
+            &nbsp; &nbsp; &nbsp;
+            <button onclick="zoomViewport(1.0, this); return false;">Actual size</button>
+            <button onclick="resizeViewportToShowAll(); return false;">Fit contents</button>
             &nbsp; &nbsp; &nbsp;
             <button onclick="toggleFixedRulers(this); return false;">Hide rulers</button>
             <button onclick="togglePhysicalUnits(this); return false;">Work in cm</button>

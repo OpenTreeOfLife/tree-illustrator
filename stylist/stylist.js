@@ -78,12 +78,38 @@ var browser_ppi;  // SVG resolution in current browser (not reliable!)
 var internal_ppi = 90;  // SVG default pixels per inch (can be modified to suit printing device)
 var display_ppi = internal_ppi;  // pixels per inch at current magnification (zoom level)
 
-// padding around the designated illustration area, in pixels (default zoom)
-var viewportPadding = {
-    'top': 50,
-    'right': 50,
-    'bottom': 50,
-    'left': 50
+/* Track the values used for our viewport (overall size, margins vs. illustration)
+ * for easy re-use in rulers, etc. For background, see SVG's viewBox docs: 
+ * http://www.w3.org/TR/SVG/coords.html#ViewBoxAttribute
+ */
+var viewbox = {
+    'x': 0,
+    'y': 0,
+    'width': 0,
+    'height': 0,
+}
+function updateViewportViewbox($viewport) {
+    /* Adjust the main VG viewBox as needed to match the current illustration
+     * size and chosen magnification. The result should be that scrollbars offer 
+     * access to all SVG elements (in or out of the printed area), while the user
+     * is free to choose arbitrary levels of magnification.
+     */
+    // TODO: maintain the current center point, but surrender empty territory
+    if (!$viewport) {
+        $viewport = $("#viz-outer-frame div.vega");
+    }
+
+    // NOTE that we need to use el.setAttribute to keep mixed-case attribute names
+    var svg = $viewport.find('svg')[0];
+    svg.setAttribute('viewBox', (viewbox.x +' '+ viewbox.y +' '+ viewbox.width +' '+viewbox.height));
+    // adjust SVG size for current zoom level
+    svg.setAttribute('width', viewbox.width * viewportMagnification);
+    svg.setAttribute('height', viewbox.height * viewportMagnification);
+    /* Surprisingly, none of these attributes is useful here!
+    el.setAttribute('clip', "0 "+ w +" "+ h +" 0");
+    el.setAttribute('preserveAspectRatio', "xMidYMid slice");
+    el.setAttribute('overflow', "scroll");
+    */
 }
 
 var availableStyles = [
@@ -93,16 +119,17 @@ var availableStyles = [
           "width": 800,
           "height": 900,
           "padding": {
-            "top": viewportPadding.top, 
-            "left": viewportPadding.left, 
-            "bottom": viewportPadding.bottom, 
-            "right": viewportPadding.right
+            "top": 0,
+            "left": 0,
+            "bottom": 0,
+            "right": 0
           },
           //, "viewport": [350, 350],
           //"data": [{"name": "table"}],
           "marks": [
             {
               "type": "group",
+              "name": "illustration-elements",  // becomes marker class .illustration-elements
               "properties": {
                 "enter": {
                   "x": {"value": 0},
@@ -475,9 +502,10 @@ var adapters = {
 }
 
 var fullSpec;
-function refreshViz() {
+function refreshViz(options) {
     if (!viewModel.style) return;
-   
+    if (!options) options = {}; 
+
     // filter the incoming data, if applicable
     var dataFilter = adapters[ viewModel.dataFormat ];
     var adaptedData = vg.isFunction(dataFilter) ? dataFilter(viewModel.data) : viewModel.data;
@@ -561,7 +589,11 @@ function refreshViz() {
 
         // ugly hack to remove the intervening FOREIGNOBJECT and DIV between our outer SVG and vega's SVG
         ///$('#viz-vega-fo').replaceWith($('div.vega').contents());
-        initTreeIllustratorWindow();
+        if (options.SHOW_ALL) {
+            resizeViewportToShowAll();
+        } else {
+            initTreeIllustratorWindow();
+        }
     });
 }
 var tg, tn, te, rn; 
@@ -642,7 +674,7 @@ $(document).ready(function() {
     // TODO: Add JSON support for older IE?
     // TODO: Add bootstrap for style+behavior?
 
-    refreshViz();
+    refreshViz( {SHOW_ALL: true} );
 });
 
 function buildStudyFetchURL( studyID ) {
@@ -756,6 +788,9 @@ function initTreeIllustratorWindow() {
     var $rulerUnitsDisplay = $outerFrame.find('#fixed-ruler-units');
     var $topRuler = $outerFrame.find('#fixed-ruler-top');
     var $leftRuler = $outerFrame.find('#fixed-ruler-left');
+    //var scrollbarWidth = $scrollingViewport[0].offsetWidth - $scrollingViewport[0].clientWidth;
+    var topRulerAdjustedWidth = $scrollingViewport[0].clientWidth;
+    var leftRulerAdjustedHeight = $scrollingViewport[0].clientHeight;
 
     $rulerUnitsDisplay.css({
         'width': rulerWidth +"px",
@@ -765,35 +800,23 @@ function initTreeIllustratorWindow() {
     });
     $topRuler.css({
         'height': rulerWidth+"px",
+        // adjust width since there's no scrollbar here
+        'width': topRulerAdjustedWidth +'px',
         'margin-right': -rulerWidth+"px"
     });
     $leftRuler.css({
         'width': rulerWidth+"px",
-        'margin-bottom': -rulerWidth+"px",
+        // adjust height since there's no scrollbar here
+        'height': leftRulerAdjustedHeight +'px',
+        'margin-bottom': -rulerWidth+"px"
     });
     $scrollingViewport.css('margin-right', -(rulerWidth+1)+"px");
 
     // reset units display; clear old rulers
     $rulerUnitsDisplay.text( physicalUnits === 'INCHES' ? "in" : "cm" );
     
-    // TODO: adjust viewport/viewbox to reflect current magnification (display_ppi)
-    
-    // NOTE that we need to use el.setAttribute to keep mixed-case attribute names
-    var svg = $scrollingViewport.find('svg')[0];
-    var style = getChosenStyle();
-    var w = 'width' in style ? style['width'] : 600;
-    var h = 'height' in style ? style['height'] : 800;
-    svg.setAttribute('viewBox', "0 0 "+ w +" "+ h);
-    // adjust for current zoom level
-    w *= viewportMagnification;
-    h *= viewportMagnification;
-    svg.setAttribute('width', w);
-    svg.setAttribute('height', h);
-    /* Surprisingly, none of these attributes is useful here!
-    el.setAttribute('clip', "0 "+ w +" "+ h +" 0");
-    el.setAttribute('preserveAspectRatio', "xMidYMid slice");
-    el.setAttribute('overflow', "scroll");
-    */
+    // adjust viewport/viewbox to reflect current magnification (display_ppi)
+    updateViewportViewbox( $scrollingViewport );
 
     // sync scrolling of rulers to viewport
     $scrollingViewport.unbind('scroll').on('scroll', function() {
@@ -811,8 +834,8 @@ function initTreeIllustratorWindow() {
     var viewportHeight = $scrollingViewport.children()[0].scrollHeight;
     var topRulerScale = d3.scale.linear()
         .domain([
-            -(pixelsToPhysicalUnits(viewportPadding.left * viewportMagnification, display_ppi)),
-            pixelsToPhysicalUnits(viewportWidth - (viewportPadding.left * viewportMagnification), display_ppi)
+            pixelsToPhysicalUnits(viewbox.x, internal_ppi),
+            pixelsToPhysicalUnits(viewbox.x + viewbox.width, internal_ppi)
         ])
         .range([
             0,
@@ -825,8 +848,8 @@ function initTreeIllustratorWindow() {
 
     var leftRulerScale = d3.scale.linear()
         .domain([
-            -(pixelsToPhysicalUnits(viewportPadding.top * viewportMagnification, display_ppi)),
-            pixelsToPhysicalUnits(viewportHeight - (viewportPadding.top * viewportMagnification), display_ppi)
+            pixelsToPhysicalUnits(viewbox.y, internal_ppi),
+            pixelsToPhysicalUnits(viewbox.y + viewbox.height, internal_ppi)
         ])
         .range([
             0,
@@ -969,6 +992,57 @@ function zoomViewport( directionOrZoomLevel ) {
     initTreeIllustratorWindow();
 }
 
+function resizeViewportToShowAll() {
+    // show full illustration bounds (and all SVG elements!) in the viewport
+    var bbox = getInclusiveIllustrationBoundingBox();
+
+    // match the viewport's proportions (width/height)
+    var $viewport = $("#viz-outer-frame div.vega");
+    var divWidth = $viewport.width();
+    var divHeight = $viewport.height();
+    // compare its proportions to our bounding box; pad as needed to match
+    var divProportions = divWidth / divHeight;
+    var bboxProportions = bbox.width / bbox.height;
+    if (divProportions > bboxProportions) {
+        // div is wider, pad bbox width to match
+        var adjustedWidth = divProportions * bbox.height;
+        var extraWidth = adjustedWidth - bbox.width;
+        bbox.width = adjustedWidth;
+        bbox.x -= (extraWidth / 2);
+    } else {
+        // div is taller (or equal), pad bbox height to match
+        var flippedDivProportions = divHeight / divWidth;
+        var adjustedHeight = flippedDivProportions * bbox.width;
+        var extraHeight = adjustedHeight - bbox.height;
+        bbox.height = adjustedHeight;
+        bbox.x -= (extraHeight / 2);
+    }
+
+    // copy to our persistent viewbox
+    for (var prop in bbox) {
+        viewbox[prop] = bbox[prop];
+    }
+
+    // TODO: match the viewport's final size (disabled scrollbars)?
+    
+    /* Scale the proportional SVG to fit the viewport DIV. To do this, we
+     * determine how big the new viewbox would be in pixels (using default_ppi)
+     * and magnify this to fit the viewportDIV.
+     */
+    var newMagnification = divWidth / viewbox.width;
+    // update the display
+    zoomViewport( newMagnification );  // calls initTreeIllustratorWindow();
+}
+function getMinimalIllustrationBoundingBox() {
+    // just the region defined for printing
+    return $('#illustration-background')[0].getBBox();
+}
+function getInclusiveIllustrationBoundingBox() {
+    // Fetch the region defined for printing, PLUS any "out of bounds" SVG elements.
+    return d3.select('g.illustration-elements').node().getBBox();
+    // this designated group should contain all illustration elements
+}
+
 /* Manage re-usable SVG elements in the viewport. These are typically defined
    in a persistent SVG defs element, where they can be modified and re-used
    (including multiple instances) for masking, clipping, and optional printed
@@ -988,12 +1062,14 @@ function enableViewportMask() {
 
     // match the mask's viewport-bounds to the current viewport size
     d3.select("#viewport-bounds")
-        .attr('width', viewportSVG.node().scrollWidth / viewportMagnification)
-        .attr('height', viewportSVG.node().scrollHeight / viewportMagnification);
+        .attr('x', viewbox.x)
+        .attr('y', viewbox.y)
+        .attr('width', viewbox.width)
+        .attr('height', viewbox.height);
     // match the mask's illustration-bounds to the current illustration size
     d3.select("#illustration-bounds")
-        .attr('x', viewportPadding.left) // scales along with zoom
-        .attr('y', viewportPadding.top)  // scales along with zoom
+        .attr('x', 0)
+        .attr('y', 0)
         .attr('width', physicalUnitsToPixels(physicalWidth, internal_ppi))
         .attr('height', physicalUnitsToPixels(physicalHeight, internal_ppi));
 
@@ -1013,6 +1089,9 @@ function enableViewportMask() {
                 .attr('xlink:href', '#illustration-bounds')
                 .style('stroke','#bbb');
     }
+    d3.select('#viewport-background')
+        .attr('x', viewbox.x)
+        .attr('y', viewbox.y);
 }
 function disableViewportMask() {
     // remove and clean up masking stuff (prior to printing?)
