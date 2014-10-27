@@ -99,17 +99,127 @@ function updateViewportViewbox($viewport) {
         $viewport = $("#viz-outer-frame div.vega");
     }
 
+    /* Make sure we have latest DIV size+proportions. (These can change if the
+     * user toggles scrollbars or resizes the surrounding page.) This is the
+     * new *minimum* size for our SVG element, to avoid gaps in the viewport!
+     */
+    var vpDiv = $viewport[0];
+    var divWidth = vpDiv.clientWidth;
+    var divHeight = vpDiv.clientHeight;
+    var divProportions = divWidth / divHeight;
+
+    /* What must be in the viewbox? All illustration elements (so we can scroll
+     * to them), plus any padding needed (at current magnification) to fill the
+     * viewport.
+     */
+    var ebox = getInclusiveIllustrationBoundingBox();
+    // this is the area with all illustration elements
+    ///console.log(">>> inclusive box:");
+    ///console.log(ebox);
+    var center = {
+        x: ebox.x + (ebox.width / 2),
+        y: ebox.y + (ebox.height / 2)
+    };
+    ///console.log(">>> inclusive center:");
+    ///console.log(center);
+
+/* SUPERSEDED by padding logic below
+     * Project current in-view rectangle to *internal* pixels (bbox units) to
+     * determine necessary padding.
+     *
+    var displayToInternalPx = viewbox.width / vpDiv.scrollWidth;
+    var vbox = {
+        x: viewbox.x + (vpDiv.scrollLeft * displayToInternalPx),
+        y: viewbox.y + (vpDiv.scrollTop * displayToInternalPx),
+        width: vpDiv.clientWidth * displayToInternalPx,
+        height: vpDiv.clientHeight * displayToInternalPx
+    }
+console.log(">>> illustration area in view:");
+console.log(vbox);
+vbox = ebox;
+
+     * For a steady view with no gaps, the new viewbox needs to include all
+     * illustration elements PLUS this visible area.
+     *
+    var newLeft = Math.min( vbox.x, ebox.x );
+    var newTop = Math.min( vbox.y, ebox.y );
+    var newRight = Math.max( vbox.x + vbox.width, ebox.x + ebox.width);
+    var newBottom = Math.max( vbox.y + vbox.height, ebox.y + ebox.height); 
+    viewbox.x = newLeft;
+    viewbox.y = newTop;
+    viewbox.width = newRight - newLeft;
+    viewbox.height = newBottom - newTop;
+    ///console.log(">>> MODIFIED viewbox:");
+    ///console.log(viewbox);
+*/
+
+    // copy to our persistent viewbox
+    for (var prop in ebox) {
+        viewbox[prop] = ebox[prop];
+    }
+
+    var proportionalWidth = Math.round(viewbox.width * viewportMagnification);
+    var proportionalHeight = Math.round(viewbox.height * viewportMagnification);
+
+    // compare its proportions to our *new* viewport; pad as needed to fill space
+    var bbox = viewbox;
+    if (proportionalWidth < divWidth) {
+        // div is wider, pad viewbox width to match
+        var adjustedWidth = divWidth / viewportMagnification;
+        var extraWidth = adjustedWidth - viewbox.width;
+        viewbox.width = adjustedWidth;
+        viewbox.x -= (extraWidth / 2);
+    } 
+    if (proportionalHeight < divHeight) {
+        // div is taller, pad viewbox height to match
+        var adjustedHeight = divHeight / viewportMagnification;
+        var extraHeight = adjustedHeight - viewbox.height;
+        viewbox.height = adjustedHeight;
+        viewbox.y -= (extraHeight / 2);
+    }
+    ///console.log(">>> PADDED viewbox:");
+    ///console.log(viewbox);
+
+    // move our background to the new viewport top-left corner
+    d3.selectAll('#viewport-background, #viewport-bounds')
+        .attr('x', viewbox.x)
+        .attr('y', viewbox.y);
+
+    // Update physical size of SVG element based on new viewbox and magnification
+    proportionalWidth = Math.round(viewbox.width * viewportMagnification);
+    proportionalHeight = Math.round(viewbox.height * viewportMagnification);
+    var svgWidth = proportionalWidth;
+    var svgHeight = proportionalHeight;
+
     // NOTE that we need to use el.setAttribute to keep mixed-case attribute names
     var svg = $viewport.find('svg')[0];
+
+    // make sure we're at least filling the available viewport DIV
+    svg.setAttribute('width', svgWidth);
+    svg.setAttribute('height', svgHeight);
+
+
+    // TODO: nudge scrollbars to hold a steady view?
+
+
     svg.setAttribute('viewBox', (viewbox.x +' '+ viewbox.y +' '+ viewbox.width +' '+viewbox.height));
-    // adjust SVG size for current zoom level
-    svg.setAttribute('width', viewbox.width * viewportMagnification);
-    svg.setAttribute('height', viewbox.height * viewportMagnification);
-    /* Surprisingly, none of these attributes is useful here!
-    el.setAttribute('clip', "0 "+ w +" "+ h +" 0");
-    el.setAttribute('preserveAspectRatio', "xMidYMid slice");
-    el.setAttribute('overflow', "scroll");
-    */
+    $('#viewbox-indicator').html(svg.getAttribute('viewBox'));
+    $('#mag-indicator').html(viewportMagnification);
+    $('#svg-width-indicator').html(svg.getAttribute('width'));
+    $('#svg-height-indicator').html(svg.getAttribute('height'));
+
+/*
+console.log('OLD div w: '+ svg.getAttribute('width'));
+console.log('  viewbox.width: '+ viewbox.width);
+console.log('  * magnification: '+ viewportMagnification);
+console.log('  NEW div w: '+ viewbox.width * viewportMagnification);
+console.log('  INT div w: '+ Math.round(viewbox.width * viewportMagnification));
+console.log('OLD div h: '+ svg.getAttribute('height'));
+console.log('  viewbox.height: '+ viewbox.height);
+console.log('  * magnification: '+ viewportMagnification);
+console.log('  NEW div h: '+ viewbox.height * viewportMagnification);
+console.log('  INT div h: '+ Math.round(viewbox.height * viewportMagnification));
+*/
 }
 
 var availableStyles = [
@@ -584,8 +694,8 @@ function refreshViz(options) {
         });
 
         // bring stuff into view //TODO: cleanup
-        tn.attr('transform','translate(100,100)')
-        te.attr('transform','translate(100,100)')
+        //tn.attr('transform','translate(100,100)')
+        //te.attr('transform','translate(100,100)')
 
         // ugly hack to remove the intervening FOREIGNOBJECT and DIV between our outer SVG and vega's SVG
         ///$('#viz-vega-fo').replaceWith($('div.vega').contents());
@@ -764,6 +874,7 @@ function toggleFixedRulers(toggle) {
         $('#viz-outer-frame').addClass('hide-rulers');
         $toggleBtn.text('Show rulers');
     }
+    updateViewportViewbox();
 }
 
 function togglePhysicalUnits(toggle) {
@@ -972,6 +1083,7 @@ function zoomViewport( directionOrZoomLevel ) {
     // let's use simple, proportional steps up and down
     var stepUp = 1.25;
     var stepDown = 0.8;  // should be inverse of stepUp
+    var previousMagnification = viewportMagnification;
 
     switch(directionOrZoomLevel) {
         case 'IN':
@@ -985,10 +1097,12 @@ function zoomViewport( directionOrZoomLevel ) {
             viewportMagnification = directionOrZoomLevel;
             break;
     }
-    ///console.log("viewportMagnification: "+ viewportMagnification);
     display_ppi = internal_ppi * viewportMagnification;
     $('#display-ppi-indicator').text(display_ppi);
-    //refreshViz();
+
+    // TODO: reset center point of viewbox? based on click XY, or current center?
+    // TODO: update scrollTop, scrollLeft to stay in place?
+
     initTreeIllustratorWindow();
 }
 
@@ -998,9 +1112,11 @@ function resizeViewportToShowAll() {
 
     // match the viewport's proportions (width/height)
     var $viewport = $("#viz-outer-frame div.vega");
-    var divWidth = $viewport.width();
-    var divHeight = $viewport.height();
+    // NOTE that we want to match its *inner* size, not incl. scrollbars!
+    var divWidth = $viewport[0].clientWidth;
+    var divHeight = $viewport[0].clientHeight;
     // compare its proportions to our bounding box; pad as needed to match
+    // TODO: this is duplicate code! refactor to DRY
     var divProportions = divWidth / divHeight;
     var bboxProportions = bbox.width / bbox.height;
     if (divProportions > bboxProportions) {
@@ -1189,4 +1305,20 @@ function printIllustration() {
     w.document.write(getPrintableSVG());
     w.print();
     w.close();
+}
+
+function testAddElement() {
+    d3.select('div.vega svg g.illustration-elements')
+        .append('rect')
+            .attr('id','RED-RECT')
+            .style('fill','#500')
+            .attr('x', -400)
+            .attr('y', 0)
+            .attr('width', '100')
+            .attr('height', '80');
+    initTreeIllustratorWindow();
+}
+function testRemoveElement() {
+    d3.select('#RED-RECT').remove();
+    initTreeIllustratorWindow();
 }
