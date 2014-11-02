@@ -742,7 +742,6 @@ $(document).ready(function() {
         ];
     }
 
-
     // create the viewModel (a full vega spec?) and build a matching UI
     viewModel = {
         style: availableStyles[0].style,  // see above
@@ -783,6 +782,11 @@ $(document).ready(function() {
     // TODO: Add "safety net" if there are unsaved changes
     // TODO: Add JSON support for older IE?
     // TODO: Add bootstrap for style+behavior?
+
+    // resizing the window should refresh/resize the viewport
+    $(window).resize(function() {
+        zoomViewport('REFRESH');
+    });
 
     refreshViz( {SHOW_ALL: true} );
 });
@@ -875,6 +879,7 @@ function toggleFixedRulers(toggle) {
         $toggleBtn.text('Show rulers');
     }
     updateViewportViewbox();
+    zoomViewport('REFRESH');
 }
 
 function togglePhysicalUnits(toggle) {
@@ -1086,6 +1091,9 @@ function zoomViewport( directionOrZoomLevel ) {
     var previousMagnification = viewportMagnification;
 
     switch(directionOrZoomLevel) {
+        case 'REFRESH':
+            // just update at the current magnification (e.g. when window is resized)
+            break;
         case 'IN':
             viewportMagnification *= stepUp;
             break;
