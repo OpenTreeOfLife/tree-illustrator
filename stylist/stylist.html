@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>Stylist - Tree Illustrator test</title/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="jquery.js"></script>
     <script src="knockout-2.3.0.js"></script>
     <!--<script src="d3.v3.min.js"></script>-->
@@ -12,11 +13,15 @@
     <script src="vg.data.phylogram.js"></script>
     <!-- <script src="d3.phylogram.js"></script>   // includes Vega transform, must follow vega.js! -->
     <script src="stylist.js"></script>
+    <script src="bootstrap.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="bootstrap.min.css"/>
     <link rel="stylesheet" type="text/css" href="stylist.css"/>
     <link rel="stylesheet" type="text/css" media="print" href="stylist-print.css">
   </head>
   <body>
-    <div style="margin-bottom: 0.5em;">
+   <div class="container-fluid">
+   <div class="row-fluid">
+    <div class="span12" style="margin-bottom: 0.5em;">
         <h2 style="margin: 0 0 4px;">Cascading stylist</h2>
         <em>
             Pixels/inch: <strong id="display-ppi-indicator">-</strong>
@@ -24,22 +29,24 @@
             (default in this browser: <strong id="browser-ppi-indicator">-</strong>)
         </em>
         <div style="float: right;">
-            <button onclick="zoomViewport('IN', this); return false;">Zoom in</button>
-            <button onclick="zoomViewport('OUT', this); return false;">Zoom out</button>
+            <button class="btn btn-small" onclick="zoomViewport('IN', this); return false;">Zoom in</button>
+            <button class="btn btn-small" onclick="zoomViewport('OUT', this); return false;">Zoom out</button>
             &nbsp; &nbsp; &nbsp;
-            <button onclick="zoomViewport(1.0, this); return false;">Actual size</button>
-            <button onclick="resizeViewportToShowAll(); return false;">Fit contents</button>
+            <button class="btn btn-small" onclick="zoomViewport(1.0, this); return false;">Actual size</button>
+            <button class="btn btn-small" onclick="resizeViewportToShowAll(); return false;">Fit contents</button>
             &nbsp; &nbsp; &nbsp;
-            <button onclick="toggleFixedRulers(this); return false;">Hide rulers</button>
-            <button onclick="togglePhysicalUnits(this); return false;">Work in cm</button>
+            <button class="btn btn-small" onclick="toggleFixedRulers(this); return false;">Hide rulers</button>
+            <button class="btn btn-small" onclick="togglePhysicalUnits(this); return false;">Work in cm</button>
         </div>
     </div>
-    <div id="editor">
+   </div><!-- .row-fluid -->
+   <div class="row-fluid">
+    <div id="editor" class="span5">
         <form action="#" onsubmit="return false;">
             <div class="button-bar" style="margin-bottom: 1em;">
-                <button>Load illustration...</button>
-                <button style="float: right;">Save illustration as...</button>
-                <button style="float: right;">Save</button>
+                <button class="btn btn-small">Load illustration...</button>
+                <button class="btn btn-small" style="float: right;">Save illustration as...</button>
+                <button class="btn btn-small" style="float: right;">Save</button>
             </div>
 
             <div style="margin-bottom: 1em;">
@@ -82,7 +89,7 @@
       [node styles & size]
       [colors]
       [fonts]</pre>
-                <button>Save modified style as...</button>
+                <button class="btn btn-small">Save modified style as...</button>
             </div>
             
             <div style="margin-bottom: 1em;">
@@ -100,9 +107,9 @@
         </form>
 
             <div class="button-bar" style="margin-bottom: 1em;">
-                <button>Load illustration...</button>
-                <button style="float: right;">Save illustration as...</button>
-                <button style="float: right;">Save</button>
+                <button class="btn btn-small">Load illustration...</button>
+                <button class="btn btn-small" style="float: right;">Save illustration as...</button>
+                <button class="btn btn-small" style="float: right;">Save</button>
             </div>
     </div>
     
@@ -123,14 +130,15 @@
       </defs>
     </svg>
 
+   <div class="span6 offset1"> 
     <div id="viz-outer-frame">
         <div id="fixed-ruler-units" class="viz-fixed-ruler">&nbsp;</div>
         <div id="fixed-ruler-top" class="viz-fixed-ruler"><svg></svg></div>
         <div id="fixed-ruler-left" class="viz-fixed-ruler"><svg></svg></div>
     </div>
     <div style="float:left; margin-top: 3em;">
-        <button onclick="refreshViz(); return false;">Refresh</button>
-        <button onclick="printIllustration(); return false;">Print actual size</button>
+        <button class="btn btn-small" onclick="refreshViz(); return false;">Refresh</button>
+        <button class="btn btn-small" onclick="printIllustration(); return false;">Print actual size</button>
         <br/>
         viewbox: <strong id="viewbox-indicator" style="font-size: 0.7em;">??</strong>
         <br/>
@@ -138,6 +146,9 @@
         <br/>
         SVG width: <strong id="svg-width-indicator">??</strong>, SVG height: <strong id="svg-height-indicator">??</strong>
     </div>
+   </div><!-- .span6 -->
+   </div><!-- .row-fluid -->
+   </div><!-- .container-fluid -->
 
     <hr style="clear: left;"/>
     <p>TODO here:</p>
