@@ -384,6 +384,10 @@ var availableStyles = [
                 }
               }
             },
+
+    {   /* group node/label pairs, for easier event binding later */
+        "type":"group",
+        "marks":[
             {
               "type": "symbol",
               //"from": {"data": "phyloTree", "transform": [{"type":"array", "fields":["phyloNodes"] }] },
@@ -404,26 +408,50 @@ var availableStyles = [
                 }
               }
             }
-/* ,
+            ,
             {
               "type": "text",
               "from": {"data": "phyloTree", "transform": [{"type":"pluck", "field":"phyloNodes" }] },
               "properties": {
                 "enter": {
+                  /* Properties for cartesian / rectangular layouts
                   "x": {"scale": "time", "field": "x", "mult":1},
                   "y": {"scale": "y", "field": "y", "mult":1.0}
+                  "dx": {"value": -6},
+                  "dy": {"value": -6},
+                  */
+
+                  /* Properties for radial/polar layouts.
+                   * Radius and theta (angle from origin, in radians) are the
+                   * alternatives to X and Y for polar projection, and assume
+                   * that the x and y properties represent the origin or center
+                   * of the layout, ie, the root node. See discussion at
+                   *  https://github.com/trifacta/vega/pull/187
+                   */
+                  "x": {"value": 0},  // this is origin for radial/polar projection
+                  "y": {"value": 0},
+                  "radius": {"field": "radius"},  // px from origin
+                  "theta": {"field": "theta"},  // in radians (what direction from origin)
+                  "align": {"field": 'align'},  // NOTE that some labels are flipped 180deg for legibility
+                  "angle": {"field": "angle"},  // in degrees
+
+                  "fontSize": {"value": 5}
+                        // TODO: adjustable font size (convert pt to px)
                 },
                 "update": {
-                  "text": {"value":"LBL"},
+                  "text": {"field": "ottTaxonName"},
                   //"text": {"field":"y"},
-                  "fill": {"value":"orange"}
+                  "fill": {"value":"black"}
                 },
                 "hover": {
                   "fill": {"value": "red"}
                 }
               }
-            },
-*/
+            } /* end of label marks */
+           ]
+          } /* end of grouped node+label */ 
+           ,
+
                 ] /* end of inner group marks */
             } /* end of inner group */
 
@@ -767,7 +795,6 @@ $(document).ready(function() {
                         "branchLengths": "",  // empty/false, or a property name to compare?
                         "width": 100,   // TODO: FIX these dimensions (they rotate)
                         "height": 100, 
-                        //"orientation": 0,
                         "tipsAlignment": 'right'
                     }
                 ]
@@ -819,14 +846,13 @@ function useChosenData() {
                     { 
                         "type": "phylogram", 
                         "layout": "radial",
-                        //"radialArc": [90, 0],
+                        //"radialArc": [90, 270],
                         //"radialSweep": 'CLOCKWISE',
                         "radialSweep": 'COUNTERCLOCKWISE',
                         //"branchStyle": "diagonal",  // other options here?
                         "branchLengths": "",  // empty/false, or a property name to compare?
                         "width": 100,   // TODO: FIX these dimensions (they rotate)
                         "height": 100, 
-                        //"orientation": 0,
                         "tipsAlignment": 'right'
                     }
             // TODO: add all possible properties (common to by all formats?)

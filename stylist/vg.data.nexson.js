@@ -55,6 +55,35 @@ console.log(data);
       //.size(vg.data.size(size, group))
       //.value(value)
       .nodes(rootNode);
+
+    // add all possible labels to each node
+    var tree = getSpecifiedTree();
+    $.each(data.phyloNodes, function(i, node) {
+        if ('label' in node) {
+            console.log(">> node "+ i +" has 'label'");
+            node.explicitLabel = node['label'];
+        }
+        if ('@label' in node) {
+            console.log(">> node "+ i +" has '@label'");
+            node.explicitLabel = node['@label'];
+        }
+        if ('@otu' in node) {
+            var itsOTU = getOTUByID( node['@otu'] );
+            // attach OTU with possible label(s) here
+            if (itsOTU) {
+                // nudge the relevant properties into a generic form
+                if ('^ot:originalLabel' in itsOTU) {
+                    node.originalLabel = itsOTU['^ot:originalLabel'];
+                }
+                if ('^ot:ottTaxonName' in itsOTU) {
+                    node.ottTaxonName = itsOTU['^ot:ottTaxonName'];
+                }
+                if ('^ot:ottId' in itsOTU) {
+                    node.ottId = itsOTU['^ot:ottId'];
+                }
+            }
+        }
+    });
     
     data.phyloEdges = layout.links(data.phyloNodes);
 /* translate incoming keys to their output names?
@@ -74,6 +103,7 @@ console.log(data);
       //d.children = getChildren(d);
     });
 */
+
     
 /*
     console.log("OUTGOING data from nexson transform:");
@@ -257,7 +287,7 @@ console.log(data);
 
         $.each(childEdges, function(index, edge) {
             var childID = edge['@target'];
-            var childNode = getTreeNodeByID(null, childID);
+            var childNode = getTreeNodeByID(childID);
             if (!('@id' in childNode)) {
                 console.error(">>>>>>> childNode is a <"+ typeof(childNode) +">");
                 console.error(childNode);
@@ -268,10 +298,15 @@ console.log(data);
         ///return (itsChildren.length === 0) ? null: itsChildren;
         return itsChildren;
     }
-    function getTreeNodeByID(tree, id) {
+    function getTreeNodeByID(id) {
         // There should be only one matching (or none) within a tree
-        // (NOTE that we now use a flat collection across all trees, so disregard 'tree' argument)
+        // (NOTE that we now use a flat collection across all trees, so there's no 'tree' argument)
         var lookup = getFastLookup('NODES_BY_ID');
+        return lookup[ id ] || null;
+    }
+    function getOTUByID(id) {
+        // There should be only one matching (or none) in this study
+        var lookup = getFastLookup('OTUS_BY_ID');
         return lookup[ id ] || null;
     }
     function getTreeEdgesByID(tree, id, sourceOrTarget) {

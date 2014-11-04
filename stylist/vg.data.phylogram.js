@@ -92,9 +92,14 @@ vg.data.phylogram = function() {
         // disregard for radial layouts?
     var orientation = -90; 
         // degrees of rotation from default (0, -90, 90, 180)
+        // NOTE that this is not set directly (from vega spec) but from within
     var descentAxis = 'x'; // x|y
         // needed to render paths correctly
         // TODO: add more from options below
+    var nodeLabelSource = 'MAPPED';  // 'ORIGINAL' or 'MAPPED'
+        // choose preferred source for labels; fall back as needed and use marker classes
+        // to distinguish these in display
+    var showFallbackLabels = true;  // boolean
 
     function phylogram(data) {
       // Expecting incoming data in the 'phylotree' format described here:
@@ -201,6 +206,8 @@ vg.data.phylogram = function() {
       data.height = height;
       data.branchStyle = branchStyle;
       data.branchLengths = branchLengths;
+      data.nodeLabelSource = nodeLabelSource;
+      data.showFallbackLabels = showFallbackLabels;
 
       return data;
     }
@@ -285,6 +292,23 @@ vg.data.phylogram = function() {
       return phylogram;
     };
 
+    phylogram.nodeLabelSource = function(s) {
+      switch(s) {
+        case 'ORIGINAL':
+        case 'MAPPED':
+          nodeLabelSource = s;
+          break;
+        default:
+          nodeLabelSource = 'MAPPED';
+      } 
+      return phylogram;
+    }
+
+    phylogram.showFallbackLabels = function(b) {
+      showFallbackLabels = Boolean(b);
+      return phylogram;
+    }
+
     var displacePoint = function(point, delta) {
         // where 'delta' is an object with x and y properties
         point.x += delta.x;
@@ -321,7 +345,7 @@ vg.data.phylogram = function() {
         // is an optional second point
         var cos = Math.cos,
             sin = Math.sin,
-            angle = (angle || orientation) * Math.PI / 180, // convert to radians
+            angle = degreesToRadians(angle || orientation), // convert to radians
             // default midpoint is origin (0,0)
             xm = (pivot && 'x' in pivot) ? pivot.x : 0,   
             ym = (pivot && 'y' in pivot) ? pivot.y : 0,   
@@ -338,6 +362,17 @@ vg.data.phylogram = function() {
             point.cartesian_y = (cx - xm) * sin(angle) + (cy - ym) * cos(angle) + ym; 
         }
         return point;
+    }
+
+    function radiansToDegrees(r) {
+        return (r * 180 / Math.PI);
+    }
+    function degreesToRadians(d) {
+        return (d * Math.PI / 180);
+    }
+    function normalizeDegrees(d) {
+        // convert to positive integer, e.g. -90 ==> 270
+        return (d + (360 * 3)) % 360;
     }
 
   // Convert XY and radius to angle of a circle centered at 0,0
@@ -404,7 +439,8 @@ vg.data.phylogram = function() {
     return diagonal;
   }
   
-  var cartesianToPolarProjection = function(d) {
+  var cartesianToPolarProjection = function(d, options) {
+    options = options || {returnType: 'XY-ARRAY'}; // or 'POLAR-COORDS'
     // radius is simply the x coordinate
     var r = d.x;
 
@@ -445,7 +481,38 @@ vg.data.phylogram = function() {
     // remap angle to the specified arc, in the sweep direction
 
     // TODO: reckon angle based on height/width and sweep
-    return [r * Math.cos(a), r * Math.sin(a)];
+    if (options.returnType === 'POLAR_COORDS') {
+        // add radius and angle (theta) for label display in vega
+        var labelAngle = normalizeDegrees(radiansToDegrees(a));
+        var labelAlignment = 'left';
+        // TODO: adjustable nudge separates label text from drawn node
+        var nudgeRadius = 4; // px?
+        // TODO: adjustable nudge (should vary with text size) shifts angle 
+        // from the label's baseline to the middle of its x-height
+        var nudgeTheta = degreesToRadians(0.6);
+
+        // test for upside-down labels (assuming 0 deg = due right)
+        if ((labelAngle > 90) && (labelAngle < 270)) {
+            // left-side labels should be flipped and aligned right
+            labelAlignment = 'right';
+            labelAngle = normalizeDegrees(labelAngle + 180);
+            nudgeTheta =  -(nudgeTheta)
+        }
+        var nodeAndLabelProperties = {
+            // X, Y coordinates for the node itself
+            'x': r * Math.cos(a),
+            'y': r * Math.sin(a),
+            // additional properties for placing the label
+            'radius': r + nudgeRadius,
+            'theta': a - degreesToRadians(orientation) + nudgeTheta, // in radians!
+            'angle': labelAngle,
+            'align': labelAlignment
+        };
+        return nodeAndLabelProperties;
+    } else {
+        // return XY-COORDS by default
+        return [r * Math.cos(a), r * Math.sin(a)];
+    }
   }
 
   var radialRightAngleDiagonal = function(d) {
@@ -516,9 +583,13 @@ vg.data.phylogram = function() {
 
         ///data.phyloNodes.map(rotatePointByY);
         data.phyloNodes.map(function(d) {
-            pcoords = cartesianToPolarProjection(d);
-            d.x = pcoords[0];
-            d.y = pcoords[1];
+            pcoords = cartesianToPolarProjection(d, {returnType:'POLAR_COORDS'});
+            d.radius  = pcoords.radius;
+            d.theta  = pcoords.theta;
+            d.angle  = pcoords.angle;
+            d.align  = pcoords.align;
+            d.x = pcoords.x;
+            d.y = pcoords.y;
         });
     }
     var cladogramLayout = function(data) {
@@ -748,6 +819,7 @@ vg.data.phylogram = function() {
     /* node labeling 
     // TODO: why is this SUPER-SLOW with large trees? like MINUTES to run...
     // Is there a faster/cruder way to clear the decks?
+    debugger;
     vis.selectAll('g.node text').remove();
 
     // provide an empty label as last resort, so we can see highlights
