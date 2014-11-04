@@ -9,3 +9,7 @@ cd stylist/
 python -m SimpleHTTPServer 8888
 ```
 Now open a web browser to http://localhost:8888/stylist.html
+
+**Easier still!** We now have a hosted version of the latest work at
+http://rawgit.com/OpenTreeOfLife/tree-illustrator/master/stylist/stylist.html
+
