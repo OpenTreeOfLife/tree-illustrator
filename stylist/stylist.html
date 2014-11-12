@@ -81,29 +81,197 @@
                 </select>
             </div>
 
-            <div style="margin-bottom: 1em;">
-                <label>Refine this style for the current illustration</label>
-                <pre>
-      [map data elements to visual properties]
-      [path styles & widths]
-      [node styles & size]
-      [colors]
-      [fonts]</pre>
-                <button class="btn btn-small">Save modified style as...</button>
-            </div>
+
             
-            <div style="margin-bottom: 1em;">
-                <label>Highlights and ornaments</label>
-                <pre>
-    Editorial decisions for this tree, mostly "recorded" as 
-    the user interacts with the live viz:
-      [width]
-      [height]
-      [pan and zoom]
-      [expanded/collapsed nodes]
-      [highlighted nodes/edges]
-      [add/upload ornaments (images, etc)]</pre>
+<div class="accordion" id="ti-main-accordion">
+
+  <div class="accordion-group panel panel-default">
+    <div class="accordion-heading panel-heading">
+      <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-general">
+        General illustration properties
+        <i class="indicator icon-chevron-down Xicon-white  pull-right"></i>
+      </a> 
+    </div>
+    <div id="ti-panel-general" class="accordion-body panel-body collapse">
+      <div class="accordion-inner">
+        <ul>
+            <li>toggle rulers? [checkbox]</li>
+            <li>dimensions [width, height]</li>
+            <li>units</li>
+            <li></li>
+            <li></li>
+            <li></li>
+        </ul>
+        <h5>Metadata</h5>
+        <ul>
+            <li>illustration name</li>
+            <li>description</li>
+            <li>author(s)</li>
+            <li>tags?</li>
+            <li>DOIs</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion-group panel panel-default">
+    <div class="accordion-heading panel-heading">
+      <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-styles">
+        Styles / template
+        <i class="indicator icon-chevron-down Xicon-white  pull-right"></i>
+      </a> 
+    </div>
+    <div id="ti-panel-styles" class="accordion-body panel-body collapse">
+      <div class="accordion-inner">
+        <ul>
+            <li>style name and source</li>
+            <li>style description</li>
+            <li>dimensions (menu of suggested/allowed sizes) <em>- or is this a single size?</em></li>
+            <li>default units (inches or centimeters)</li>
+            <li>Font family, style, minimum size</li>
+            <li>Minimum line weight</li>
+            <li>Colors (constrained? suggested?)</li>
+            <li><strong>style switcher?</strong></li>
+            <li>show <strong>overrides</strong> and warnings here, but with defaults visible</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion-group panel panel-success">
+    <div class="accordion-heading panel-heading">
+      <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-tree-0">
+        Crown Carnivora with parsimony
+        <i class="indicator icon-chevron-down Xicon-white  pull-right"></i>
+        <span class="element-type">tree</span> 
+      </a>
+    </div>
+    <div id="ti-panel-tree-0" class="accordion-body panel-body collapse">
+      <div class="accordion-inner">
+        <ul>
+            <li>tree source</li>
+            <li>tree type (data format)</li>
+            <li>layout/geometry (circular, triangular, rectangular)</li>
+            <li>styles - <em>specify value+units, pick from options, or map to data</em>
+                <ul>
+                    <li>edge thickness</li>
+                    <li>node size</li>
+                    <li>node shape</li>
+                    <li>color</li>
+                    <li>highlight style</li>
+                </ul>
+            </li>
+            <li>un-collapse all nodes</li>
+            <li>un-highlight all nodes</li>
+            <li>un-highlight all edges</li>
+            <li>interesting nodes+edges; for each listed element:
+                <ul>
+                    <li>collapsed</li>
+                    <li>highlighted</li>
+                    <li>styles (appropriate to type) - <em>specify value+units, pick from options, or map to data</em>
+                        <ul>
+                            <li>edge thickness</li>
+                            <li>node size</li>
+                            <li>node shape</li>
+                            <li>color</li>
+                            <li>font/text styles</li>
+                            <li>highlight style</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="accordion-group panel panel-warning">
+    <div class="accordion-heading panel-heading">
+      <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-data-0">
+        Trait data for crown Carnivora
+        <i class="indicator icon-chevron-down Xicon-white  pull-right"></i>
+        <span class="element-type">data</span> 
+      </a>
+    </div>
+    <div id="ti-panel-data-0" class="accordion-body panel-body collapse">
+      <div class="accordion-inner">
+        <ul>
+            <li>data source</li>
+            <li>data type</li>
+            <li>data filter</li>
+            <li>tabular display of raw data?</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion-group panel panel-success">
+    <div class="accordion-heading panel-heading">
+      <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-tree-1">
+        Carnivora from Klein, 2002
+        <i class="indicator icon-chevron-down Xicon-white  pull-right"></i>
+        <span class="element-type">tree</span> 
+      </a>
+    </div>
+    <div id="ti-panel-tree-1" class="accordion-body panel-body collapse">
+      <div class="accordion-inner">
+        <em>See tree above for likely controls</em>
+      </div>
+    </div>
+  </div>
+
+            <div class="button-bar" style="margin-bottom: 1em;">
+                <button class="btn btn-small">Add tree...</button>
+                <button class="btn btn-small">Add supporting data...</button>
             </div>
+
+  <div class="accordion-group panel panel-default">
+    <div class="accordion-heading panel-heading">
+      <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-ornaments">
+        Ornaments
+        <i class="indicator icon-chevron-down Xicon-white  pull-right"></i>
+      </a>
+    </div>
+    <div id="ti-panel-ornaments" class="accordion-body panel-body collapse">
+      <div class="accordion-inner">
+        <ul>
+            <li>PhyloPic or other images?</li>
+            <li>Captions and text blocks?</li>
+            <li>Single images (choose and place anywhere)</li>
+            <li>Borders, poster layouts?</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion-group panel panel-default">
+    <div class="accordion-heading panel-heading">
+      <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-presentation">
+        Presentation
+        <i class="indicator icon-chevron-down Xicon-white  pull-right"></i>
+      </a>
+    </div>
+    <div id="ti-panel-presentation" class="accordion-body panel-body collapse">
+      <div class="accordion-inner">
+        <ul>
+            <li><em>This would be a wild nice-to-have, an interactive illustration.</em></li>
+            <li>Allow several named presentations per illustration?</li>
+            <li>Presentation = a series of "snapshots" of this illustration over time</li>
+            <li>For each snapshot:
+                <ul>
+                    <li>pan and zoom</li>
+                    <li>expanded/collapsed nodes</li>
+                    <li>highlighted elements or areas</li>
+                    <li>changed colors</li>
+                    <li>caption(s) and callouts</li>
+                    <li>timing for auto-play?</li>
+                </ul>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
         </form>
 
             <div class="button-bar" style="margin-bottom: 1em;">

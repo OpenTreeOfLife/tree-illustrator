@@ -1356,3 +1356,16 @@ function testRemoveElement() {
     d3.select('#RED-RECT').remove();
     initTreeIllustratorWindow();
 }
+
+/* Accordion UI helpers */
+function toggleChevron(e) {
+    console.log('TOGGLE!');
+    $(e.target)
+        .prev('.panel-heading')
+        .find("i.indicator")
+        .toggleClass('icon-chevron-down icon-chevron-up');
+}
+$(document).ready(function() {
+    $('#ti-main-accordion .panel-body').on('hide', toggleChevron);
+    $('#ti-main-accordion .panel-body').on('show', toggleChevron);
+});
