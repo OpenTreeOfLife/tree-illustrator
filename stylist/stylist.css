@@ -174,3 +174,7 @@ g.outer-axis text {
     float: right;
     padding-right: 0.75em;
 }
+.help-text {
+    padding: 4px 8px;
+    font-style: italic;
+}

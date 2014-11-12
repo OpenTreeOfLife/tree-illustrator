@@ -49,15 +49,15 @@
                 <button class="btn btn-small" style="float: right;">Save</button>
             </div>
 
-            <div style="margin-bottom: 1em;">
-                <label for="tree-chooser">Choose a tree to illustrate</label>
-                <br/>
-                <select id="tree-chooser"
+            <div style="margin-bottom: 1.0em; border-radius: 8px; border: 2px dashed #900; background-color: #fee; padding: 4px 6px;">
+                <label style="display: inline; margin-right: 0.5em;" for="tree-chooser">DEMO - Choose a tree to illustrate</label>
+                <select id="tree-chooser" style="margin-bottom: 0;"
                         data-bind="options: availableTrees,
                                    optionsValue: 'name',
                                    optionsText: 'name',
                                    event: {change: useChosenData}">
                 </select>
+<!--
                 <br/>
                 <label for="tree-upload">... or upload a tree file</label>
                 <br/>
@@ -68,8 +68,10 @@
                 <input id="tree-url" type="text" placeholder="Enter URL here"
                        TODO-data-bind="event: {change: useChosenData}"
                 ></input>
+-->
             </div>
 
+<!--
             <div style="margin-bottom: 1em;">
                 <label for="style-chooser">Choose a general style for this illustration</label>
                 <br/>
@@ -80,29 +82,24 @@
                                    event: {change: useChosenStyle}">
                 </select>
             </div>
+-->
 
-
+<div class="help-text">
+    Click the blocks below to explore the illustration editor.
+</div>
             
 <div class="accordion" id="ti-main-accordion">
 
   <div class="accordion-group panel panel-default">
     <div class="accordion-heading panel-heading">
       <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-general">
-        General illustration properties
+        About this illustration
         <i class="indicator icon-chevron-down Xicon-white  pull-right"></i>
       </a> 
     </div>
     <div id="ti-panel-general" class="accordion-body panel-body collapse">
       <div class="accordion-inner">
-        <ul>
-            <li>toggle rulers? [checkbox]</li>
-            <li>dimensions [width, height]</li>
-            <li>units</li>
-            <li></li>
-            <li></li>
-            <li></li>
-        </ul>
-        <h5>Metadata</h5>
+        <em>Here we can manage metadata for the illustration</em>
         <ul>
             <li>illustration name</li>
             <li>description</li>
@@ -114,15 +111,16 @@
     </div>
   </div>
 
-  <div class="accordion-group panel panel-default">
+  <div class="accordion-group panel panel-default" style="margin-bottom: 0.4em;">
     <div class="accordion-heading panel-heading">
       <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-styles">
-        Styles / template
+        Template & style
         <i class="indicator icon-chevron-down Xicon-white  pull-right"></i>
       </a> 
     </div>
     <div id="ti-panel-styles" class="accordion-body panel-body collapse">
       <div class="accordion-inner">
+        <em>Choose a template with constraints and default styles. Override as needed.</em>
         <ul>
             <li>style name and source</li>
             <li>style description</li>
@@ -148,6 +146,7 @@
     </div>
     <div id="ti-panel-tree-0" class="accordion-body panel-body collapse">
       <div class="accordion-inner">
+        <em>Once a tree is added, describe its origin and appearance</em>
         <ul>
             <li>tree source</li>
             <li>tree type (data format)</li>
@@ -194,6 +193,7 @@
     </div>
     <div id="ti-panel-data-0" class="accordion-body panel-body collapse">
       <div class="accordion-inner">
+        <em>Add supporting data to enhance displayed trees</em>
         <ul>
             <li>data source</li>
             <li>data type</li>
@@ -214,15 +214,15 @@
     </div>
     <div id="ti-panel-tree-1" class="accordion-body panel-body collapse">
       <div class="accordion-inner">
-        <em>See tree above for likely controls</em>
+        <em>See the tree above for a list of expected contents.</em>
       </div>
     </div>
   </div>
 
-            <div class="button-bar" style="margin-bottom: 1em;">
-                <button class="btn btn-small">Add tree...</button>
-                <button class="btn btn-small">Add supporting data...</button>
-            </div>
+    <div class="button-bar" style="margin-bottom: 0.4em;">
+        <button class="btn btn-small">Add tree...</button>
+        <button class="btn btn-small">Add supporting data...</button>
+    </div>
 
   <div class="accordion-group panel panel-default">
     <div class="accordion-heading panel-heading">
@@ -233,6 +233,7 @@
     </div>
     <div id="ti-panel-ornaments" class="accordion-body panel-body collapse">
       <div class="accordion-inner">
+        <em>Special features added to this illustration</em>
         <ul>
             <li>PhyloPic or other images?</li>
             <li>Captions and text blocks?</li>
@@ -252,8 +253,8 @@
     </div>
     <div id="ti-panel-presentation" class="accordion-body panel-body collapse">
       <div class="accordion-inner">
+        <em>This would be a wild nice-to-have, an interactive illustration.</em>
         <ul>
-            <li><em>This would be a wild nice-to-have, an interactive illustration.</em></li>
             <li>Allow several named presentations per illustration?</li>
             <li>Presentation = a series of "snapshots" of this illustration over time</li>
             <li>For each snapshot:
