@@ -1358,14 +1358,75 @@ function testRemoveElement() {
 }
 
 /* Accordion UI helpers */
-function toggleChevron(e) {
-    console.log('TOGGLE!');
+function accordionPanelShown(e) {
+    var $heading = $(e.target).prev('.panel-heading');
+    $heading.find("i.help-rollover")
+        .text('Click to close this panel');
+}
+function accordionPanelHidden(e) {
+    var $heading = $(e.target).prev('.panel-heading');
+    $heading.find("i.help-rollover")
+        .text('Click to open this panel');
+}
+function showAccordionHint(e) {
     $(e.target)
-        .prev('.panel-heading')
-        .find("i.indicator")
-        .toggleClass('icon-chevron-down icon-chevron-up');
+        .find("i.help-rollover")
+        .show();
+}
+function hideAccordionHint(e) {
+    $(e.target)
+        .find("i.help-rollover")
+        .hide();
+}
+function movePanelUp(e) {
+    var $widget = $(e.target);
+    if ($widget.hasClass('move-disabled')) return false;
+    var $panel = $(e.target).closest('.panel');
+    if ($panel.prev().prev().length) {
+        $panel.insertAfter($panel.prev().prev());
+    } else {
+        $panel.closest('.accordion').prepend($panel);
+    }
+    updateMoveWidgets();
+    return false; // no more actions here
+}
+function movePanelDown(e) {
+    var $widget = $(e.target);
+    if ($widget.hasClass('move-disabled')) return false;
+    var $panel = $(e.target).closest('.panel');
+    $panel.insertAfter($panel.next());
+    updateMoveWidgets();
+    return false; // no more actions here
+}
+function updateMoveWidgets() {
+    var $panels = $('#ti-main-accordion > .panel');
+    $panels.each(function(i, panel) {
+        var $panel = $(panel);
+        if ($panel.prev('.tree-panel, .data-panel').length) {
+            // enable move-up widget
+            $panel.find('.panel-heading .move-up').removeClass('move-disabled');
+        } else {
+            // nowhere to move, disable it
+            $panel.find('.panel-heading .move-up').addClass('move-disabled');
+        }
+        if ($panel.next('.tree-panel, .data-panel').length) {
+            // enable move-down widget
+            $panel.find('.panel-heading .move-down').removeClass('move-disabled');
+        } else {
+            // nowhere to move, disable it
+            $panel.find('.panel-heading .move-down').addClass('move-disabled');
+        }
+    });
 }
 $(document).ready(function() {
-    $('#ti-main-accordion .panel-body').on('hide', toggleChevron);
-    $('#ti-main-accordion .panel-body').on('show', toggleChevron);
+    $('#ti-main-accordion .panel-body').on('shown', accordionPanelShown);
+    $('#ti-main-accordion .panel-body').on('hidden', accordionPanelHidden);
+
+    $('#ti-main-accordion .panel-heading').on('mouseenter', showAccordionHint);
+    $('#ti-main-accordion .panel-heading').on('mouseleave', hideAccordionHint);
+
+    $('#ti-main-accordion .move-up').on('click', movePanelUp);
+    $('#ti-main-accordion .move-down').on('click', movePanelDown);
+
+    updateMoveWidgets();
 });

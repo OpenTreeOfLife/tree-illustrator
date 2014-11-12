@@ -22,7 +22,7 @@
    <div class="container-fluid">
    <div class="row-fluid">
     <div class="span12" style="margin-bottom: 0.5em;">
-        <h2 style="margin: 0 0 4px;">Cascading stylist</h2>
+        <h2 style="margin: 0 0 4px;">Tree Illustrator (prototype)</h2>
         <em>
             Pixels/inch: <strong id="display-ppi-indicator">-</strong>
             &nbsp;
@@ -94,10 +94,10 @@
     <div class="accordion-heading panel-heading">
       <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-general">
         About this illustration
-        <i class="indicator icon-chevron-down Xicon-white  pull-right"></i>
+        <i class="help-rollover">Click to close this panel</i>
       </a> 
     </div>
-    <div id="ti-panel-general" class="accordion-body panel-body collapse">
+    <div id="ti-panel-general" class="accordion-body panel-body collapse in">
       <div class="accordion-inner">
         <em>Here we can manage metadata for the illustration</em>
         <ul>
@@ -114,8 +114,8 @@
   <div class="accordion-group panel panel-default" style="margin-bottom: 0.4em;">
     <div class="accordion-heading panel-heading">
       <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-styles">
-        Template & style
-        <i class="indicator icon-chevron-down Xicon-white  pull-right"></i>
+        Template & default styles
+        <i class="help-rollover">Click to open this panel</i>
       </a> 
     </div>
     <div id="ti-panel-styles" class="accordion-body panel-body collapse">
@@ -136,11 +136,13 @@
     </div>
   </div>
 
-  <div class="accordion-group panel panel-success">
+  <div class="accordion-group panel tree-panel panel-success">
     <div class="accordion-heading panel-heading">
       <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-tree-0">
         Crown Carnivora with parsimony
-        <i class="indicator icon-chevron-down Xicon-white  pull-right"></i>
+        <i class="help-rollover">Click to open this panel</i>
+        <i class="indicator move-down icon-chevron-down Xicon-white  pull-right"></i>
+        <i class="indicator move-up icon-chevron-up Xicon-white  pull-right"></i>
         <span class="element-type">tree</span> 
       </a>
     </div>
@@ -183,11 +185,13 @@
       </div>
     </div>
   </div>
-  <div class="accordion-group panel panel-warning">
+  <div class="accordion-group panel data-panel panel-warning">
     <div class="accordion-heading panel-heading">
       <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-data-0">
         Trait data for crown Carnivora
-        <i class="indicator icon-chevron-down Xicon-white  pull-right"></i>
+        <i class="help-rollover">Click to open this panel</i>
+        <i class="indicator move-down icon-chevron-down Xicon-white  pull-right"></i>
+        <i class="indicator move-up icon-chevron-up Xicon-white  pull-right"></i>
         <span class="element-type">data</span> 
       </a>
     </div>
@@ -204,11 +208,13 @@
     </div>
   </div>
 
-  <div class="accordion-group panel panel-success">
+  <div class="accordion-group panel tree-panel panel-success">
     <div class="accordion-heading panel-heading">
       <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-tree-1">
         Carnivora from Klein, 2002
-        <i class="indicator icon-chevron-down Xicon-white  pull-right"></i>
+        <i class="help-rollover">Click to open this panel</i>
+        <i class="indicator move-down icon-chevron-down Xicon-white  pull-right"></i>
+        <i class="indicator move-up icon-chevron-up Xicon-white  pull-right"></i>
         <span class="element-type">tree</span> 
       </a>
     </div>
@@ -228,7 +234,6 @@
     <div class="accordion-heading panel-heading">
       <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-ornaments">
         Ornaments
-        <i class="indicator icon-chevron-down Xicon-white  pull-right"></i>
       </a>
     </div>
     <div id="ti-panel-ornaments" class="accordion-body panel-body collapse">
@@ -248,7 +253,6 @@
     <div class="accordion-heading panel-heading">
       <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-presentation">
         Presentation
-        <i class="indicator icon-chevron-down Xicon-white  pull-right"></i>
       </a>
     </div>
     <div id="ti-panel-presentation" class="accordion-body panel-body collapse">

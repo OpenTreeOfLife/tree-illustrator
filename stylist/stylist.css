@@ -118,6 +118,7 @@ g.outer-axis text {
 .panel-heading > .panel-title {
   color: #000;
   font-weight: bold;
+  text-decoration: none;
 }
 .panel-default > .panel-heading {
   background-image: -webkit-linear-gradient(top, #f5f5f5 0%, #e8e8e8 100%);
@@ -177,4 +178,18 @@ g.outer-axis text {
 .help-text {
     padding: 4px 8px;
     font-style: italic;
+}
+.help-rollover {
+    display: none;
+    font-weight: normal;
+    color: #777;
+    padding-left: 0.75em;
+}
+.move-up, .move-down, .move-disabled {
+   border: 6px solid transparent;
+   margin: -6px 0;
+}
+.move-disabled {
+    opacity: 0.3;
+    cursor: default;
 }
