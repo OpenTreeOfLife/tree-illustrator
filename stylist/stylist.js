@@ -1242,13 +1242,19 @@ function enableViewportMask() {
     d3.select('#viewport-background')
         .attr('x', viewbox.x)
         .attr('y', viewbox.y);
+    viewportSVG.selectAll("#viewport-background, #illustration-background")
+        .style("visibility", "visible");
 }
 function disableViewportMask() {
     // remove and clean up masking stuff (prior to printing?)
     var viewportSVG = d3.selectAll("#viz-outer-frame div.vega svg");
     viewportSVG.attr('mask', null);
+/*
     viewportSVG.selectAll("#viewport-background").remove();
     viewportSVG.selectAll("#illustration-background").remove();
+*/
+    viewportSVG.selectAll("#viewport-background, #illustration-background")
+        .style("visibility", "hidden");
 }
 
 function enablePrintingCropArea() {
@@ -1268,16 +1274,99 @@ function hidePrintingDiagnostics() {
     hidePrintingRulers();
 }
 function showPrintingCropMarks() {
+    var viewportSVG = d3.selectAll("#viz-outer-frame div.vega svg");
+    if (viewportSVG.empty()) {
+        console.warn("showPrintingCropMarks(): viewport SVG not found!");
+        return null;
+    }
+    if (viewportSVG.selectAll("#crop-marks").empty()) {
+        // create instance of crop marks and 
+        viewportSVG.insert('use', 'svg > g')
+                .attr('id', 'crop-marks')
+                .attr('xlink:href', '#printing-crop-marks');
+    }
+    // adjust placement of marks to match for illustration size
+    var printTopEdge = 0;  // no need to set these
+    var printLeftEdge = 0;
+    var printBottomEdge = physicalUnitsToPixels(physicalHeight, internal_ppi);
+    var printRightEdge = physicalUnitsToPixels(physicalWidth, internal_ppi);
+    d3.select('#crop-mark-top-right')
+        .attr('transform', "translate("+ printRightEdge +", 0)");
+    d3.select('#crop-mark-bottom-left')
+        .attr('transform', "translate(0, "+ printBottomEdge +")");
+    d3.select('#crop-mark-bottom-right')
+        .attr('transform', "translate("+ printRightEdge +", "+ printBottomEdge +")");
 }
 function hidePrintingCropMarks() {
+    // remove all crop-mark instances
+    var viewportSVG = d3.selectAll("#viz-outer-frame div.vega svg");
+    viewportSVG.selectAll("#crop-marks").remove();
 }
 function showPrintingDescription() {
+    var viewportSVG = d3.selectAll("#viz-outer-frame div.vega svg");
+    if (viewportSVG.empty()) {
+        console.warn("showPrintingDescription(): viewport SVG not found!");
+        return null;
+    }
+    if (viewportSVG.selectAll("#description").empty()) {
+        // create instance of crop marks and 
+        viewportSVG.insert('use', 'svg > g')
+                .attr('id', 'description')
+                .attr('xlink:href', '#printing-description')
+                .attr('x', -50)
+                .attr('y', -110);
+    }
+    d3.select('#printing-description-name')
+        .text("TODO: Add the actual illustration name, or 'Untitled'");
+    var rightNow = new Date();
+    var displayDateTime = "Generated "+ rightNow.toLocaleDateString() +" - "+ rightNow.toLocaleTimeString();
+    d3.select('#printing-description-datetime')
+        .text(displayDateTime);
 }
 function hidePrintingDescription() {
+    // remove description instance
+    var viewportSVG = d3.selectAll("#viz-outer-frame div.vega svg");
+    viewportSVG.selectAll("#description").remove();
 }
 function showPrintingRulers() {
+    var viewportSVG = d3.selectAll("#viz-outer-frame div.vega svg");
+    if (viewportSVG.empty()) {
+        console.warn("showPrintingDescription(): viewport SVG not found!");
+        return null;
+    }
+    if (viewportSVG.selectAll("#rulers").empty()) {
+        // create instance of crop marks and 
+        viewportSVG.insert('use', 'svg > g')
+                .attr('id', 'rulers')
+                .attr('xlink:href', '#printing-rulers')
+                .attr('x', 0)
+                .attr('y', -60);
+    }
+    // set scale for inch ruler
+    var unitWidth = inchesToPixels(1.0, internal_ppi);
+    d3.select('#ruler-inches line')
+        .attr('x2', 6 * unitWidth);
+    d3.selectAll('#ruler-inches rect')
+        .each(function(d,i) {
+            d3.select(this)
+                .attr('width', unitWidth)
+                .attr('x', (i * 2 * unitWidth) + unitWidth)
+        });
+    // set scale for cm ruler
+    unitWidth = centimetersToPixels(1.0, internal_ppi);
+    d3.select('#ruler-cm line')
+        .attr('x2', 16 * unitWidth);
+    d3.selectAll('#ruler-cm rect')
+        .each(function(d,i) {
+            d3.select(this)
+                .attr('width', unitWidth)
+                .attr('x', (i * 2 * unitWidth) + unitWidth)
+        });
 }
 function hidePrintingRulers() {
+    // remove description instance
+    var viewportSVG = d3.selectAll("#viz-outer-frame div.vega svg");
+    viewportSVG.selectAll("#rulers").remove();
 }
 
 function getPrintableSVG( options ) {
@@ -1336,7 +1425,8 @@ function printIllustration() {
         alert("Please allow popups for this domain.");
         return;
     }
-    w.document.write(getPrintableSVG());
+    var showDiagnostics = $('#toggle-printing-diagnostics').is(':checked');
+    w.document.write(getPrintableSVG( {INCLUDE_DIAGNOSTICS: showDiagnostics} ));
     w.print();
     w.close();
 }
