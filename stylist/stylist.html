@@ -300,6 +300,9 @@
             <rect id="illustration-bounds" fill="#fff"></rect>
           </g>
         </mask>
+        <clipPath id="printing-clip-path">
+            <use xlink:href="#illustration-bounds" />
+        </clipPath>
         <g id="printing-crop-marks">
             <g id="crop-mark-top-left">
                 <path stroke="black" stroke-width="0.25pt" fill="none" d="M 0 -10 V -50" />
@@ -318,13 +321,15 @@
                 <path stroke="black" stroke-width="0.25pt" fill="none" d="M 10 0 H 50" />
             </g>
         </g>
-        <text id="printing-description">
-            <tspan id="printing-description-name" style="font-weight: bold;">_NAME_</tspan>
-            <tspan id="printing-description-datetime" x="0" dy="18">_DATETIME_</tspan>
-        </text>
+        <g id="printing-description">
+            <text id="printing-description-name" x="0" y="0" 
+                  style="font-family: sans-serif; font-weight: bold;">_NAME_</text>
+            <text id="printing-description-datetime" x="0" y="18"
+                  style="font-family: sans-serif; font-size: 0.8em;">_DATETIME_</text>
+        </g>
         <g id="printing-rulers">
             <g id="ruler-cm">
-                <text style="font-size: 0.5em; text-anchor: end;" x="-4" y="-16">cm</text>
+                <text style="font-family: sans-serif; font-size: 0.5em; text-anchor: end;" x="-4" y="-16">cm</text>
                 <line x1="0" y1="-15" x2="100" y2="-15" stroke="#000" stroke-width="0.25pt" stroke-linecap="square"/>
                 <rect fill="#000" stroke="none"  x="10" y="-20" width="10" height="5"/>
                 <rect fill="#000" stroke="none"  x="30" y="-20" width="10" height="5"/>
@@ -336,7 +341,7 @@
                 <rect fill="#000" stroke="none" x="150" y="-20" width="10" height="5"/>
             </g>
             <g id="ruler-inches">
-                <text style="font-size: 0.5em; text-anchor: end;" x="-4" y="-1">inches</text>
+                <text style="font-family: sans-serif; font-size: 0.5em; text-anchor: end;" x="-4" y="-1">inches</text>
                 <line x1="0" y1="0" x2="100" y2="0" stroke="#000" stroke-width="0.25pt" stroke-linecap="square"/>
                 <rect fill="#000" stroke="none" x="10" y="-5" width="10" height="5"/>
                 <rect fill="#000" stroke="none" x="30" y="-5" width="10" height="5"/>

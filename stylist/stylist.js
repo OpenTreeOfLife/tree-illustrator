@@ -114,44 +114,10 @@ function updateViewportViewbox($viewport) {
      */
     var ebox = getInclusiveIllustrationBoundingBox();
     // this is the area with all illustration elements
-    ///console.log(">>> inclusive box:");
-    ///console.log(ebox);
     var center = {
         x: ebox.x + (ebox.width / 2),
         y: ebox.y + (ebox.height / 2)
     };
-    ///console.log(">>> inclusive center:");
-    ///console.log(center);
-
-/* SUPERSEDED by padding logic below
-     * Project current in-view rectangle to *internal* pixels (bbox units) to
-     * determine necessary padding.
-     *
-    var displayToInternalPx = viewbox.width / vpDiv.scrollWidth;
-    var vbox = {
-        x: viewbox.x + (vpDiv.scrollLeft * displayToInternalPx),
-        y: viewbox.y + (vpDiv.scrollTop * displayToInternalPx),
-        width: vpDiv.clientWidth * displayToInternalPx,
-        height: vpDiv.clientHeight * displayToInternalPx
-    }
-console.log(">>> illustration area in view:");
-console.log(vbox);
-vbox = ebox;
-
-     * For a steady view with no gaps, the new viewbox needs to include all
-     * illustration elements PLUS this visible area.
-     *
-    var newLeft = Math.min( vbox.x, ebox.x );
-    var newTop = Math.min( vbox.y, ebox.y );
-    var newRight = Math.max( vbox.x + vbox.width, ebox.x + ebox.width);
-    var newBottom = Math.max( vbox.y + vbox.height, ebox.y + ebox.height); 
-    viewbox.x = newLeft;
-    viewbox.y = newTop;
-    viewbox.width = newRight - newLeft;
-    viewbox.height = newBottom - newTop;
-    ///console.log(">>> MODIFIED viewbox:");
-    ///console.log(viewbox);
-*/
 
     // copy to our persistent viewbox
     for (var prop in ebox) {
@@ -177,8 +143,6 @@ vbox = ebox;
         viewbox.height = adjustedHeight;
         viewbox.y -= (extraHeight / 2);
     }
-    ///console.log(">>> PADDED viewbox:");
-    ///console.log(viewbox);
 
     // move our background to the new viewport top-left corner
     d3.selectAll('#viewport-background, #viewport-bounds')
@@ -208,18 +172,18 @@ vbox = ebox;
     $('#svg-width-indicator').html(svg.getAttribute('width'));
     $('#svg-height-indicator').html(svg.getAttribute('height'));
 
-/*
-console.log('OLD div w: '+ svg.getAttribute('width'));
-console.log('  viewbox.width: '+ viewbox.width);
-console.log('  * magnification: '+ viewportMagnification);
-console.log('  NEW div w: '+ viewbox.width * viewportMagnification);
-console.log('  INT div w: '+ Math.round(viewbox.width * viewportMagnification));
-console.log('OLD div h: '+ svg.getAttribute('height'));
-console.log('  viewbox.height: '+ viewbox.height);
-console.log('  * magnification: '+ viewportMagnification);
-console.log('  NEW div h: '+ viewbox.height * viewportMagnification);
-console.log('  INT div h: '+ Math.round(viewbox.height * viewportMagnification));
-*/
+    /*
+    console.log('OLD div w: '+ svg.getAttribute('width'));
+    console.log('  viewbox.width: '+ viewbox.width);
+    console.log('  * magnification: '+ viewportMagnification);
+    console.log('  NEW div w: '+ viewbox.width * viewportMagnification);
+    console.log('  INT div w: '+ Math.round(viewbox.width * viewportMagnification));
+    console.log('OLD div h: '+ svg.getAttribute('height'));
+    console.log('  viewbox.height: '+ viewbox.height);
+    console.log('  * magnification: '+ viewportMagnification);
+    console.log('  NEW div h: '+ viewbox.height * viewportMagnification);
+    console.log('  INT div h: '+ Math.round(viewbox.height * viewportMagnification));
+    */
 }
 
 var availableStyles = [
@@ -245,8 +209,8 @@ var availableStyles = [
                   "x": {"value": 0},
                   "y": {"value": 0}, // {"scale": "g", "field": "key"},
                   "height": {"value": physicalUnitsToPixels(physicalHeight, internal_ppi) },  // {"group": "height"}, // {"scale": "g", "band": true},
-                  "width": {"value": physicalUnitsToPixels(physicalWidth, internal_ppi) },      // {"group": "width"},
-                  "stroke": {"value": "#ccc"}
+                  "width": {"value": physicalUnitsToPixels(physicalWidth, internal_ppi) }      // {"group": "width"},
+                  //"stroke": {"value": "#ccc"}
                 },
                 "update": {
                   //"transform": {"value":"rotate(-25)"}  // ???
@@ -1192,6 +1156,55 @@ function getInclusiveIllustrationBoundingBox() {
     return d3.select('g.illustration-elements').node().getBBox();
     // this designated group should contain all illustration elements
 }
+function getDiagnosticBoundingBox() {
+    // gather outermost bounds based on diagnostic elements found
+    var bbox = getMinimalIllustrationBoundingBox();
+    var viewportSVG = d3.select("#viz-outer-frame div.vega svg");
+    var rulers = viewportSVG.select("#rulers").node();
+    if (rulers) {
+        bbox = getCombinedBoundingBox( bbox, rulers.getBBox() );
+    }
+    var cropmarks = viewportSVG.select("#crop-marks").node();
+    if (cropmarks) {
+        bbox = getCombinedBoundingBox( bbox, cropmarks.getBBox() );
+    }
+    var description = viewportSVG.select("#description").node();
+    if (description) {
+        bbox = getCombinedBoundingBox( bbox, description.getBBox() );
+    }
+    return bbox;
+}
+function getCombinedBoundingBox( box1, box2 ) {
+    // reckon the "union" of two bounding boxes
+    var bbox = $.extend({}, box1);
+    // compare (obvious) left and top extents
+    var bboxLeft = bbox.x;
+    var box2Left = box2.x;
+    if (box2Left < bboxLeft) {
+        // increase width, then reset left edge
+        bbox.width = bbox.width + (bboxLeft - box2Left);
+        bbox.x = box2Left;
+    }
+    var bboxTop = bbox.y;
+    var box2Top = box2.y;
+    if (box2Top < bboxTop) {
+        // increase height, then reset top edge
+        bbox.height = bbox.height + (bboxTop - box2Top);
+        bbox.y = box2Top;
+    }
+    // compare (implicit) right and bottom extents
+    var bboxRight = bbox.x + bbox.width;
+    var box2Right = box2.x + box2.width;
+    if (box2Right > bboxRight) {
+        bbox.width = box2Right - bbox.x;
+    }
+    var bboxBottom = bbox.y + bbox.height;
+    var box2Bottom = box2.y + box2.height;
+    if (box2Bottom > bboxBottom) {
+        bbox.height = box2Bottom - bbox.y;
+    }
+    return bbox;
+}
 
 /* Manage re-usable SVG elements in the viewport. These are typically defined
    in a persistent SVG defs element, where they can be modified and re-used
@@ -1258,8 +1271,12 @@ function disableViewportMask() {
 }
 
 function enablePrintingCropArea() {
+    d3.select('div.vega svg g.illustration-elements')
+        .style('clip-path','url(#printing-clip-path)');
 }
 function disablePrintingCropArea() {
+    d3.select('div.vega svg g.illustration-elements')
+        .style('clip-path','none');
 }
 
 /* Manage diagnostic markings (crop marks, description, rulers) for printed output */
@@ -1312,15 +1329,18 @@ function showPrintingDescription() {
         // create instance of crop marks and 
         viewportSVG.insert('use', 'svg > g')
                 .attr('id', 'description')
-                .attr('xlink:href', '#printing-description')
-                .attr('x', -50)
-                .attr('y', -110);
+                .attr('xlink:href', '#printing-description');
     }
+    // NOTE that we need to move the *original* text element to get its proper bounding box!
     d3.select('#printing-description-name')
+        .attr('x', -50)
+        .attr('y', -110)
         .text("TODO: Add the actual illustration name, or 'Untitled'");
     var rightNow = new Date();
     var displayDateTime = "Generated "+ rightNow.toLocaleDateString() +" - "+ rightNow.toLocaleTimeString();
     d3.select('#printing-description-datetime')
+        .attr('x', -50)
+        .attr('y', -94)
         .text(displayDateTime);
 }
 function hidePrintingDescription() {
@@ -1379,34 +1399,68 @@ function getPrintableSVG( options ) {
         showPrintingDiagnostics();
     }
 
-    // shift the main SVG dimensions to physical units (for more accurate print size)
+    // capture the viewbox and pixel dimensions of the current working view
     var illustration = d3.select('#viz-outer-frame div.vega svg');
-    var pxWidth = illustration.attr("width");
-    var pxHeight = illustration.attr("height");
+    var workingView = {
+        'width': illustration.attr("width"),
+        'height': illustration.attr("height"),
+        'viewBox': illustration.attr("viewBox")
+    }
+
+    // modify the viewbox to capture just the illustration elements (and possibly diagnostic stuff)
+    var printViewBox = (options.INCLUDE_DIAGNOSTICS) ?
+        getDiagnosticBoundingBox() : 
+        getMinimalIllustrationBoundingBox();
+
+    /*
+    console.log("printViewBox: ");
+    console.log(printViewBox);
+    */
+
+    // shift the main SVG dimensions to physical units (for more accurate print size)
     var unitSuffix = getPhysicalUnitSuffix();
     // reckon physical size in default (print-ready) ppi to "freeze" the pixel size of the top-level SVG
     illustration
-        .attr("width", pixelsToPhysicalUnits(pxWidth, display_ppi) + unitSuffix)
-        .attr("height", pixelsToPhysicalUnits(pxHeight, display_ppi) + unitSuffix);
-    /* TODO: Overhaul this to use: 
-     *  > internal_ppi
-     *  > the defined illustration size 
-     *  > modified viewbox (restrict to the illustration area!)
-     *  > optional padding for diagnostic markings, if (options.INCLUDE_DIAGNOSTICS) { ... }
-     */
+        /* N.B. Relying on "natural" SVG res (90 ppi) prints not-quite to scale!
+        .attr("width", printViewBox.width)   // rely on built-in ?
+        .attr("height", printViewBox.height)
+        */
+        // Explicitly state WRONG physical size, using browser PPI; prints correctly, but gives me a migraine
+        .attr("width", pixelsToPhysicalUnits(printViewBox.width, browser_ppi) + unitSuffix)
+        .attr("height", pixelsToPhysicalUnits(printViewBox.height, browser_ppi) + unitSuffix)
+        .attr("viewBox", (printViewBox.x +' '+ printViewBox.y +' '+ printViewBox.width +' '+printViewBox.height));
+
+    /*
+    console.log( "w: "+ illustration.attr('width') );
+    console.log( "h: "+ illustration.attr('height') );
+    console.log( "v: "+ illustration.attr('viewBox') );
+    console.log("display_ppi: "+ display_ppi);
+    console.log("internal_ppi: "+ internal_ppi);
+    console.log("browser_ppi: "+ internal_ppi);
+    console.log("viewportMagnification: "+ viewportMagnification);
+    */
 
     // momentarily "splice" persistent defs into the illustration, capture the result
     var toolbox = d3.select('#svg-toolbox');
     var defs = toolbox.select('defs');
     $(illustration.node()).prepend(defs);
+
+    /*
+     * Capture the resulting SVG (ie, The Moment of Truth)... 
+     */
     var combinedSVG = $('#viz-outer-frame div.vega').html();
+    /*
+     * ... then unwind all these changes to restore our normal working view. 
+     */
+
     // replace the persistent defs
     $(toolbox.node()).prepend(defs);
 
     // restore pixel dimensions (in deference to Vega)
     illustration
-        .attr("width", pxWidth)
-        .attr("height", pxHeight);
+        .attr("width", workingView.width)
+        .attr("height", workingView.height)
+        .attr("viewBox", workingView.viewBox);
 
     // reverse all the previous steps
     if (options.INCLUDE_DIAGNOSTICS) {
@@ -1436,8 +1490,8 @@ function testAddElement() {
         .append('rect')
             .attr('id','RED-RECT')
             .style('fill','#500')
-            .attr('x', -400)
-            .attr('y', 0)
+            .attr('x', 325)
+            .attr('y', 400)
             .attr('width', '100')
             .attr('height', '80');
     initTreeIllustratorWindow();
