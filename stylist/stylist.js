@@ -703,7 +703,7 @@ var tg, tn, te, rn;
 var viewModel;
 $(document).ready(function() {
     // test for the preset ppi (pixels / inch) in this browser
-    browser_ppi = $('#svg-toolbox').width();
+    browser_ppi = $('#svg-toolbox').width() / 10.0;
     // NOTE that this is still unlikely to match the physical size of any particular monitor!
     // If that's important, we might want to let the user tweak this value.
     $('#browser-ppi-indicator').text(browser_ppi);
