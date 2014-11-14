@@ -59,6 +59,13 @@ console.log(data);
     // add all possible labels to each node
     var tree = getSpecifiedTree();
     $.each(data.phyloNodes, function(i, node) {
+        /* N.B. It's best to provide at least an empty string for all
+         * properties, to avoid showing 'undefined' labels in some browsers.
+         */
+        node.explicitLabel = '';
+        node.originalLabel = '';
+        node.ottTaxonName = '';
+        node.ottId = '';
         if ('label' in node) {
             console.log(">> node "+ i +" has 'label'");
             node.explicitLabel = node['label'];
