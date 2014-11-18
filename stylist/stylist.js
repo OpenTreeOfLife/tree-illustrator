@@ -482,7 +482,6 @@ var availableStyles = [
  * (re)loading the illustration?
  */
 var vegaSpec;
-alert('vegaSpec!');
 function refreshViz(options) {
     if (!viewModel.style) return;
     if (!options) options = {}; 
