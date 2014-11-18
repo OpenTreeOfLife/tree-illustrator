@@ -1,28 +1,43 @@
-//vg.data.phylogram = d3.phylogram.rightAngleDiagonal;
+/*
+ * In this editor, we generate a declarative Vega spec (and its downstream d3
+ * visualization) from a more descriptive scene-graph model. This corresponds
+ * closely with a web UI that's bound and enabled using KnockoutJS.
+ */
 
+/* TODO: Offer all studies and trees from the Open Tree of Life repository,
+ * plus other sources and tree formats.
+ */
 var availableTrees = [
     {
         name: "Gazis, 2014", 
-        url: buildStudyFetchURL( 'pg_2818' )
-       /* TODO: provide more IDs here?
+        /* TODO: provide more IDs here (esp. tree ID)
         studyID: 'pg_10',
         treeID: 'tree5',
         otusID: 'otus2'
         */ 
+        url: buildStudyFetchURL( 'pg_2818' )
+    },
+    {
+        name: "Tuovila, 2013", 
+        url: buildStudyFetchURL( '2380' )
+        /* NOTE that this one has two trees!
+        treeID: 'tree4999',
+        otusID: 'tree5000'
+        */ 
     },
     {
         name: "Jansen, 2007", 
-        url: buildStudyFetchURL( 'pg_10' ), // "./pg_10.json"
+        url: buildStudyFetchURL( 'pg_10' )
     },
     {
         name: "Drew BT, 2014", 
         url: buildStudyFetchURL( 'pg_2821' )
     }
-
 ];
 
 
-/* Conversion utilities for physical units */
+/* Conversion utilities for physical units
+ */
 var cm_per_inch = 2.54;
 function inchesToCentimeters( inches ) {
     return inches * cm_per_inch;
@@ -67,13 +82,18 @@ function getPhysicalUnitSuffix() {
     }
 }
 
-/* ruler metrics (adjust for legibility) */
+// ruler metrics (adjust for legibility)
 var rulerWidth = 25;  // px
 
+// TODO: These key properties should be driven from the loaded illustration
 var physicalUnits = 'INCHES'; // 'CENTIMETERS' | 'INCHES'
 var physicalWidth = 4.0;      // in the chosen units
 var physicalHeight = 5.0;
 
+/* Maintain a few independent scales (in pixels/inch) to support the
+ * illustration editor. These will sometimes align, but it's vital that we can
+ * discriminate between them as each is suited for a different purposes.
+ */
 var browser_ppi;  // SVG resolution in current browser (not reliable!)
 var internal_ppi = 90;  // SVG default pixels per inch (can be modified to suit printing device)
 var display_ppi = internal_ppi;  // pixels per inch at current magnification (zoom level)
@@ -186,6 +206,11 @@ function updateViewportViewbox($viewport) {
     */
 }
 
+/* TODO: Load available styles from an external source or store. These might be
+ * shared or private. Styles should include name and description, defaults for
+ * most visual properties, and constraints (soft or hard) that we can test
+ * against.
+ */
 var availableStyles = [
     {
         name: "Basic", 
@@ -427,73 +452,7 @@ var availableStyles = [
         } /* end of Basic style */
     }, /* end of Basic */
 
-/*
-    {
-        name: "Nature", 
-        style:  {
-          "width": 300,
-          "height": 500,
-          "padding": {"top": 80, "left": 30, "bottom": 30, "right": 10},
-          //"data": [{"name": "table"}],
-          "scales": [
-            {
-              "name": "x", "type": "ordinal", "range": "width",
-              "domain": {"data": "table", "field": "data.x"}
-            },
-            {
-              "name": "y", "range": "height", "nice": true,
-              "domain": {"data": "table", "field": "data.y"}
-            }
-          ],
-          "axes": [
-            {"type": "x", "scale": "x"},
-            {"type": "y", "scale": "y"}
-          ],
-          "marks": [
-            {
-              "type": "rect",
-              "from": {"data": "table"},
-              "properties": {
-                "enter": {
-                  "x": {"scale": "x", "field": "data.x"},
-                  "y": {"scale": "y", "field": "data.y"},
-                  "y2": {"scale": "y", "value": 0},
-                  "width": {"scale": "x", "band": false, "offset": -1}
-                },
-                "update": {
-                  "fill": {"value": "navy"}
-                },
-                "hover": {
-                  "fill": {"value": "yellow"}
-                }
-              }
-            },
-            {
-              "type": "rect",
-              "interactive": false,
-              "from": {"data": "table"},
-              "properties": {
-                "enter": {
-                  "x": {"scale": "x", "field": "data.x", "offset": -3.5},
-                  "y": {"scale": "y", "field": "data.y", "offset": -3.5},
-                  "y2": {"scale": "y", "value": 0, "offset": 3.5},
-                  "width": {"scale": "x", "band": false, "offset": 6},
-                  "fill": {"value": "transparent"},
-                  "stroke": {"value": "red"},
-                  "strokeWidth": {"value": 2}
-                },
-                "update": {
-                  "strokeOpacity": {"value": 0}
-                },
-                "hover": {
-                  "strokeOpacity": {"value": 1}
-                }
-              }
-            }
-          ]
-        }
-    },
-*/
+    // more examples, just suggestive names for now
     {
         name: "Phylogram test", 
         style:  { }
@@ -516,105 +475,21 @@ var availableStyles = [
     }
 ];
 
-var spec = {
-  "width": 400,
-  "height": 200,
-  "padding": {"top": 10, "left": 30, "bottom": 30, "right": 10},
-  //"data": [{"name": "table"}],
-  "scales": [
-    {
-      "name": "x", "type": "ordinal", "range": "width",
-      "domain": {"data": "table", "field": "data.x"}
-    },
-    {
-      "name": "y", "range": "height", "nice": false,
-      "domain": {"data": "table", "field": "data.y"}
-    }
-  ],
-  "axes": [
-    {"type": "x", "scale": "x"},
-    {"type": "y", "scale": "y"}
-  ],
-  "marks": [
-    {
-      "type": "rect",
-      "from": {"data": "table"},
-      "properties": {
-        "enter": {
-          "x": {"scale": "x", "field": "data.x"},
-          "y": {"scale": "y", "field": "data.y"},
-          "y2": {"scale": "y", "value": 0},
-          "width": {"scale": "x", "band": false, "offset": -1}
-        },
-        "update": {
-          "fill": {"value": "steelblue"}
-        },
-        "hover": {
-         // "fill": {"value": "red"}
-        }
-      }
-    },
-    {
-      "type": "rect",
-      "interactive": false,
-      "from": {"data": "table"},
-      "properties": {
-        "enter": {
-          "x": {"scale": "x", "field": "data.x", "offset": -3.5},
-          "y": {"scale": "y", "field": "data.y", "offset": -3.5},
-          "y2": {"scale": "y", "value": 0, "offset": 3.5},
-          "width": {"scale": "x", "band": false, "offset": 6},
-          "fill": {"value": "transparent"},
-          "stroke": {"value": "red"},
-          "strokeWidth": {"value": 2}
-        },
-        "update": {
-          "strokeOpacity": {"value": 0}
-        },
-        "hover": {
-          //"strokeOpacity": {"value": 1}
-        }
-      }
-    }
-  ]
-};
-
-/* Offer functions to munge different input formats into d3-compatible JSON.
- * We might ultimately migrate this functionality into the vg.data namespace, but this 
- * is arguably outside of the scope of vega, see for example this discussion:
- *   https://github.com/trifacta/vega/issues/29#issuecomment-16319363
+/* The current Vega spec is generated using the chosen style (above) and 
+ * the illustration source and decisions made in the web UI. When the
+ * illustration is saved, the latest can also be embedded. Or perhaps we should
+ * always generate it fresh from the source data and scene graph whenn
+ * (re)loading the illustration?
  */
-var adapters = {
-    'identity': function( data ) {
-        // do nothing (default filter)
-        return data;
-    },
-    'nexson': function( data ) {
-        // TODO: Repeat transformations from OpenTree curation tool
-        return data;
-    },
-    'arguson': function( data ) {
-        // TODO: Support this (or another format) for piecmeal display of very large trees?
-        return data;
-    },
-    'newick': function( data ) {
-        // TODO: Support other common formats?
-        return data;
-    }
-}
-
-var fullSpec;
+var vegaSpec;
+alert('vegaSpec!');
 function refreshViz(options) {
     if (!viewModel.style) return;
     if (!options) options = {}; 
 
-    // filter the incoming data, if applicable
-    var dataFilter = adapters[ viewModel.dataFormat ];
-    var adaptedData = vg.isFunction(dataFilter) ? dataFilter(viewModel.data) : viewModel.data;
-
     // build the "full" specification, adding study data to preset style
-    fullSpec = $.extend(true, {}, viewModel.style, {'data': viewModel.data});
-    vg.parse.spec(fullSpec, function(chart) {
+    vegaSpec = $.extend(true, {}, viewModel.style, {'data': viewModel.data});
+    vg.parse.spec(vegaSpec, function(chart) {
       var view = chart({el:"#viz-outer-frame", renderer:"svg"})  // , data:viewModel.data})  <== MUST BE INLINE, NOT URL!
 /*
         .on("mouseover", function(event, item) {
