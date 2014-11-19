@@ -575,6 +575,7 @@ function refreshViz(options) {
 var tg, tn, te, rn; 
 
 var viewModel;
+var ill;
 $(document).ready(function() {
     // test for the preset ppi (pixels / inch) in this browser
     browser_ppi = $('#svg-toolbox').width() / 10.0;
@@ -588,6 +589,8 @@ $(document).ready(function() {
     if (mainGroupProperties) {
         mainGroupProperties.height.value = physicalUnitsToPixels(physicalHeight, internal_ppi);
         mainGroupProperties.width.value = physicalUnitsToPixels(physicalWidth, internal_ppi);
+        mainGroupProperties.x.value = physicalUnitsToPixels(physicalWidth/2.0, internal_ppi);
+        mainGroupProperties.y.value = physicalUnitsToPixels(physicalHeight/2.0, internal_ppi);
     }
     var cmHeightScale = availableStyles[0].style.marks[0].scales[1];
     if (cmHeightScale) {
@@ -641,12 +644,13 @@ $(document).ready(function() {
         illustrationID: null,  // TODO: assign a key/ID when saved?
         illustrationName: "Untitled"
     };
+
+    ill = new TreeIllustrator.Illustration();
     var editorArea = $('#editor')[0];
-    ko.applyBindings(viewModel, editorArea);
+    ko.applyBindings(ill, editorArea);
 
     // TODO: Add "safety net" if there are unsaved changes
     // TODO: Add JSON support for older IE?
-    // TODO: Add bootstrap for style+behavior?
 
     // resizing the window should refresh/resize the viewport
     $(window).resize(function() {
