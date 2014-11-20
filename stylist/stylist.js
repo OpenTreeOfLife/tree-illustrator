@@ -234,8 +234,7 @@ var availableStyles = [
                   "x": {"value": 0},
                   "y": {"value": 0}, // {"scale": "g", "field": "key"},
                   "height": {"value": physicalUnitsToPixels(physicalHeight, internal_ppi) },  // {"group": "height"}, // {"scale": "g", "band": true},
-                  "width": {"value": physicalUnitsToPixels(physicalWidth, internal_ppi) }      // {"group": "width"},
-                  //"stroke": {"value": "#ccc"}
+                  "width": {"value": physicalUnitsToPixels(physicalWidth, internal_ppi) }     // {"group": "width"},
                 },
                 "update": {
                   //"transform": {"value":"rotate(-25)"}  // ???
@@ -339,7 +338,12 @@ var availableStyles = [
 
         { 
             "type": "group",
+            "name": "default-tree",  // becomes marker class .default-tree
             "properties": {
+                "enter": {
+                    "x": {"value": 0},
+                    "y": {"value": 0}
+                },
                 "update": {
                     //"transform": {"value":"scale(800,300)"}
                     //"transform": {"value":"rotate(25) scale(20,20)"}
@@ -585,6 +589,7 @@ $(document).ready(function() {
     $('#display-ppi-indicator').text(display_ppi);
 
     // update some of our available styles
+/*
     var mainGroupProperties = availableStyles[0].style.marks[0].properties.enter;
     if (mainGroupProperties) {
         mainGroupProperties.height.value = physicalUnitsToPixels(physicalHeight, internal_ppi);
@@ -592,6 +597,12 @@ $(document).ready(function() {
         mainGroupProperties.x.value = physicalUnitsToPixels(physicalWidth/2.0, internal_ppi);
         mainGroupProperties.y.value = physicalUnitsToPixels(physicalHeight/2.0, internal_ppi);
     }
+*/
+    // nudge default tree into center of canvas
+    var defaultTreeProperties = availableStyles[0].style.marks[0].marks[0].properties.enter;
+    defaultTreeProperties.x.value = physicalUnitsToPixels(physicalWidth/2.0, internal_ppi);
+    defaultTreeProperties.y.value = physicalUnitsToPixels(physicalHeight/2.0, internal_ppi);
+
     var cmHeightScale = availableStyles[0].style.marks[0].scales[1];
     if (cmHeightScale) {
         cmHeightScale.domain = [
@@ -803,9 +814,8 @@ function initTreeIllustratorWindow() {
     updateViewportViewbox( $scrollingViewport );
 
     // sync scrolling of rulers to viewport
-    $scrollingViewport.unbind('scroll').on('scroll', function() {
     //TODO: delegate these for one-time call!
-    //$outerFrame.on('scroll', 'div.vega', function() {
+    $scrollingViewport.unbind('scroll').on('scroll', function() {
         $topRuler.scrollLeft($scrollingViewport.scrollLeft());
         $leftRuler.scrollTop($scrollingViewport.scrollTop());
     });
@@ -1032,7 +1042,8 @@ function getMinimalIllustrationBoundingBox() {
 function getInclusiveIllustrationBoundingBox() {
     // Fetch the region defined for printing, PLUS any "out of bounds" SVG elements.
     return d3.select('g.illustration-elements').node().getBBox();
-    // this designated group should contain all illustration elements
+    /* REMINDER: This designated group should contain all illustration elements
+       and an invisible box matching the printed area. */
 }
 function getDiagnosticBoundingBox() {
     // gather outermost bounds based on diagnostic elements found
