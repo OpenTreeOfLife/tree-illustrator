@@ -13,6 +13,9 @@ var TreeIllustrator = function(window, document, $, ko) {
         return null;
     }
 
+    /* Here we can share information among all classes and instances */
+    //var shared = {};
+
     /* Our principle view model [1] is a single illustration. This uses basic
      * Knockout observables as members, but adds custom behavior. We'll use a
      * family of pseudo-classes to define the main illustration and selected parts.
