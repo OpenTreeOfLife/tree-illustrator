@@ -16,6 +16,12 @@ var TreeIllustrator = function(window, document, $, ko) {
     /* Here we can share information among all classes and instances */
     //var shared = {};
 
+    // define some simple enumerations (for legibility, and to avoid typos)
+    var units = {
+        INCHES: 'inches',
+        CENTIMETERS: 'centimeters'
+    };
+
     /* Return the values for a new illustration (outlines our JSON representation) */
     var getNewIllustrationObject = function(options) {
         if (!options) options = {};
@@ -36,12 +42,35 @@ var TreeIllustrator = function(window, document, $, ko) {
                 'version': {'type': "version number", 'value': "0.1"},  // git SHA, mod date, version number
                 'constraints': {
                     // list constrained labels and values, if any (items not listed are unconstrained)
-                    'units': {
-                        "Inches": "inches",
-                        "Centimeters": "centimeters"
-                    },
-                    'printSizes': {
-                    }
+                    'printSizes': [
+                        {
+                            'name': "Letter size (portrait)",
+                            'width': 8.5, 
+                            'height': 11, 
+                            'units': units.INCHES 
+                        },
+                        {
+                            'name': "Letter size (landscape)",
+                            'width': 11, 
+                            'height': 8.5, 
+                            'units': units.INCHES 
+                        },
+                        {
+                            'name': "Quarter-page (portrait)",
+                            'width': 4.25, 
+                            'height': 5.5, 
+                            'units': units.INCHES 
+                        },
+                        {
+                            'name': "Quarter-page (landscape)",
+                            'width': 5.5, 
+                            'height': 4.25, 
+                            'units': units.INCHES 
+                        },
+                        {
+                            'name': "Custom size"
+                        }
+                    ]
                 },
                 'placeholderElements': [
                     // dummy tree(s) or data to show, eg, "two mirrored trees"
@@ -58,9 +87,11 @@ var TreeIllustrator = function(window, document, $, ko) {
             },
             'style': {
                 // choices and overrides from the template defaults above
-                'units': "inches",  // OR "centimeters"
-                'printWidth': 3.5,  // in physical units
-                'printHeight': 5.0,   // in physical units
+                'printSize': {
+                    'units': units.INCHES,  // OR units.CENTIMETERS
+                    'width': 3.5,  // in physical units
+                    'height': 5.0,   // in physical units
+                },
                 'backgroundColor': "#fdd",
                 'border': "none",
                 'fontFamily': "Times New Roman, Times, serif",
@@ -105,9 +136,65 @@ var TreeIllustrator = function(window, document, $, ko) {
         }
 
         /* define PUBLIC variables (and privileged methods) with 'self' */
-        //self.myVariable = ko.observable();
-        //self.myComputed = ko.computed(function () { return "hello" + self.myVariable() });
 
+        // REMINDER: computed observables should use 'deferEvaluation' in
+        // case their dependencies will appear during ko.mapping
+        self.templateSourceHTML = ko.computed(function () {
+            switch(self.template.source.type()) {
+                case 'URL':
+                    var itsURL = self.template.source.value();
+                    return '<a href='+ itsURL +' target="_blank">'+ itsURL +'</a>';
+                case 'builtin':
+                    return "Built-in";
+            }
+            return "Undefined"; 
+        }, self, {deferEvaluation:true});
+
+        self.useChosenPrintSize = function() {
+            var sizeName = $('#template-docsize-chooser').val();
+            var selectedSize = getPrintSizeByName( sizeName );
+            if (!selectedSize) {
+                console.warn('useChosenPrintSize(): no matching size found!');
+                return;
+            }
+            if (selectedSize.units) {
+                // Custom size should retain current settings
+                self.style.printSize.width( selectedSize.width() );
+                self.style.printSize.height( selectedSize.height() );
+                self.style.printSize.units( selectedSize.units() );
+            }
+        };
+        self.updatePrintSizeChooser = function() {
+            // (de)select matching size after manual adjustments
+            var matchingSize = $.grep(
+                self.template.constraints.printSizes(), 
+                function(o) {
+                    if (!('units' in o)) return false; // 'Custom size' never matches
+                    // NOTE use of != instead of !== below, because "11" == 11
+                    if (o.units() != self.style.printSize.units()) return false;
+                    if (o.width() != self.style.printSize.width()) return false;
+                    if (o.height() != self.style.printSize.height()) return false;
+                    return true;
+                }
+            )[0];
+            var matchingSizeName = 'Custom size';
+            if (matchingSize) {
+                matchingSizeName = matchingSize.name();
+            }
+            $('#template-docsize-chooser').val(matchingSizeName);
+        };
+
+        var getPrintSizeByName = function( name ) {
+            var matchingSize = $.grep(
+                self.template.constraints.printSizes(), function(o) {
+                    return o.name() === name;
+                }
+            )[0];
+            if (typeof matchingSize === 'undefined') {
+                console.warn('getPrintSizeByname(): no such size as "'+ name +'"!');
+            }
+            return matchingSize;
+        }
 /*
         self.metadata = {
             name: ko.observable(data.metadata.name),
