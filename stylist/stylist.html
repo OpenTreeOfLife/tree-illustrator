@@ -154,12 +154,79 @@
     </div>
     <div id="ti-panel-styles" class="accordion-body panel-body collapse">
       <div class="accordion-inner">
-        <em>Choose a template with constraints and default styles. Override as needed.</em>
+        <form class="form-horizontal">
+            <div class="control-group" style="margin-bottom: 0px;">
+                <label class="control-label" for="#template-name-field">Template name</label> 
+                <div class="controls">
+                    <input class="input-xlarge" type="text" id="template-name-field" type="text" value="?" 
+                           data-bind="value: template.name" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="">Source</label> 
+                <div class="controls">
+                    <div class="static-form-value" 
+                         data-bind="html: templateSourceHTML">
+                        SRC?
+                    </div>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="#template-desc-field">Template description</label> 
+                <div class="controls">
+                    <textarea id="template-desc-field" class="input-xlarge" type="text"
+                              data-bind="value: template.description">?</textarea>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="#template-docsize-chooser">Document size</label> 
+                <div class="controls">
+                    <select id="template-docsize-chooser" style="margin-bottom: 0;"
+                            data-bind="options: template.constraints.printSizes,
+                                       optionsText: 'name',
+                                       optionsValue: 'name',
+                                       event: {change: useChosenPrintSize}">
+                                  <!-- OR value: style.printSize -->
+                                  <!--  -->
+                    </select>
+                </div>
+                <div class="controls mini-form" Xdata-bind="visible: style.printSize.name() === 'Custom size'">
+                    <label for="#style-printsize-width-field">width</label> 
+                    <input id="style-printsize-width-field" type="text" value="?"
+                           style="width: 2.5em;"
+                           data-bind="value: style.printSize.width,
+                                      valueUpdate: ['afterkeydown','input'],
+                                      event: {keyup: updatePrintSizeChooser, change: updatePrintSizeChooser}" >
+
+                    <label for="#style-printsize-height-field">height</label> 
+                    <input id="style-printsize-height-field" type="text" value="?"
+                           style="width: 2.5em;"
+                           data-bind="value: style.printSize.height,
+                                      valueUpdate: ['afterkeydown','input'],
+                                      event: {keyup: updatePrintSizeChooser, change: updatePrintSizeChooser}" >
+
+                    <select id="style-printsize-units-field" type="text" value="?"
+                           style="width: auto; margin-left: 8px;"
+                           data-bind="options: ['inches', 'cm'],
+                                      value: style.printSize.units,
+                                      event: {change: updatePrintSizeChooser}" >
+                    </select>
+
+                </div>
+            </div>
+<!--
+            <div class="control-group">
+                <label class="control-label" for="#template-desc-field">Description</label> 
+                <div class="controls">
+                    <textarea id="template-desc-field" class="input-xlarge" type="text"
+                              data-bind="value: template.description">?</textarea>
+                </div>
+            </div>
+        </form>
+-->
+        <em>More default styles (including suggested constraints). Override as needed.</em>
         <ul>
-            <li>style name and source</li>
-            <li>style description</li>
-            <li>dimensions (menu of suggested/allowed sizes) <em>- or is this a single size?</em></li>
-            <li>default units (inches or centimeters)</li>
             <li>Font family, style, minimum size</li>
             <li>Minimum line weight</li>
             <li>Colors (constrained? suggested?)</li>
