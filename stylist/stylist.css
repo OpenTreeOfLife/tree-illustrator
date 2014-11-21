@@ -202,7 +202,22 @@ g.outer-axis text {
     margin-left: 42%;
 }
 .accordion-inner .form-horizontal .control-group .controls input[type=text],
+.accordion-inner .form-horizontal .control-group .controls select,
 .accordion-inner .form-horizontal .control-group .controls textarea {
     width: 95%;
 }
 
+.static-form-value {
+    /* mimic spacing of editalbe widgets */
+    padding-top: 5px;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+.mini-form {
+    padding-left: 10px;
+    padding-top: 4px;
+}
+.mini-form label, 
+.mini-form input {
+    display: inline-block;
+}
