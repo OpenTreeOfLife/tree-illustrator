@@ -107,17 +107,33 @@ var TreeIllustrator = function(window, document, $, ko) {
         /* define PUBLIC variables (and privileged methods) with 'self' */
         //self.myVariable = ko.observable();
         //self.myComputed = ko.computed(function () { return "hello" + self.myVariable() });
+
+/*
         self.metadata = {
-            name: ko.observable('metadata.name' in data ? data.metadata.name : 'Untitled'),
-            description: ko.observable('metadata.description' in data ? data.metadata.description : '')
+            name: ko.observable(data.metadata.name),
+            description: ko.observable(data.metadata.description)
         };
         self.styles = ko.observable();
         self.sceneGraph = ko.observable();
         self.vegaSpec = ko.observable();
+*/
+
+        /* Instead of explicitly defining all possible members, let's
+         * trust the ko.mapping plugin to handle loading and saving 
+         * illustration data from JS(ON), with mapping options to handle
+         * any exceptional stuff.
+         */
+        var mappingOptions = {
+            // TODO: map some elements to objects, etc.
+        };
+        ko.mapping.fromJS(data, mappingOptions, self);
+        // TODO: Add some valication or other sanity checks here?
+
 
         // two initial test properties for tree placement
         self.treeX = ko.observable( 'treeX' in data ? data.treeX : physicalWidth / 2.0 );
         self.treeY = ko.observable( 'treeY' in data ? data.treeY : physicalHeight / 2.0 );
+*/
 
         self.privilegedMethod = function() {
             alert( 'calling my private method:' );
