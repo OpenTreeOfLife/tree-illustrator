@@ -18,6 +18,7 @@
     <script src="stylist.js"></script>
     <script src="bootstrap.min.js"></script>
     <link rel="stylesheet" type="text/css" href="bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="bootstrap-responsive.min.css"/>
     <link rel="stylesheet" type="text/css" href="stylist.css"/>
     <link rel="stylesheet" type="text/css" media="print" href="stylist-print.css">
   </head>
@@ -45,7 +46,7 @@
    </div><!-- .row-fluid -->
    <div class="row-fluid">
     <div id="editor" class="span6" style="padding-right: 20px;">
-        <form action="#" onsubmit="return false;">
+        <!--<form action="#" onsubmit="return false;">-->
             <div class="button-bar" style="margin-bottom: 1em;">
                 <button class="btn btn-small">Load illustration...</button>
                 <button class="btn btn-small" style="float: right;">Save illustration as...</button>
@@ -102,14 +103,44 @@
     </div>
     <div id="ti-panel-general" class="accordion-body panel-body collapse in">
       <div class="accordion-inner">
-        <em>Here we can manage metadata for the illustration</em>
-        <ul>
-            <li>illustration name</li>
-            <li>description</li>
-            <li>author(s)</li>
-            <li>tags?</li>
-            <li>DOIs</li>
-        </ul>
+        <form class="form-horizontal">
+            <div class="control-group">
+                <label class="control-label" for="#metadata-name-field">Illustration name</label> 
+                <div class="controls">
+                    <input class="input-xlarge" type="text" id="metadata-name-field" type="text" value="?" 
+                           data-bind="value: metadata.name" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="#metadata-desc-field">Description</label> 
+                <div class="controls">
+                    <textarea id="metadata-desc-field" class="input-xlarge" type="text"
+                              data-bind="value: metadata.description">?</textarea>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="#metadata-authors-field">Author(s)</label> 
+                    <!-- one name per line? -->
+                <div class="controls">
+                    <textarea id="metadata-authors-field" class="input-xlarge" type="text"
+                              data-bind="value: metadata.authors">?</textarea>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="#metadata-tags">Tags</label> 
+                <div class="controls">
+                    <input type="text" style="color: #c33;" value="TODO: tags widget here" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="#metadata-dois-field">DOI(s)</label> 
+                    <!-- one DOI per line? -->
+                <div class="controls">
+                    <textarea id="metadata-dois-field" class="input-xlarge" type="text"
+                              data-bind="value: metadata.dois">?</textarea>
+                </div>
+            </div>
+        </form>
       </div>
     </div>
   </div>
@@ -280,7 +311,7 @@
   </div>
 
 </div>
-        </form>
+        <!--</form>-->
 
             <div class="button-bar" style="margin-bottom: 1em;">
                 <button class="btn btn-small">Load illustration...</button>
