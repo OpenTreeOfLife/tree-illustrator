@@ -16,6 +16,69 @@ var TreeIllustrator = function(window, document, $, ko) {
     /* Here we can share information among all classes and instances */
     //var shared = {};
 
+    /* Return the values for a new illustration (outlines our JSON representation) */
+    var getNewIllustrationObject = function(options) {
+        if (!options) options = {};
+        var obj = {
+            'metadata': {
+                'name': "Untitled",
+                'description': "",
+                'authors': [ ],   // assign immediately to this user?
+                'tags': [ ],
+                'dois': [ ]
+            },
+            'template': {
+                // maybe the defaults here are "anything goes" (all options enabled)?
+                // TODO: Explicitly list all options somewhere else? Filter template styles if they fall out of conformance?
+                'name': "Default template",
+                'description': "You can replace this with a shared template in the Style Switcher above", // captured when assigned
+                'source': {'type': "builtin", 'value': "DEFAULT"},  // URL, builtin
+                'version': {'type': "version number", 'value': "0.1"},  // git SHA, mod date, version number
+                'constraints': {
+                    // list constrained labels and values, if any (items not listed are unconstrained)
+                    'units': {
+                        "Inches": "inches",
+                        "Centimeters": "centimeters"
+                    },
+                    'printSizes': {
+                    }
+                },
+                'placeholderElements': [
+                    // dummy tree(s) or data to show, eg, "two mirrored trees"
+                    {
+                        'id': "tree1",
+                        'type': "tree",
+                        'layout': "blah",
+                        'source': { 'type': "URL", 'value': "blah" },
+                        'styleOverrides': {
+                            // 'edgeThickness': {'value': '4pt', 'edges': 'ALL'} // or ['edge23', 'edge948']
+                        }
+                    }
+                ]
+            },
+            'style': {
+                // choices and overrides from the template defaults above
+                'units': "inches",  // OR "centimeters"
+                'printWidth': 3.5,  // in physical units
+                'printHeight': 5.0,   // in physical units
+                'backgroundColor': "#fdd",
+                'border': "none",
+                'fontFamily': "Times New Roman, Times, serif",
+                'fontSize': "12pt",  // use same physical units as above?
+                'fontWeight': "normal"
+                // TODO: add default line color, thickness, node shape/size, etc.
+            },
+            'elements': {
+            }
+        };
+        /* TODO: Apply optional modifications?
+        if (options.BLAH) {
+            obj.metadata.FOO = 'BAR';
+        }
+        */
+        return obj;
+    };
+
     /* Our principle view model [1] is a single illustration. This uses basic
      * Knockout observables as members, but adds custom behavior. We'll use a
      * family of pseudo-classes to define the main illustration and selected parts.
@@ -28,7 +91,10 @@ var TreeIllustrator = function(window, document, $, ko) {
             return new Illustration(data);
         }
 
-        if (!data || typeof(data) !== 'object') data = {};
+        if (!data || typeof(data) !== 'object') {
+            // load the "empty" illustration object above
+            data = getNewIllustrationObject();
+        }
 
         // safely refer to this instance
         var self = this;
@@ -37,13 +103,14 @@ var TreeIllustrator = function(window, document, $, ko) {
         var secretSauce = function() {
             alert("TOP SECRET!");
         }
-        //var name = data.name || 'TEST ILL';
 
         /* define PUBLIC variables (and privileged methods) with 'self' */
         //self.myVariable = ko.observable();
         //self.myComputed = ko.computed(function () { return "hello" + self.myVariable() });
-        self.metadata = ko.observable();
-        self.metadata = ko.observable();
+        self.metadata = {
+            name: ko.observable('metadata.name' in data ? data.metadata.name : 'Untitled'),
+            description: ko.observable('metadata.description' in data ? data.metadata.description : '')
+        };
         self.styles = ko.observable();
         self.sceneGraph = ko.observable();
         self.vegaSpec = ko.observable();
@@ -52,7 +119,6 @@ var TreeIllustrator = function(window, document, $, ko) {
         self.treeX = ko.observable( 'treeX' in data ? data.treeX : physicalWidth / 2.0 );
         self.treeY = ko.observable( 'treeY' in data ? data.treeY : physicalHeight / 2.0 );
 
-        self.name = ko.observable( 'name' in data ? data.name : 'TEST ILL' );
         self.privilegedMethod = function() {
             alert( 'calling my private method:' );
             secretSauce();
@@ -102,7 +168,6 @@ var TreeIllustrator = function(window, document, $, ko) {
         // TODO: Include options to map selected data to visual style
         return self;
     }
-
 
 
     /* expose class constructors (and static methods) for instantiation */
