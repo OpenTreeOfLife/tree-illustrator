@@ -116,6 +116,10 @@ var TreeIllustrator = function(window, document, $, ko) {
         self.styles = ko.observable();
         self.sceneGraph = ko.observable();
         self.vegaSpec = ko.observable();
+
+        // two initial test properties for tree placement
+        self.treeX = ko.observable( 'treeX' in data ? data.treeX : physicalWidth / 2.0 );
+        self.treeY = ko.observable( 'treeY' in data ? data.treeY : physicalHeight / 2.0 );
 */
 
         /* Instead of explicitly defining all possible members, let's
@@ -124,21 +128,63 @@ var TreeIllustrator = function(window, document, $, ko) {
          * any exceptional stuff.
          */
         var mappingOptions = {
-            // TODO: map some elements to objects, etc.
+            /* Use to handle special cases:
+             *  'ignore' to keep some clutter out of the saved model
+             *  'include' to force view-model properties to be saved
+             *  'copy' to keep simple values simple (vs. observable)
+             *  'observe' ONLY if it's easier to whitelist the observables
+             *  'create' map some elements to object classes
+             *  'update'? convert Dates to ISO date-strings, ints to floats
+             *  'key': pin elements to specified keys
+             * See http://knockoutjs.com/documentation/plugins-mapping.html
+             */
+            'ignore': [ 'constructor' ],
+            'include': [ ],
+            'copy': [ ],
+            // 'observe': [ ], // WARNING: using this flips default mapping!
+            'elements': {
+                'create': function(options) {
+                    // create these as object instances
+                    var data = options.data;
+                    var dataParent = options.parent;
+                    switch(data.type) {
+                        case 'tree':
+                            //TODO: return new Tree(data);
+                            break;
+                        case 'supporting data':
+                            //TODO: return new SupportingData(data);
+                            break;
+                    }
+                    // keep it simple by default
+                    return ko.observable(data);
+                },
+                'key': function(data) {
+                    // use 'id' attribute to pin these
+                    return ko.utils.unwrapObservable(data.id);
+                }
+            }
         };
+        /* Map incoming data from a JS object. NOTE that we can also do 
+         * this piecemeal to (for example) apply new styles to an illustration.
+         *
+         * TODO: Add some valication or other sanity checks after mapping, to
+         * make sure we're not getting nonsense from the saved model?
+         */
         ko.mapping.fromJS(data, mappingOptions, self);
-        // TODO: Add some valication or other sanity checks here?
 
+        // Add validation for fields that need it
+        self.metadata.name.extend({required: true});
 
-        // two initial test properties for tree placement
-        self.treeX = ko.observable( 'treeX' in data ? data.treeX : physicalWidth / 2.0 );
-        self.treeY = ko.observable( 'treeY' in data ? data.treeY : physicalHeight / 2.0 );
-*/
+        self.exportModelAsObject = function() {
+            var obj = ko.mapping.toJS(self);
+            // TODO: any cleanup here?
+            return obj;
+        };
 
-        self.privilegedMethod = function() {
-            alert( 'calling my private method:' );
-            secretSauce();
-            //alert(counter);
+        self.exportModelAsJSON = function() {
+            var json = ko.mapping.toJSON(self);
+            // TODO: any cleanup here?
+            return json;
         };
 
     }
