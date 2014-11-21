@@ -193,3 +193,16 @@ g.outer-axis text {
     opacity: 0.3;
     cursor: default;
 }
+
+/* EXPERIMENTAL fluid layout for accordion forms */
+.accordion-inner .form-horizontal .control-group .control-label {
+    width: 40%;
+}
+.accordion-inner .form-horizontal .control-group .controls {
+    margin-left: 42%;
+}
+.accordion-inner .form-horizontal .control-group .controls input[type=text],
+.accordion-inner .form-horizontal .control-group .controls textarea {
+    width: 95%;
+}
+
