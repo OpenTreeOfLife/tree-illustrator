@@ -108,19 +108,7 @@ var TreeIllustrator = function(window, document, $, ko) {
                             'value': colorDepths.BLACK_AND_WHITE
                         }
                     ]
-                },
-                'placeholderElements': [
-                    // dummy tree(s) or data to show, eg, "two mirrored trees"
-                    {
-                        'id': "tree1",
-                        'type': "tree",
-                        'layout': "blah",
-                        'source': { 'type': "URL", 'value': "blah" },
-                        'styleOverrides': {
-                            // 'edgeThickness': {'value': '4pt', 'edges': 'ALL'} // or ['edge23', 'edge948']
-                        }
-                    }
-                ]
+                }
             },
             'style': {
                 // choices and overrides from the style guide above
