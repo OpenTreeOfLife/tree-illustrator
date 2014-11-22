@@ -46,6 +46,22 @@ function centimetersToInches( cm ) {
     return cm / cm_per_inch;
 }
 
+var pt_per_inch = 72.0;
+function inchesToPoints( inches, ppi ) {
+    return inches * pt_per_inch;
+}
+function pointsToInches( pt, ppi ) {
+    return pt / pt_per_inch;
+}
+
+var pt_per_cm = pt_per_inch / cm_per_inch;
+function centimetersToPoints( cm, ppi ) {
+    return cm * pt_per_cm;
+}
+function pointsToCentimeters( pt, ppi ) {
+    return pt / pt_per_cm;
+}
+
 function pixelsToInches( px, ppi ) {
     return px / ppi;
 }

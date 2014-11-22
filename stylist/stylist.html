@@ -197,7 +197,7 @@
                            style="width: 2.5em;"
                            data-bind="value: style.printSize.width,
                                       valueUpdate: ['afterkeydown','input'],
-                                      event: {keyup: updatePrintSizeChooser, change: updatePrintSizeChooser}" />
+                                      event: {keyup: updatePrintSizeChooser, change: updatePrintSizeChooser}" />&nbsp;
 
                     <label for="#style-printsize-height-field">height</label> 
                     <input id="style-printsize-height-field" type="text" value="?"
@@ -240,6 +240,18 @@
                                       event: {keyup: updateFontFamilyChooser, change: updateFontFamilyChooser}" />
                 </div>
             </div>
+            <div class="control-group">
+                <label class="control-label" for="#template-mintextsize-field">Minimum text size</label> 
+                <div class="controls">
+                    <input id="style-mintextsize-field" type="text" value="?"
+                      style="width: 2.5em;"
+                      data-bind="value: style.minimumTextSize,
+                                 valueUpdate: ['afterkeydown','input']" />&nbsp;
+                    <span data-bind="html: minTextSizeHelper">
+                        pt = ?
+                    </span>
+                </div>
+            </div>
 
 <!--
             <div class="control-group">
@@ -253,7 +265,6 @@
 -->
         <em>More default styles (including suggested constraints). Override as needed.</em>
         <ul>
-            <li>Font family, style, minimum size</li>
             <li>Minimum line weight</li>
             <li>Colors (constrained? suggested?)</li>
             <li><strong>style switcher?</strong></li>

@@ -109,11 +109,12 @@ var TreeIllustrator = function(window, document, $, ko) {
                     'width': 11,  // in physical units
                     'height': 8.5,   // in physical units
                 },
+                'fontFamily': "Times New Roman, Times, serif",
+                'minimumTextSize': 12,  
+                    // specified in pt, but echoed using physical units above
+
                 'backgroundColor': "#fdd",
                 'border': "none",
-                'fontFamily': "Times New Roman, Times, serif",
-                'fontSize': "12pt",  // use same physical units as above?
-                'fontWeight': "normal"
                 // TODO: add default line color, thickness, node shape/size, etc.
             },
             'elements': {
@@ -256,6 +257,27 @@ var TreeIllustrator = function(window, document, $, ko) {
             }
             return matchingFont;
         }
+
+        self.minTextSizeHelper = ko.computed(function() {
+            // explain this size in chosen units
+            var html;
+            var chosenSize = self.style.minimumTextSize();
+            if (isNaN(chosenSize)) {
+                // rejects any non-numeric chars, allows whitespace and decimal
+                html = '<em>This value must be a number</em>';
+            } else {
+                // echo the new size (in pt) as inches/cm
+                chosenSize = parseFloat(chosenSize);
+                var convertedSize = self.style.printSize.units() === units.INCHES ?
+                    pointsToInches( chosenSize ) :
+                    pointsToCentimeters( chosenSize );
+                convertedSize = convertedSize.toFixed(2);
+                var unitSuffix = self.style.printSize.units() === units.INCHES ?
+                    'inches' : 'cm';
+                html = 'pt &nbsp;('+ convertedSize +' '+ unitSuffix +')';
+            }
+            return html;
+        }, self, {deferEvaluation:true});
 /*
         self.metadata = {
             name: ko.observable(data.metadata.name),
