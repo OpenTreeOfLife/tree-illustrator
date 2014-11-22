@@ -321,6 +321,7 @@ var TreeIllustrator = function(window, document, $, ko) {
 
     /* expose class constructors (and static methods) for instantiation */
     return {
+        units: units,
         //Tree: Tree,
         SceneGraph: SceneGraph,
         StyleOverrides: StyleOverrides,

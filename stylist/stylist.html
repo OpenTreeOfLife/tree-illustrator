@@ -208,7 +208,14 @@
 
                     <select id="style-printsize-units-field" type="text" value="?"
                            style="width: auto; margin-left: 8px;"
-                           data-bind="options: ['inches', 'cm'],
+                           data-bind="options: [
+                                       {label: 'inches', 
+                                        value: TreeIllustrator.units.INCHES},
+                                       {label:'cm', 
+                                        value: TreeIllustrator.units.CENTIMETERS}
+                                      ],
+                                      optionsText: 'label',
+                                      optionsValue: 'value',
                                       value: style.printSize.units,
                                       event: {change: updatePrintSizeChooser}" >
                     </select>
