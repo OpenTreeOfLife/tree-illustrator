@@ -159,13 +159,15 @@
       <div class="accordion-inner">
         <form class="form-horizontal">
             <div class="control-group" style="margin-bottom: 0px;">
-                <label class="control-label" for="#template-name-field">Template name</label> 
+                <label class="control-label" for="">Template name</label> 
                 <div class="controls">
-                    <input class="input-xlarge" type="text" id="template-name-field" type="text" value="?" 
-                           data-bind="value: template.name" />
+                    <div class="static-form-value" 
+                         data-bind="html: template.name">
+                        NAME?
+                    </div>
                 </div>
             </div>
-            <div class="control-group">
+            <div class="control-group" style="margin-bottom: 0px;">
                 <label class="control-label" for="">Source</label> 
                 <div class="controls">
                     <div class="static-form-value" 
@@ -175,10 +177,16 @@
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label" for="#template-desc-field">Template description</label> 
+                <label class="control-label" for="">Template description</label> 
                 <div class="controls">
+                    <p class="static-form-value" 
+                       style="font-weight: normal; color: #666;"
+                       data-bind="html: template.description">?</p>
+<!--
                     <textarea id="template-desc-field" class="input-xlarge" type="text"
+                              readonly="readonly"
                               data-bind="value: template.description">?</textarea>
+-->
                 </div>
             </div>
 
@@ -244,7 +252,7 @@
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label" for="#template-mintextsize-field">Minimum text size</label> 
+                <label class="control-label" for="#style-mintextsize-field">Minimum text size</label> 
                 <div class="controls">
                     <input id="style-mintextsize-field" type="text" value="?"
                       style="width: 2.0em;"
@@ -256,7 +264,7 @@
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label" for="#template-minlinethickness-field">Minimum line thickness</label> 
+                <label class="control-label" for="#style-minlinethickness-field">Minimum line thickness</label> 
                 <div class="controls">
                     <input id="style-minlinethickness-field" type="text" value="?"
                       style="width: 2.0em;"
@@ -267,20 +275,19 @@
                     </span>
                 </div>
             </div>
-
-<!--
             <div class="control-group">
-                <label class="control-label" for="#template-desc-field">Description</label> 
+                <label class="control-label" for="#style-colordepth-chooser">Color depth</label> 
                 <div class="controls">
-                    <textarea id="template-desc-field" class="input-xlarge" type="text"
-                              data-bind="value: template.description">?</textarea>
+                    <select id="style-colordepth-chooser"
+                            data-bind="options: template.constraints.colorDepths,
+                                       optionsText: 'name',
+                                       optionsValue: 'name'">
+                    </select>
                 </div>
             </div>
--->
         </form>
         <em>More default styles (including suggested constraints). Override as needed.</em>
         <ul>
-            <li>Colors (constrained? suggested?)</li>
             <li><strong>style switcher?</strong></li>
             <li>show <strong>overrides</strong> and warnings here, but with defaults visible</li>
         </ul>

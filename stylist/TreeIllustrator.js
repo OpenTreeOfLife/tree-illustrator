@@ -18,8 +18,13 @@ var TreeIllustrator = function(window, document, $, ko) {
 
     // define some simple enumerations (for legibility, and to avoid typos)
     var units = {
-        INCHES: 'inches',
-        CENTIMETERS: 'centimeters'
+        INCHES: 'INCHES',
+        CENTIMETERS: 'CENTIMETERS'
+    };
+    var colorDepths = {
+        FULL_COLOR: 'FULL_COLOR',
+        GRAYSCALE: 'GRAYSCALE',
+        BLACK_AND_WHITE: 'BLACK_AND_WHITE'
     };
 
     /* Return the values for a new illustration (outlines our JSON representation) */
@@ -86,6 +91,20 @@ var TreeIllustrator = function(window, document, $, ko) {
                         },
                         {
                             'name': "Something else"
+                        }
+                    ],
+                    'colorDepths': [
+                        {
+                            'name': "Color",
+                            'value': colorDepths.FULL_COLOR
+                        },
+                        {
+                            'name': "Grayscale",
+                            'value': colorDepths.GRAYSCALE
+                        },
+                        {
+                            'name': "Black and white (no gray)",
+                            'value': colorDepths.BLACK_AND_WHITE
                         }
                     ]
                 },
@@ -427,6 +446,7 @@ var TreeIllustrator = function(window, document, $, ko) {
     /* expose class constructors (and static methods) for instantiation */
     return {
         units: units,
+        colorDepths: colorDepths,
         //Tree: Tree,
         SceneGraph: SceneGraph,
         StyleOverrides: StyleOverrides,
