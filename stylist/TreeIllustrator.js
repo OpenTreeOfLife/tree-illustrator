@@ -112,7 +112,8 @@ var TreeIllustrator = function(window, document, $, ko) {
                 'fontFamily': "Times New Roman, Times, serif",
                 'minimumTextSize': 12,  
                     // specified in pt, but echoed using physical units above
-
+                'minimumLineThickness': 2,  
+                    // specified in pt, but echoed using physical units above
                 'backgroundColor': "#fdd",
                 'border': "none",
                 // TODO: add default line color, thickness, node shape/size, etc.
@@ -262,7 +263,28 @@ var TreeIllustrator = function(window, document, $, ko) {
             // explain this size in chosen units
             var html;
             var chosenSize = self.style.minimumTextSize();
-            if (isNaN(chosenSize)) {
+            if (isNaN(chosenSize) || $.trim(chosenSize) === '') {
+                // rejects any non-numeric chars, allows whitespace and decimal
+                html = '<em>This value must be a number</em>';
+            } else {
+                // echo the new size (in pt) as inches/cm
+                chosenSize = parseFloat(chosenSize);
+                var convertedSize = self.style.printSize.units() === units.INCHES ?
+                    pointsToInches( chosenSize ) :
+                    pointsToCentimeters( chosenSize );
+                convertedSize = convertedSize.toFixed(2);
+                var unitSuffix = self.style.printSize.units() === units.INCHES ?
+                    'inches' : 'cm';
+                html = 'pt &nbsp;('+ convertedSize +' '+ unitSuffix +')';
+            }
+            return html;
+        }, self, {deferEvaluation:true});
+
+        self.minLineThicknessHelper = ko.computed(function() {
+            // explain this size in chosen units
+            var html;
+            var chosenSize = self.style.minimumLineThickness();
+            if (isNaN(chosenSize) || $.trim(chosenSize) === '') {
                 // rejects any non-numeric chars, allows whitespace and decimal
                 html = '<em>This value must be a number</em>';
             } else {

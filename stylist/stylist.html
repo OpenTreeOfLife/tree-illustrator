@@ -252,6 +252,18 @@
                     </span>
                 </div>
             </div>
+            <div class="control-group">
+                <label class="control-label" for="#template-minlinethickness-field">Minimum line thickness</label> 
+                <div class="controls">
+                    <input id="style-minlinethickness-field" type="text" value="?"
+                      style="width: 2.5em;"
+                      data-bind="value: style.minimumLineThickness,
+                                 valueUpdate: ['afterkeydown','input']" />&nbsp;
+                    <span data-bind="html: minLineThicknessHelper">
+                        pt = ?
+                    </span>
+                </div>
+            </div>
 
 <!--
             <div class="control-group">
