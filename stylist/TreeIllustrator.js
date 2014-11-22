@@ -38,11 +38,12 @@ var TreeIllustrator = function(window, document, $, ko) {
                 'tags': [ ],
                 'dois': [ ]
             },
-            'template': {
+            'styleGuide': {
                 // maybe the defaults here are "anything goes" (all options enabled)?
-                // TODO: Explicitly list all options somewhere else? Filter template styles if they fall out of conformance?
-                'name': "Default template",
-                'description': "You can replace this with a shared template in the Style Switcher above", // captured when assigned
+                // TODO: Explicitly list all options somewhere else? 
+                // TODO: Filter styles if they fall out of conformance?
+                'name': "Default styles",
+                'description': "Style guides are used to suggest and constrain the overall look of your illustration for a particular publication or context. You can try different styles using the <strong>Switch styles...</strong> button.", // captured when assigned
                 'source': {'type': "builtin", 'value': "DEFAULT"},  // URL, builtin
                 'version': {'type': "version number", 'value': "0.1"},  // git SHA, mod date, version number
                 'constraints': {
@@ -95,7 +96,7 @@ var TreeIllustrator = function(window, document, $, ko) {
                     ],
                     'colorDepths': [
                         {
-                            'name': "Color",
+                            'name': "Full color",
                             'value': colorDepths.FULL_COLOR
                         },
                         {
@@ -122,7 +123,7 @@ var TreeIllustrator = function(window, document, $, ko) {
                 ]
             },
             'style': {
-                // choices and overrides from the template defaults above
+                // choices and overrides from the style guide above
                 'printSize': {
                     'units': units.INCHES,  // OR units.CENTIMETERS
                     'width': 11,  // in physical units
@@ -177,10 +178,10 @@ var TreeIllustrator = function(window, document, $, ko) {
 
         // REMINDER: computed observables should use 'deferEvaluation' in
         // case their dependencies will appear during ko.mapping
-        self.templateSourceHTML = ko.computed(function () {
-            switch(self.template.source.type()) {
+        self.styleGuideSourceHTML = ko.computed(function () {
+            switch(self.styleGuide.source.type()) {
                 case 'URL':
-                    var itsURL = self.template.source.value();
+                    var itsURL = self.styleGuide.source.value();
                     return '<a href='+ itsURL +' target="_blank">'+ itsURL +'</a>';
                 case 'builtin':
                     return "Built-in";
@@ -189,7 +190,7 @@ var TreeIllustrator = function(window, document, $, ko) {
         }, self, {deferEvaluation:true});
 
         self.useChosenPrintSize = function() {
-            var sizeName = $('#template-docsize-chooser').val();
+            var sizeName = $('#style-docsize-chooser').val();
             var selectedSize = getPrintSizeByName( sizeName );
             if (!selectedSize) {
                 console.warn('useChosenPrintSize(): no matching size found!');
@@ -205,7 +206,7 @@ var TreeIllustrator = function(window, document, $, ko) {
         self.updatePrintSizeChooser = function() {
             // (de)select matching size after manual adjustments
             var matchingSize = $.grep(
-                self.template.constraints.printSizes(), 
+                self.styleGuide.constraints.printSizes(), 
                 function(o) {
                     if (!('units' in o)) return false; // 'Custom size' never matches
                     // NOTE use of != instead of !== below, because "11" == 11
@@ -219,11 +220,11 @@ var TreeIllustrator = function(window, document, $, ko) {
             if (matchingSize) {
                 matchingSizeName = matchingSize.name();
             }
-            $('#template-docsize-chooser').val(matchingSizeName);
+            $('#style-docsize-chooser').val(matchingSizeName);
         };
         var getPrintSizeByName = function( name ) {
             var matchingSize = $.grep(
-                self.template.constraints.printSizes(), function(o) {
+                self.styleGuide.constraints.printSizes(), function(o) {
                     return o.name() === name;
                 }
             )[0];
@@ -234,7 +235,7 @@ var TreeIllustrator = function(window, document, $, ko) {
         }
 
         self.useChosenFontFamily = function() {
-            var fontName = $('#template-fontfamily-chooser').val();
+            var fontName = $('#style-fontfamily-chooser').val();
             var selectedFont = getFontFamilyByName( fontName );
             if (!selectedFont) {
                 console.warn('useChosenFontFamily(): no matching font found!');
@@ -245,15 +246,15 @@ var TreeIllustrator = function(window, document, $, ko) {
                 self.style.fontFamily( selectedFont.value() );
             }
             if (fontName === 'Something else') {
-                $('#template-fontfamily-options').show();
+                $('#style-fontfamily-options').show();
             } else {
-                $('#template-fontfamily-options').hide();
+                $('#style-fontfamily-options').hide();
             }
         };
         self.updateFontFamilyChooser = function() {
             // (de)select matching font after manual adjustments
             var matchingFont = $.grep(
-                self.template.constraints.fontFamilies(), 
+                self.styleGuide.constraints.fontFamilies(), 
                 function(o) {
                     if (!('value' in o)) return false; // 'Something else' never matches
                     if (o.value() !== self.style.fontFamily()) return false;
@@ -264,11 +265,11 @@ var TreeIllustrator = function(window, document, $, ko) {
             if (matchingFont) {
                 matchingFontName = matchingFont.name();
             }
-            $('#template-fontfamily-chooser').val(matchingFontName);
+            $('#style-fontfamily-chooser').val(matchingFontName);
         };
         var getFontFamilyByName = function( name ) {
             var matchingFont = $.grep(
-                self.template.constraints.fontFamilies(), function(o) {
+                self.styleGuide.constraints.fontFamilies(), function(o) {
                     return o.name() === name;
                 }
             )[0];

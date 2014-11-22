@@ -151,7 +151,7 @@
   <div class="accordion-group panel panel-default" style="margin-bottom: 0.4em;">
     <div class="accordion-heading panel-heading">
       <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-styles">
-        Template & default styles
+        Units, size, and style
         <i class="help-rollover">Click to open this panel</i>
       </a> 
     </div>
@@ -159,42 +159,41 @@
       <div class="accordion-inner">
         <form class="form-horizontal">
             <div class="control-group" style="margin-bottom: 0px;">
-                <label class="control-label" for="">Template name</label> 
+                <label class="control-label" for="">Style guide</label> 
                 <div class="controls">
                     <div class="static-form-value" 
-                         data-bind="html: template.name">
+                         data-bind="html: styleGuide.name">
                         NAME?
                     </div>
                 </div>
             </div>
             <div class="control-group" style="margin-bottom: 0px;">
+                <label class="control-label">
+                    <button class="btn btn-small pull-right"
+                            onclick="alert('Coming soon'); return false;"
+                    >Switch styles...</button>
+                </label>
+                <div class="controls">
+                    <p class="static-form-value" 
+                       style="padding-top: 0; font-weight: normal; color: #666;"
+                       data-bind="html: styleGuide.description">?</p>
+                </div>
+            </div>
+            <div class="control-group">
                 <label class="control-label" for="">Source</label> 
                 <div class="controls">
                     <div class="static-form-value" 
-                         data-bind="html: templateSourceHTML">
+                         data-bind="html: styleGuideSourceHTML">
                         SRC?
                     </div>
                 </div>
             </div>
-            <div class="control-group">
-                <label class="control-label" for="">Template description</label> 
-                <div class="controls">
-                    <p class="static-form-value" 
-                       style="font-weight: normal; color: #666;"
-                       data-bind="html: template.description">?</p>
-<!--
-                    <textarea id="template-desc-field" class="input-xlarge" type="text"
-                              readonly="readonly"
-                              data-bind="value: template.description">?</textarea>
--->
-                </div>
-            </div>
 
             <div class="control-group">
-                <label class="control-label" for="#template-docsize-chooser">Document size</label> 
+                <label class="control-label" for="#style-docsize-chooser">Document size</label> 
                 <div class="controls">
-                    <select id="template-docsize-chooser" style="margin-bottom: 0;"
-                            data-bind="options: template.constraints.printSizes,
+                    <select id="style-docsize-chooser" style="margin-bottom: 0;"
+                            data-bind="options: styleGuide.constraints.printSizes,
                                        optionsText: 'name',
                                        optionsValue: 'name',
                                        event: {change: useChosenPrintSize}">
@@ -234,16 +233,16 @@
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label" for="#template-fontfamily-chooser">Font family</label> 
+                <label class="control-label" for="#style-fontfamily-chooser">Font family</label> 
                 <div class="controls">
-                    <select id="template-fontfamily-chooser"
-                            data-bind="options: template.constraints.fontFamilies,
+                    <select id="style-fontfamily-chooser"
+                            data-bind="options: styleGuide.constraints.fontFamilies,
                                        optionsText: 'name',
                                        optionsValue: 'name',
                                        event: {change: useChosenFontFamily}">
                     </select>
                 </div>
-                <div id="template-fontfamily-options" class="controls" 
+                <div id="style-fontfamily-options" class="controls" 
                      style="display: none; margin-top: 0.25em;">
                     <input id="style-fontfamily-field" type="text" value="?"
                            data-bind="value: style.fontFamily,
@@ -279,18 +278,14 @@
                 <label class="control-label" for="#style-colordepth-chooser">Color depth</label> 
                 <div class="controls">
                     <select id="style-colordepth-chooser"
-                            data-bind="options: template.constraints.colorDepths,
+                            data-bind="options: styleGuide.constraints.colorDepths,
                                        optionsText: 'name',
                                        optionsValue: 'name'">
                     </select>
                 </div>
             </div>
         </form>
-        <em>More default styles (including suggested constraints). Override as needed.</em>
-        <ul>
-            <li><strong>style switcher?</strong></li>
-            <li>show <strong>overrides</strong> and warnings here, but with defaults visible</li>
-        </ul>
+        <em>TODO: Mark deviations from style guide and add warnings.</em>
       </div>
     </div>
   </div>
