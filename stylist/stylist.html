@@ -197,14 +197,14 @@
                 <div class="controls mini-form" Xdata-bind="visible: style.printSize.name() === 'Custom size'">
                     <label for="#style-printsize-width-field">width</label> 
                     <input id="style-printsize-width-field" type="text" value="?"
-                           style="width: 2.5em;"
+                           style="width: 2.0em;"
                            data-bind="value: style.printSize.width,
                                       valueUpdate: ['afterkeydown','input'],
                                       event: {keyup: updatePrintSizeChooser, change: updatePrintSizeChooser}" />&nbsp;
 
                     <label for="#style-printsize-height-field">height</label> 
                     <input id="style-printsize-height-field" type="text" value="?"
-                           style="width: 2.5em;"
+                           style="width: 2.0em;"
                            data-bind="value: style.printSize.height,
                                       valueUpdate: ['afterkeydown','input'],
                                       event: {keyup: updatePrintSizeChooser, change: updatePrintSizeChooser}" />
@@ -247,7 +247,7 @@
                 <label class="control-label" for="#template-mintextsize-field">Minimum text size</label> 
                 <div class="controls">
                     <input id="style-mintextsize-field" type="text" value="?"
-                      style="width: 2.5em;"
+                      style="width: 2.0em;"
                       data-bind="value: style.minimumTextSize,
                                  valueUpdate: ['afterkeydown','input']" />&nbsp;
                     <span data-bind="html: minTextSizeHelper">
@@ -259,7 +259,7 @@
                 <label class="control-label" for="#template-minlinethickness-field">Minimum line thickness</label> 
                 <div class="controls">
                     <input id="style-minlinethickness-field" type="text" value="?"
-                      style="width: 2.5em;"
+                      style="width: 2.0em;"
                       data-bind="value: style.minimumLineThickness,
                                  valueUpdate: ['afterkeydown','input']" />&nbsp;
                     <span data-bind="html: minLineThicknessHelper">

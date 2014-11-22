@@ -196,10 +196,10 @@ g.outer-axis text {
 
 /* EXPERIMENTAL fluid layout for accordion forms */
 .accordion-inner .form-horizontal .control-group .control-label {
-    width: 40%;
+    width: 35%;
 }
 .accordion-inner .form-horizontal .control-group .controls {
-    margin-left: 42%;
+    margin-left: 37%;
 }
 .accordion-inner .form-horizontal .control-group .controls input[type=text],
 .accordion-inner .form-horizontal .control-group .controls select,
