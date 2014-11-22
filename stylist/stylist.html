@@ -197,14 +197,14 @@
                            style="width: 2.5em;"
                            data-bind="value: style.printSize.width,
                                       valueUpdate: ['afterkeydown','input'],
-                                      event: {keyup: updatePrintSizeChooser, change: updatePrintSizeChooser}" >
+                                      event: {keyup: updatePrintSizeChooser, change: updatePrintSizeChooser}" />
 
                     <label for="#style-printsize-height-field">height</label> 
                     <input id="style-printsize-height-field" type="text" value="?"
                            style="width: 2.5em;"
                            data-bind="value: style.printSize.height,
                                       valueUpdate: ['afterkeydown','input'],
-                                      event: {keyup: updatePrintSizeChooser, change: updatePrintSizeChooser}" >
+                                      event: {keyup: updatePrintSizeChooser, change: updatePrintSizeChooser}" />
 
                     <select id="style-printsize-units-field" type="text" value="?"
                            style="width: auto; margin-left: 8px;"
@@ -222,6 +222,25 @@
 
                 </div>
             </div>
+            <div class="control-group">
+                <label class="control-label" for="#template-fontfamily-chooser">Font family</label> 
+                <div class="controls">
+                    <select id="template-fontfamily-chooser"
+                            data-bind="options: template.constraints.fontFamilies,
+                                       optionsText: 'name',
+                                       optionsValue: 'name',
+                                       event: {change: useChosenFontFamily}">
+                    </select>
+                </div>
+                <div id="template-fontfamily-options" class="controls" 
+                     style="display: none; margin-top: 0.25em;">
+                    <input id="style-fontfamily-field" type="text" value="?"
+                           data-bind="value: style.fontFamily,
+                                      valueUpdate: ['afterkeydown','input'],
+                                      event: {keyup: updateFontFamilyChooser, change: updateFontFamilyChooser}" />
+                </div>
+            </div>
+
 <!--
             <div class="control-group">
                 <label class="control-label" for="#template-desc-field">Description</label> 

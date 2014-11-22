@@ -70,6 +70,23 @@ var TreeIllustrator = function(window, document, $, ko) {
                         {
                             'name': "Custom size"
                         }
+                    ],
+                    'fontFamilies': [
+                        {
+                            'name': "Times New Roman",
+                            'value': "Times New Roman, Times, serif"
+                        },
+                        {
+                            'name': "Helvetica",
+                            'value': "Helvetica, Arial, sans"
+                        },
+                        {
+                            'name': "Arial",
+                            'value': "Arial, sans"
+                        },
+                        {
+                            'name': "Something else"
+                        }
                     ]
                 },
                 'placeholderElements': [
@@ -89,8 +106,8 @@ var TreeIllustrator = function(window, document, $, ko) {
                 // choices and overrides from the template defaults above
                 'printSize': {
                     'units': units.INCHES,  // OR units.CENTIMETERS
-                    'width': 3.5,  // in physical units
-                    'height': 5.0,   // in physical units
+                    'width': 11,  // in physical units
+                    'height': 8.5,   // in physical units
                 },
                 'backgroundColor': "#fdd",
                 'border': "none",
@@ -183,7 +200,6 @@ var TreeIllustrator = function(window, document, $, ko) {
             }
             $('#template-docsize-chooser').val(matchingSizeName);
         };
-
         var getPrintSizeByName = function( name ) {
             var matchingSize = $.grep(
                 self.template.constraints.printSizes(), function(o) {
@@ -194,6 +210,51 @@ var TreeIllustrator = function(window, document, $, ko) {
                 console.warn('getPrintSizeByname(): no such size as "'+ name +'"!');
             }
             return matchingSize;
+        }
+
+        self.useChosenFontFamily = function() {
+            var fontName = $('#template-fontfamily-chooser').val();
+            var selectedFont = getFontFamilyByName( fontName );
+            if (!selectedFont) {
+                console.warn('useChosenFontFamily(): no matching font found!');
+                return;
+            }
+            if (selectedFont.value) {
+                // Custom size should retain current settings
+                self.style.fontFamily( selectedFont.value() );
+            }
+            if (fontName === 'Something else') {
+                $('#template-fontfamily-options').show();
+            } else {
+                $('#template-fontfamily-options').hide();
+            }
+        };
+        self.updateFontFamilyChooser = function() {
+            // (de)select matching font after manual adjustments
+            var matchingFont = $.grep(
+                self.template.constraints.fontFamilies(), 
+                function(o) {
+                    if (!('value' in o)) return false; // 'Something else' never matches
+                    if (o.value() !== self.style.fontFamily()) return false;
+                    return true;
+                }
+            )[0];
+            var matchingFontName = 'Something else';
+            if (matchingFont) {
+                matchingFontName = matchingFont.name();
+            }
+            $('#template-fontfamily-chooser').val(matchingFontName);
+        };
+        var getFontFamilyByName = function( name ) {
+            var matchingFont = $.grep(
+                self.template.constraints.fontFamilies(), function(o) {
+                    return o.name() === name;
+                }
+            )[0];
+            if (typeof matchingFont === 'undefined') {
+                console.warn('getFontFamilyByname(): no such font as "'+ name +'"!');
+            }
+            return matchingFont;
         }
 /*
         self.metadata = {
