@@ -26,6 +26,11 @@ var TreeIllustrator = function(window, document, $, ko) {
         GRAYSCALE: 'GRAYSCALE',
         BLACK_AND_WHITE: 'BLACK_AND_WHITE'
     };
+    var treeLayouts = {
+        RECTANGLE: 'RECTANGLE',
+        CIRCLE: 'CIRCLE',
+        TRIANGLE: 'TRIANGLE'
+    }
 
     /* Return the data model for a new illustration (our JSON representation) */
     var getNewIllustrationModel = function(options) {
@@ -144,11 +149,15 @@ var TreeIllustrator = function(window, document, $, ko) {
         var obj = {
             'id': newID,
             'metadata': {
+                'type': 'IllustratedTree',
                 'name': "Untitled ("+ newID +")",
                 'description': "",
                 'dois': [ ]
             },
             'data': { },
+            'layout': treeLayouts.RECTANGLE,
+            'rootX': 0,   // TODO: use a bounding box instead?
+            'rootY': 0,
             'style': {
                 // incl. only deviations from the style guide above?
                 'edgeThickness': 2,  
@@ -170,6 +179,7 @@ var TreeIllustrator = function(window, document, $, ko) {
         var obj = {
             'id': newID,
             'metadata': {
+                'type': 'SupportingDataset',
                 'name': "Untitled ("+ newID +")",
                 'description': "",
                 'dois': [ ]
@@ -194,6 +204,7 @@ var TreeIllustrator = function(window, document, $, ko) {
         var obj = {
             'id': newID,
             'metadata': {
+                'type': 'Ornament',
                 'name': "Untitled ("+ newID +")",
                 'description': ""
             },
@@ -473,14 +484,15 @@ var TreeIllustrator = function(window, document, $, ko) {
                     var data = options.data;
                     var dataParent = options.parent;
                     switch(data.type) {
-                        case 'tree':
-                            //TODO: return new Tree(data);
-                            break;
-                        case 'supporting data':
-                            //TODO: return new SupportingData(data);
-                            break;
+                        case 'IllustratedTree':
+                            return new Tree(data);
+                        case 'SupportingDataset':
+                            return new SupportingDataset(data);
+                        case 'Ornament':
+                            return new Ornament(data);
                     }
                     // keep it simple by default
+                    console.warn("Unexpected element type '"+ data.type +"'! Creating a generic observable...");
                     return ko.observable(data);
                 },
                 'key': function(data) {
