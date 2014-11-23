@@ -295,7 +295,9 @@
     <!-- ko if: $data instanceof TreeIllustrator.IllustratedTree -->
       <div class="accordion-group panel tree-panel panel-success">
         <div class="accordion-heading panel-heading">
-          <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-tree-0">
+          <a class="accordion-toggle panel-title" 
+             data-toggle="collapse" data-parent="#ti-main-accordion" 
+             data-bind="attr: {href: '#ti-panel-'+ id()}">
             <span data-bind="html: el.metadata.name, attr: {'title': el.id}">NAME</span>
             <i class="help-rollover">Click to open this panel</i>
 
@@ -320,7 +322,8 @@
             <span class="element-type">tree</span> 
           </a>
         </div>
-        <div id="ti-panel-tree-0" class="accordion-body panel-body collapse">
+        <div class="accordion-body panel-body collapse"
+             data-bind="attr: {id: 'ti-panel-'+ id()}">
           <div class="accordion-inner">
             <em>Once a tree is added, describe its origin and appearance</em>
             <ul>
@@ -364,7 +367,9 @@
     <!-- ko if: $data instanceof TreeIllustrator.SupportingDataset -->
       <div class="accordion-group panel dataset-panel panel-warning">
         <div class="accordion-heading panel-heading">
-          <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-data-0">
+          <a class="accordion-toggle panel-title" 
+             data-toggle="collapse" data-parent="#ti-main-accordion" 
+             data-bind="attr: {href: '#ti-panel-'+ id()}">
             <span data-bind="html: el.metadata.name, attr: {'title': el.id}">NAME</span>
             <i class="help-rollover">Click to open this panel</i>
 
@@ -389,7 +394,8 @@
             <span class="element-type">data</span> 
           </a>
         </div>
-        <div id="ti-panel-data-0" class="accordion-body panel-body collapse">
+        <div class="accordion-body panel-body collapse"
+             data-bind="attr: {id: 'ti-panel-'+ id()}">
           <div class="accordion-inner">
             <em>Add supporting data to enhance displayed trees</em>
             <ul>
@@ -406,7 +412,9 @@
     <!-- ko if: $data instanceof TreeIllustrator.Ornament -->
       <div class="accordion-group panel ornament-panel panel-info">
         <div class="accordion-heading panel-heading">
-          <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-data-0">
+          <a class="accordion-toggle panel-title"
+             data-toggle="collapse" data-parent="#ti-main-accordion" 
+             data-bind="attr: {href: '#ti-panel-'+ id()}">
             <span data-bind="html: el.metadata.name, attr: {'title': el.id}">NAME</span>
             <i class="help-rollover">Click to open this panel</i>
 
@@ -431,7 +439,8 @@
             <span class="element-type">ornament</span> 
           </a>
         </div>
-        <div id="ti-panel-data-0" class="accordion-body panel-body collapse">
+        <div class="accordion-body panel-body collapse"
+             data-bind="attr: {id: 'ti-panel-'+ id()}">
           <div class="accordion-inner">
             <em>Add supporting data to enhance displayed trees</em>
             <ul>
