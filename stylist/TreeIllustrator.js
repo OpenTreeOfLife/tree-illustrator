@@ -140,10 +140,11 @@ var TreeIllustrator = function(window, document, $, ko) {
     /* Return the data model for a new tree (our JSON representation) */
     var getNewIllustratedTreeModel = function(illustration, options) {
         if (!options) options = {};
+        var newID = illustration.getNextAvailableID('tree'); 
         var obj = {
-            'id': illustration.getNextAvailableID('tree'),
+            'id': newID,
             'metadata': {
-                'name': "Untitled tree",
+                'name': "Untitled ("+ newID +")",
                 'description': "",
                 'dois': [ ]
             },
@@ -165,10 +166,11 @@ var TreeIllustrator = function(window, document, $, ko) {
     /* Return the data model for a new dataset (our JSON representation) */
     var getNewSupportingDatasetModel = function(illustration, options) {
         if (!options) options = {};
+        var newID = illustration.getNextAvailableID('dataset'); 
         var obj = {
-            'id': illustration.getNextAvailableID('dataset'),
+            'id': newID,
             'metadata': {
-                'name': "Untitled dataset",
+                'name': "Untitled ("+ newID +")",
                 'description': "",
                 'dois': [ ]
             },
@@ -188,10 +190,11 @@ var TreeIllustrator = function(window, document, $, ko) {
     /* Return the data model for a new ornament (our JSON representation) */
     var getNewOrnamentModel = function(illustration, options) {
         if (!options) options = {};
+        var newID = illustration.getNextAvailableID('ornament'); 
         var obj = {
-            'id': illustration.getNextAvailableID('ornament'),
+            'id': newID,
             'metadata': {
-                'name': "Untitled ornament",
+                'name': "Untitled ("+ newID +")",
                 'description': ""
             },
             'data': { },
