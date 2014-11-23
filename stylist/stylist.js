@@ -1448,17 +1448,18 @@ function movePanelDown(e) {
     return false; // no more actions here
 }
 function updateMoveWidgets() {
+/*
     var $panels = $('#ti-main-accordion > .panel');
     $panels.each(function(i, panel) {
         var $panel = $(panel);
-        if ($panel.prev('.tree-panel, .data-panel').length) {
+        if ($panel.prev('.tree-panel, .dataset-panel, .ornament-panel').length) {
             // enable move-up widget
             $panel.find('.panel-heading .move-up').removeClass('move-disabled');
         } else {
             // nowhere to move, disable it
             $panel.find('.panel-heading .move-up').addClass('move-disabled');
         }
-        if ($panel.next('.tree-panel, .data-panel').length) {
+        if ($panel.next('.tree-panel, .dataset-panel, .ornament-panel').length) {
             // enable move-down widget
             $panel.find('.panel-heading .move-down').removeClass('move-disabled');
         } else {
@@ -1466,6 +1467,7 @@ function updateMoveWidgets() {
             $panel.find('.panel-heading .move-down').addClass('move-disabled');
         }
     });
+*/
 }
 $(document).ready(function() {
     $('#ti-main-accordion .panel-body').on('shown', accordionPanelShown);
@@ -1474,8 +1476,15 @@ $(document).ready(function() {
     $('#ti-main-accordion .panel-heading').on('mouseenter', showAccordionHint);
     $('#ti-main-accordion .panel-heading').on('mouseleave', hideAccordionHint);
 
+/*
     $('#ti-main-accordion .move-up').on('click', movePanelUp);
     $('#ti-main-accordion .move-down').on('click', movePanelDown);
+*/
 
     updateMoveWidgets();
 });
+
+function doNothing() {
+    console.log("NADA");
+    return;
+}

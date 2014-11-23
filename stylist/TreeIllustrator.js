@@ -32,7 +32,7 @@ var TreeIllustrator = function(window, document, $, ko) {
         if (!options) options = {};
         var obj = {
             'metadata': {
-                'name': "Untitled",
+                'name': "Untitled illustration",
                 'description': "",
                 'authors': [ ],   // assign immediately to this user?
                 'tags': [ ],
@@ -143,7 +143,7 @@ var TreeIllustrator = function(window, document, $, ko) {
         var obj = {
             'id': illustration.getNextAvailableID('tree'),
             'metadata': {
-                'name': "Untitled",
+                'name': "Untitled tree",
                 'description': "",
                 'dois': [ ]
             },
@@ -152,6 +152,51 @@ var TreeIllustrator = function(window, document, $, ko) {
                 // incl. only deviations from the style guide above?
                 'edgeThickness': 2,  
                 'edgeColor': '#933'
+            },
+        };
+        /* TODO: Apply optional modifications?
+        if (options.BLAH) {
+            obj.metadata.FOO = 'BAR';
+        }
+        */
+        return obj;
+    };
+
+    /* Return the data model for a new dataset (our JSON representation) */
+    var getNewSupportingDatasetModel = function(illustration, options) {
+        if (!options) options = {};
+        var obj = {
+            'id': illustration.getNextAvailableID('dataset'),
+            'metadata': {
+                'name': "Untitled dataset",
+                'description': "",
+                'dois': [ ]
+            },
+            'data': { },
+            'style': {
+                // incl. only deviations from the style guide above?
+            },
+        };
+        /* TODO: Apply optional modifications?
+        if (options.BLAH) {
+            obj.metadata.FOO = 'BAR';
+        }
+        */
+        return obj;
+    };
+
+    /* Return the data model for a new ornament (our JSON representation) */
+    var getNewOrnamentModel = function(illustration, options) {
+        if (!options) options = {};
+        var obj = {
+            'id': illustration.getNextAvailableID('ornament'),
+            'metadata': {
+                'name': "Untitled ornament",
+                'description': ""
+            },
+            'data': { },
+            'style': {
+                // incl. only deviations from the style guide above?
             },
         };
         /* TODO: Apply optional modifications?
@@ -219,9 +264,9 @@ var TreeIllustrator = function(window, document, $, ko) {
 
         self.getNextAvailableID = function( elementType ) {
             // creates a serial ID like 'dataset-4' or 'tree-12'
-            var readyID = elementType +'-'+ nextAvailableID[ elementType ];
+            var readyID = nextAvailableID[ elementType ];
             nextAvailableID[ elementType ] = readyID + 1;
-            return readyID;
+            return (elementType +'-'+ nextAvailableID[ elementType ]);
         } 
 
         // REMINDER: computed observables should use 'deferEvaluation' in
@@ -382,6 +427,23 @@ var TreeIllustrator = function(window, document, $, ko) {
         self.treeY = ko.observable( 'treeY' in data ? data.treeY : physicalHeight / 2.0 );
 */
 
+        self.moveElementUp = function(el) {
+              var tempList = self.elements().slice(0);
+              var currentPos = $.inArray(el, tempList);
+              var previousPos = currentPos - 1;
+              tempList[currentPos] = tempList[previousPos];
+              tempList[previousPos] = el;
+              self.elements(tempList);
+        }
+        self.moveElementDown = function(el) {
+              var tempList = self.elements().slice(0);
+              var currentPos = $.inArray(el, tempList);
+              var nextPos = currentPos + 1;
+              tempList[currentPos] = tempList[nextPos];
+              tempList[nextPos] = el;
+              self.elements(tempList);
+        }
+
         /* Instead of explicitly defining all possible members, let's
          * trust the ko.mapping plugin to handle loading and saving 
          * illustration data from JS(ON), with mapping options to handle
@@ -535,8 +597,15 @@ var TreeIllustrator = function(window, document, $, ko) {
             console.warn("MISSING 'new' keyword, patching this now");
             return new SupportingDataset(illustration, data);
         }
+
+        if (!data || typeof(data) !== 'object') {
+            // load the "empty" dataset object above
+            data = getNewSupportingDatasetModel(illustration);
+        }
+
         // safely refer to this instance
         var self = this;
+        ko.mapping.fromJS(data, Illustration.mappingOptions, self);
 
         // TODO: Based on the element type, offer appropriate styles and constraints
         // TODO: Include options to map selected data to visual style
@@ -547,8 +616,15 @@ var TreeIllustrator = function(window, document, $, ko) {
             console.warn("MISSING 'new' keyword, patching this now");
             return new Ornament(illustration, data);
         }
+
+        if (!data || typeof(data) !== 'object') {
+            // load the "empty" ornament object above
+            data = getNewOrnamentModel(illustration);
+        }
+
         // safely refer to this instance
         var self = this;
+        ko.mapping.fromJS(data, Illustration.mappingOptions, self);
 
         // TODO: Based on the element type, offer appropriate styles and constraints
         // TODO: Include options to map selected data to visual style
