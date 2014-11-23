@@ -569,7 +569,6 @@ function refreshViz(options) {
         console.log("  right="+ right);
         console.log("  bottom="+ bottom);
         console.log("  left="+ left);
-*/
         // colorize nodes and edges to ROYGBV
         colors = ['red','orange','#cc0','green','blue','violet'];
         $.each(tn.find('path'), function(i, n) {
@@ -582,6 +581,7 @@ function refreshViz(options) {
         // bring stuff into view //TODO: cleanup
         //tn.attr('transform','translate(100,100)')
         //te.attr('transform','translate(100,100)')
+*/
 
         // ugly hack to remove the intervening FOREIGNOBJECT and DIV between our outer SVG and vega's SVG
         ///$('#viz-vega-fo').replaceWith($('div.vega').contents());
