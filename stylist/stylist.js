@@ -4,6 +4,13 @@
  * closely with a web UI that's bound and enabled using KnockoutJS.
  */
 
+// patch missing JS console on some (very) old browsers
+if (typeof console == 'undefined') console = {
+    log: function(msg) {},
+    warn: function(msg) {},
+    error: window.alert
+}
+
 /* TODO: Offer all studies and trees from the Open Tree of Life repository,
  * plus other sources and tree formats.
  */
@@ -1423,3 +1430,4 @@ function doNothing() {
     // occasionally useful in KO click bindings
     return;
 }
+
