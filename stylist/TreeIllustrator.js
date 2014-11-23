@@ -27,8 +27,8 @@ var TreeIllustrator = function(window, document, $, ko) {
         BLACK_AND_WHITE: 'BLACK_AND_WHITE'
     };
 
-    /* Return the values for a new illustration (outlines our JSON representation) */
-    var getNewIllustrationObject = function(options) {
+    /* Return the data model for a new illustration (our JSON representation) */
+    var getNewIllustrationModel = function(options) {
         if (!options) options = {};
         var obj = {
             'metadata': {
@@ -126,8 +126,33 @@ var TreeIllustrator = function(window, document, $, ko) {
                 'border': "none",
                 // TODO: add default line color, thickness, node shape/size, etc.
             },
-            'elements': {
-            }
+            'elements': [
+            ]
+        };
+        /* TODO: Apply optional modifications?
+        if (options.BLAH) {
+            obj.metadata.FOO = 'BAR';
+        }
+        */
+        return obj;
+    };
+
+    /* Return the data model for a new tree (our JSON representation) */
+    var getNewIllustratedTreeModel = function(illustration, options) {
+        if (!options) options = {};
+        var obj = {
+            'id': illustration.getNextAvailableID('tree'),
+            'metadata': {
+                'name': "Untitled",
+                'description': "",
+                'dois': [ ]
+            },
+            'data': { },
+            'style': {
+                // incl. only deviations from the style guide above?
+                'edgeThickness': 2,  
+                'edgeColor': '#933'
+            },
         };
         /* TODO: Apply optional modifications?
         if (options.BLAH) {
@@ -151,18 +176,53 @@ var TreeIllustrator = function(window, document, $, ko) {
 
         if (!data || typeof(data) !== 'object') {
             // load the "empty" illustration object above
-            data = getNewIllustrationObject();
+            data = getNewIllustrationModel();
         }
 
         // safely refer to this instance
         var self = this;
 
         /* define PRIVATE members (variables and methods)functions and with 'var' */
-        var secretSauce = function() {
-            alert("TOP SECRET!");
+
+        /* We'll need to mint a unique, serial ID for each new illustration
+         * element. Since we have a reasonable number of elements, we can
+         * set the initial values for an illustration as it loads, by scanning
+         * the existing elements of each type.
+         */
+        var nextAvailableID = {
+            'tree': 0,
+            'dataset': 0,
+            'ornament': 0
+        };
+        // Each element nickname above is used in IDs, eg. 'tree-32'
+        var initSerialElementIDs = function() {
+            for (var aType in nextAvailableID) {
+                nextAvailableID[ aType ] = 0;
+            }
+            var highestTreeIDFound = 0;
+            var highestDatasetIDFound = 0;
+            var highestOrnamentIDFound = 0;
+
+            $.each(self.elements(), function(i, el) {
+                var parts = el.id().split('-');
+                var elementType = parts[0];
+                var itsSerialID = parseInt(parts[1], 10);
+                nextAvailableID[ elementType ] = Math.max( 
+                    itsSerialID,
+                    nextAvailableID[ elementType ] 
+                );
+            });
         }
 
+
         /* define PUBLIC variables (and privileged methods) with 'self' */
+
+        self.getNextAvailableID = function( elementType ) {
+            // creates a serial ID like 'dataset-4' or 'tree-12'
+            var readyID = elementType +'-'+ nextAvailableID[ elementType ];
+            nextAvailableID[ elementType ] = readyID + 1;
+            return readyID;
+        } 
 
         // REMINDER: computed observables should use 'deferEvaluation' in
         // case their dependencies will appear during ko.mapping
@@ -375,6 +435,9 @@ var TreeIllustrator = function(window, document, $, ko) {
         // Add validation for fields that need it
         self.metadata.name.extend({required: true});
 
+        // Reset serial element IDs for this illustration
+        initSerialElementIDs();
+
         self.exportModelAsObject = function() {
             var obj = ko.mapping.toJS(self);
             // TODO: any cleanup here?
@@ -391,10 +454,42 @@ var TreeIllustrator = function(window, document, $, ko) {
     /* define PUBLIC methods (that don't need private data) in its prototype */
     Illustration.prototype = {
         constructor: Illustration,
-        greet: function () {
+
+        addIllustratedTree: function() {
             var self = this;
-            alert(self.name() + ' says hi!');
-        }
+            var tree = new IllustratedTree(self);
+            self.elements.push(tree);
+            return tree;
+        },
+        removeIllustratedTree: function(tree) {
+            var self = this;
+            self.elements.remove(tree);
+            delete tree;
+        },
+
+        addSupportingDataset: function() {
+            var self = this;
+            var ds  = new SupportingDataset(self);
+            self.elements.push(ds);
+            return ds;
+        },
+        removeSupportingDataset: function(ds) {
+            var self = this;
+            self.elements.remove(ds);
+            delete ds;
+        },
+
+        addOrnament: function() {
+            var self = this;
+            var obj  = new Ornament(self);
+            self.elements.push(obj);
+            return obj;
+        },
+        removeOrnament: function(obj) {
+            var self = this;
+            self.elements.remove(obj);
+            delete obj;
+        },
     };
 
 
@@ -405,6 +500,52 @@ var TreeIllustrator = function(window, document, $, ko) {
         if ( !(this instanceof SceneGraph) ) {
             console.warn("MISSING 'new' keyword, patching this now");
             return new SceneGraph(data);
+        }
+        // safely refer to this instance
+        var self = this;
+
+        // TODO: Based on the element type, offer appropriate styles and constraints
+        // TODO: Include options to map selected data to visual style
+        return self;
+    }
+    var IllustratedTree = function(illustration, data) {
+        if ( !(this instanceof IllustratedTree) ) {
+            console.warn("MISSING 'new' keyword, patching this now");
+            return new IllustratedTree(illustration, data);
+        }
+
+        if (!data || typeof(data) !== 'object') {
+            // load the "empty" tree object above
+            data = getNewIllustratedTreeModel(illustration);
+        }
+
+        // safely refer to this instance
+        var self = this;
+        ko.mapping.fromJS(data, Illustration.mappingOptions, self);
+
+        // Add validation for fields that need it
+        self.metadata.name.extend({required: true});
+
+        // TODO: Based on the element type, offer appropriate styles and constraints
+        // TODO: Include options to map selected data to visual style
+        return self;
+    }
+    var SupportingDataset = function(illustration, data) {
+        if ( !(this instanceof SupportingDataset) ) {
+            console.warn("MISSING 'new' keyword, patching this now");
+            return new SupportingDataset(illustration, data);
+        }
+        // safely refer to this instance
+        var self = this;
+
+        // TODO: Based on the element type, offer appropriate styles and constraints
+        // TODO: Include options to map selected data to visual style
+        return self;
+    }
+    var Ornament = function(illustration, data) {
+        if ( !(this instanceof Ornament) ) {
+            console.warn("MISSING 'new' keyword, patching this now");
+            return new Ornament(illustration, data);
         }
         // safely refer to this instance
         var self = this;
@@ -436,9 +577,11 @@ var TreeIllustrator = function(window, document, $, ko) {
     return {
         units: units,
         colorDepths: colorDepths,
-        //Tree: Tree,
+        Illustration: Illustration,
         SceneGraph: SceneGraph,
-        StyleOverrides: StyleOverrides,
-        Illustration: Illustration
+        IllustratedTree: IllustratedTree,
+        SupportingDataset: SupportingDataset,
+        Ornament: Ornament,
+        StyleOverrides: StyleOverrides
     };
 }(window, document, $, ko);

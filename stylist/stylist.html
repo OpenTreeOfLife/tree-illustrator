@@ -290,99 +290,122 @@
     </div>
   </div>
 
-  <div class="accordion-group panel tree-panel panel-success">
-    <div class="accordion-heading panel-heading">
-      <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-tree-0">
-        Crown Carnivora with parsimony
-        <i class="help-rollover">Click to open this panel</i>
-        <i class="indicator move-down icon-chevron-down Xicon-white  pull-right"></i>
-        <i class="indicator move-up icon-chevron-up Xicon-white  pull-right"></i>
-        <span class="element-type">tree</span> 
-      </a>
-    </div>
-    <div id="ti-panel-tree-0" class="accordion-body panel-body collapse">
-      <div class="accordion-inner">
-        <em>Once a tree is added, describe its origin and appearance</em>
-        <ul>
-            <li>tree source</li>
-            <li>tree type (data format)</li>
-            <li>layout/geometry (circular, triangular, rectangular)</li>
-            <li>styles - <em>specify value+units, pick from options, or map to data</em>
-                <ul>
-                    <li>edge thickness</li>
-                    <li>node size</li>
-                    <li>node shape</li>
-                    <li>color</li>
-                    <li>highlight style</li>
-                </ul>
-            </li>
-            <li>un-collapse all nodes</li>
-            <li>un-highlight all nodes</li>
-            <li>un-highlight all edges</li>
-            <li>interesting nodes+edges; for each listed element:
-                <ul>
-                    <li>collapsed</li>
-                    <li>highlighted</li>
-                    <li>styles (appropriate to type) - <em>specify value+units, pick from options, or map to data</em>
-                        <ul>
-                            <li>edge thickness</li>
-                            <li>node size</li>
-                            <li>node shape</li>
-                            <li>color</li>
-                            <li>font/text styles</li>
-                            <li>highlight style</li>
-                        </ul>
-                    </li>
-                </ul>
-            </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  <div class="accordion-group panel data-panel panel-warning">
-    <div class="accordion-heading panel-heading">
-      <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-data-0">
-        Trait data for crown Carnivora
-        <i class="help-rollover">Click to open this panel</i>
-        <i class="indicator move-down icon-chevron-down Xicon-white  pull-right"></i>
-        <i class="indicator move-up icon-chevron-up Xicon-white  pull-right"></i>
-        <span class="element-type">data</span> 
-      </a>
-    </div>
-    <div id="ti-panel-data-0" class="accordion-body panel-body collapse">
-      <div class="accordion-inner">
-        <em>Add supporting data to enhance displayed trees</em>
-        <ul>
-            <li>data source</li>
-            <li>data type</li>
-            <li>data filter</li>
-            <li>tabular display of raw data?</li>
-        </ul>
-      </div>
-    </div>
-  </div>
+<!-- ko foreach: {data: elements, as: 'el'} -->
 
-  <div class="accordion-group panel tree-panel panel-success">
-    <div class="accordion-heading panel-heading">
-      <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-tree-1">
-        Carnivora from Klein, 2002
-        <i class="help-rollover">Click to open this panel</i>
-        <i class="indicator move-down icon-chevron-down Xicon-white  pull-right"></i>
-        <i class="indicator move-up icon-chevron-up Xicon-white  pull-right"></i>
-        <span class="element-type">tree</span> 
-      </a>
-    </div>
-    <div id="ti-panel-tree-1" class="accordion-body panel-body collapse">
-      <div class="accordion-inner">
-        <em>See the tree above for a list of expected contents.</em>
+    <!-- ko if: $data instanceof TreeIllustrator.IllustratedTree -->
+      <div class="accordion-group panel tree-panel panel-success">
+        <div class="accordion-heading panel-heading">
+          <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-tree-0">
+            <span data-bind="html: el.metadata.name, attr: {'title': el.id}">NAME</span>
+            <i class="help-rollover">Click to open this panel</i>
+            <i class="indicator move-down icon-chevron-down Xicon-white  pull-right"></i>
+            <i class="indicator move-up icon-chevron-up Xicon-white  pull-right"></i>
+            <span class="element-type">tree</span> 
+          </a>
+        </div>
+        <div id="ti-panel-tree-0" class="accordion-body panel-body collapse">
+          <div class="accordion-inner">
+            <em>Once a tree is added, describe its origin and appearance</em>
+            <ul>
+                <li>tree source</li>
+                <li>tree type (data format)</li>
+                <li>layout/geometry (circular, triangular, rectangular)</li>
+                <li>styles - <em>specify value+units, pick from options, or map to data</em>
+                    <ul>
+                        <li>edge thickness</li>
+                        <li>node size</li>
+                        <li>node shape</li>
+                        <li>color</li>
+                        <li>highlight style</li>
+                    </ul>
+                </li>
+                <li>un-collapse all nodes</li>
+                <li>un-highlight all nodes</li>
+                <li>un-highlight all edges</li>
+                <li>interesting nodes+edges; for each listed element:
+                    <ul>
+                        <li>collapsed</li>
+                        <li>highlighted</li>
+                        <li>styles (appropriate to type) - <em>specify value+units, pick from options, or map to data</em>
+                            <ul>
+                                <li>edge thickness</li>
+                                <li>node size</li>
+                                <li>node shape</li>
+                                <li>color</li>
+                                <li>font/text styles</li>
+                                <li>highlight style</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    <!-- /ko --><!-- end of IllustratedTree block -->
+
+    <!-- ko if: $data instanceof TreeIllustrator.SupportingDataset -->
+      <div class="accordion-group panel data-panel panel-warning">
+        <div class="accordion-heading panel-heading">
+          <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-data-0">
+            Trait data for crown Carnivora
+            <i class="help-rollover">Click to open this panel</i>
+            <i class="indicator move-down icon-chevron-down Xicon-white  pull-right"></i>
+            <i class="indicator move-up icon-chevron-up Xicon-white  pull-right"></i>
+            <span class="element-type">data</span> 
+          </a>
+        </div>
+        <div id="ti-panel-data-0" class="accordion-body panel-body collapse">
+          <div class="accordion-inner">
+            <em>Add supporting data to enhance displayed trees</em>
+            <ul>
+                <li>data source</li>
+                <li>data type</li>
+                <li>data filter</li>
+                <li>tabular display of raw data?</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    <!-- /ko --><!-- end of SupportingDataset block -->
+
+    <!-- ko if: $data instanceof TreeIllustrator.Ornament -->
+      <div class="accordion-group panel data-panel panel-info">
+        <div class="accordion-heading panel-heading">
+          <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-data-0">
+            Something shiny
+            <i class="help-rollover">Click to open this panel</i>
+            <i class="indicator move-down icon-chevron-down Xicon-white  pull-right"></i>
+            <i class="indicator move-up icon-chevron-up Xicon-white  pull-right"></i>
+            <span class="element-type">ornament</span> 
+          </a>
+        </div>
+        <div id="ti-panel-data-0" class="accordion-body panel-body collapse">
+          <div class="accordion-inner">
+            <em>Add supporting data to enhance displayed trees</em>
+            <ul>
+                <li>data source</li>
+                <li>data type</li>
+                <li>data filter</li>
+                <li>tabular display of raw data?</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    <!-- /ko --><!-- end of Ornament block -->
+
+<!-- /ko --><!-- end of illustration elements loop -->
 
     <div class="button-bar" style="margin-bottom: 0.4em;">
-        <button class="btn btn-small">Add tree...</button>
-        <button class="btn btn-small">Add supporting data...</button>
-        <button class="btn btn-small">Add ornament...</button>
+        <button class="btn btn-small" 
+                onclick="ill.addIllustratedTree(); return false;"
+        >Add tree...</button>
+        <button class="btn btn-small" 
+                onclick="ill.addSupportingDataset(); return false;"
+        >Add supporting data...</button>
+        <button class="btn btn-small" 
+                onclick="ill.addOrnament(); return false;"
+        >Add ornament...</button>
     </div>
 
 <!--
