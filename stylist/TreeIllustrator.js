@@ -132,7 +132,19 @@ var TreeIllustrator = function(window, document, $, ko) {
                 // TODO: add default line color, thickness, node shape/size, etc.
             },
             'elements': [
-            ]
+            ],
+            'vegaSpec': {
+                'width': 800,
+                'height': 900,
+                'padding': {
+                    'top': 0,
+                    'left': 0,
+                    'bottom': 0,
+                    'right': 0
+                },
+                'data': [ ],
+                'style': { }
+            }
         };
         /* TODO: Apply optional modifications?
         if (options.BLAH) {
@@ -476,7 +488,7 @@ var TreeIllustrator = function(window, document, $, ko) {
              */
             'ignore': [ 'constructor' ],
             'include': [ ],
-            'copy': [ ],
+            'copy': [ 'vegaSpec' ],
             // 'observe': [ ], // WARNING: using this flips default mapping!
             'elements': {
                 'create': function(options) {
@@ -536,11 +548,13 @@ var TreeIllustrator = function(window, document, $, ko) {
             var self = this;
             var tree = new IllustratedTree(self);
             self.elements.push(tree);
+            refreshViz();
             return tree;
         },
         removeIllustratedTree: function(tree) {
             var self = this;
             self.elements.remove(tree);
+            refreshViz();
             delete tree;
         },
 
@@ -548,11 +562,13 @@ var TreeIllustrator = function(window, document, $, ko) {
             var self = this;
             var ds  = new SupportingDataset(self);
             self.elements.push(ds);
+            refreshViz();
             return ds;
         },
         removeSupportingDataset: function(ds) {
             var self = this;
             self.elements.remove(ds);
+            refreshViz();
             delete ds;
         },
 
@@ -560,15 +576,216 @@ var TreeIllustrator = function(window, document, $, ko) {
             var self = this;
             var obj  = new Ornament(self);
             self.elements.push(obj);
+            refreshViz();
             return obj;
         },
         removeOrnament: function(obj) {
             var self = this;
             self.elements.remove(obj);
+            refreshViz();
             delete obj;
         },
-    };
 
+        updateVegaSpec: function(options) {
+            /* Sweep the Illustration model and (re)generated a full Vega spec.
+             * This drives the d3 visualization in the editor viewport.
+             */
+            var self = this;
+            var spec = self.vegaSpec;
+
+            // clear all groups and marks, and restore the empty illustration-elements group
+            spec.marks = [ ];
+            var illustrationElementsGroup = {
+                "type": "group",
+                "name": "illustration-elements",  // becomes marker class .illustration-elements
+                "properties": {
+                    "enter": {
+                        "x": {"value": 0},
+                        "y": {"value": 0},
+                        "height": {"value": physicalUnitsToPixels(physicalHeight, internal_ppi) },
+                        "width": {"value": physicalUnitsToPixels(physicalWidth, internal_ppi) }
+                    }
+                },
+                "scales": [ ],
+                "axes": [ ],
+                "marks": [ ]
+            };
+            spec.marks.push( illustrationElementsGroup );
+
+            // clear and rebuild data based on current elements
+            spec.data = [ ];
+
+            $.each(self.elements(), function(i, el) {
+                // Add appropriate data *and* marks as needed
+                if (el instanceof IllustratedTree) {
+                    var dataSourceName = el.id();  // "tree-3" or similar
+                    var treeData = {
+                        'name': dataSourceName,
+                        'format': {"type":"treejson"},  // initial match for JSON object, vs. array
+                        'transform': [
+                            // TODO: add all possible properties (common to by all formats?)
+                            // TODO: merge supporting data from other files? or do that downstream?
+                            // TODO: final tailoring to phylogram layout (one, or several?)
+                        ]
+                    }
+
+                    // TODO: Define data source (allow for inline tree data? in dataset? other sources?)
+                    if (true) { 
+                        // TODO: treeData.url = el.metadata.url;
+
+                        treeData.url = buildStudyFetchURL( '2380' );
+
+                    }
+
+                    /* Build an appropriate chain of data transforms */
+
+                    // TODO: First transform imports data from its source format to our basic phyloTree
+                    if (true) { 
+                        treeData.transform.push({
+                            "type": "nexson", 
+                            "treesCollectionPosition":0, 
+                            "treePosition":0
+                        });
+                    }
+
+                    // TODO: Shape the phyloTree using preferred tree layout and styles
+                    if (true) { 
+                        treeData.transform.push({ 
+                            "type": "phylogram", 
+                            "layout": "radial",
+                            //"radialArc": [90, 270],
+                            //"radialSweep": 'CLOCKWISE',
+                            "radialSweep": 'COUNTERCLOCKWISE',
+                            //"branchStyle": "diagonal",  // other options here?
+                            "branchLengths": "",  // empty/false, or a property name to compare?
+                            "width": 100,   // TODO: FIX these dimensions (they rotate)
+                            "height": 100, 
+                            "tipsAlignment": 'right'
+                        });
+                    }
+                    spec.data.push(treeData);
+
+                    var treeMarks = { 
+                        "type": "group",
+                        "name": el.id(),  // becomes marker class .tree-3 or similar
+                        "properties": {
+                            "enter": {
+                                "x": {"value": physicalUnitsToPixels(physicalWidth/2.0, internal_ppi)},
+                                "y": {"value": physicalUnitsToPixels(physicalHeight/2.0, internal_ppi)}
+                            },
+                            "update": {
+                                //"transform": {"value":"scale(800,300)"}
+                                //"transform": {"value":"rotate(25) scale(20,20)"}
+                            }
+                        },
+                        "marks": [
+                            { /* N.B. This expects pre-existing links with 'source' and 'target' properties! The 'link' transform is 
+                                 just to provide a rendered path of the desired type. */
+                              "type": "path",
+                              //"from": {"data": "phyloTree", "property": "links", "transform": [{"type": "link", "shape": "line"}]},
+                              "from": {
+                                "data": dataSourceName,
+                                "transform": [
+                                  {"type":"pluck", "field":"phyloEdges" }
+                                // how do apply the 'time' scale here? TRY brute-forcing x and y properties
+                                  //{"type":"formula", "field":"source.x", "expr":"d.source.y"},
+                                  //{"type":"formula", "field":"target.x", "expr":"d.target.y"},
+                                  // {"type":"link", "shape":"line" }  // line | curve | diagonal | diagonalX | diagonalY
+                                  // {"type":"phylogramLink", "shape":"rightAngleDiagonal" }  // rightAngleDiagonal | radialRightAngleDiagonal
+                                ]
+                              },
+                              "properties": {
+                                "update": {
+                                  "path": {"field": "path"}, // , "transform":{"scale":"x"}},
+                                  "stroke": {"value": "#888"},
+                                  "strokeWidth": {"value": 1.0}
+                                },
+                                "hover": {
+                                 // "stroke": {"value": "red"}
+                                    }
+                                  }
+                                }
+                                ,
+                                {   /* group node/label pairs, for easier event binding later */
+                                    "type":"group",
+                                    "marks":[
+                                        {
+                                            "type": "symbol",
+                                            "from": {"data": dataSourceName, "transform": [{"type":"pluck", "field":"phyloNodes" }] },
+                                            "properties": {
+                                                "enter": {
+                                                    "x": {"XXscale": "x", "field": "x", "mult":1},
+                                                    "y": {"XXscale": "y", "field": "y", "mult":1}
+                                                },
+                                                "update": {
+                                                    "shape": {"value":"circle"},
+                                                    "size": {"value": 8},
+                                                    "fill": {"value": "black"}
+                                                },
+                                                "hover": {
+                                                    // "fill": {"value": "red"}
+                                                }
+                                            }
+                                        } /* end of node marks */
+                                        ,
+                                        {  // label marks
+                                            "type": "text",
+                                            "from": {"data": dataSourceName, "transform": [{"type":"pluck", "field":"phyloNodes" }] },
+                                            "properties": {
+                                                "enter": {
+                                                    /* Properties for cartesian / rectangular layouts
+                                                    "x": {"scale": "time", "field": "x", "mult":1},
+                                                    "y": {"scale": "y", "field": "y", "mult":1.0}
+                                                    "dx": {"value": -6},
+                                                    "dy": {"value": -6},
+                                                    */
+
+                                                    /* Properties for radial/polar layouts.
+                                                    * Radius and theta (angle from origin, in radians) are the
+                                                    * alternatives to X and Y for polar projection, and assume
+                                                    * that the x and y properties represent the origin or center
+                                                    * of the layout, ie, the root node. See discussion at
+                                                    *  https://github.com/trifacta/vega/pull/187
+                                                    */
+                                                    "x": {"value": 0},  // this is origin for radial/polar projection
+                                                    "y": {"value": 0},
+                                                    "radius": {"field": "radius"},  // px from origin
+                                                    "theta": {"field": "theta"},  // in radians (what direction from origin)
+                                                    "align": {"field": 'align'},  // NOTE that some labels are flipped 180deg for legibility
+                                                    "angle": {"field": "angle"},  // in degrees
+                                                    "fontSize": {"value": 5} // TODO: adjustable font size (convert pt to px)
+                                                },
+                                                "update": {
+                                                    "text": {"field": "ottTaxonName"},
+                                                    "fill": {"value":"black"}
+                                                },
+                                                "hover": {
+                                                    "fill": {"value": "red"}
+                                                }
+                                        }
+                                    } /* end of label marks */
+                                ]
+                            } /* end of grouped node+label */ 
+                        ] /* end of inner group marks */
+                    }; /* end of inner group */
+
+                    illustrationElementsGroup.marks.push( treeMarks );
+
+                } else if (el instanceof SupportingDataset) {
+                    console.log("updateVegaSpec(): ignoring datasets for now");
+
+                } else if (el instanceof Ornament) {
+                    console.log("updateVegaSpec(): ignoring ornaments for now");
+
+                } else {
+                    console.error("updateVegaSpec(): unexpeced element type: '"+ el.metadata.type() +"'!");
+                }
+            });
+
+
+
+        }
+    };
 
     /* We need to be able to define custom styles for many different elements of
      * the scene graph, e.g., a tree, node, or caption.

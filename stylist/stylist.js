@@ -514,8 +514,10 @@ function refreshViz(options) {
     if (!options) options = {}; 
 
     // build the "full" specification, adding study data to preset style
-    vegaSpec = $.extend(true, {}, viewModel.style, {'data': viewModel.data});
-    vg.parse.spec(vegaSpec, function(chart) {
+    //vegaSpec = $.extend(true, {}, viewModel.style, {'data': viewModel.data});
+    ill.updateVegaSpec();  // TODO: trigger updates on a more sensible basis
+
+    vg.parse.spec(ill.vegaSpec, function(chart) {
       var view = chart({el:"#viz-outer-frame", renderer:"svg"})  // , data:viewModel.data})  <== MUST BE INLINE, NOT URL!
 /*
         .on("mouseover", function(event, item) {
