@@ -379,10 +379,18 @@ var TreeIllustrator = function(window, document, $, ko) {
                     return "centimeters";
             }
         }, self, {deferEvaluation:true});
-        self.unitsAbbreviation = ko.computed(function() {
+        self.unitsDisplayAbbreviation = ko.computed(function() {
             switch( self.style.printSize.units() ) {
                 case units.INCHES:
                     return "in."
+                case units.CENTIMETERS:
+                    return "cm";
+            }
+        }, self, {deferEvaluation:true});
+        self.unitsCssSuffix = ko.computed(function() {
+            switch( self.style.printSize.units() ) {
+                case units.INCHES:
+                    return "in"
                 case units.CENTIMETERS:
                     return "cm";
             }
@@ -474,19 +482,6 @@ var TreeIllustrator = function(window, document, $, ko) {
             }
             return html;
         }, self, {deferEvaluation:true});
-/*
-        self.metadata = {
-            name: ko.observable(data.metadata.name),
-            description: ko.observable(data.metadata.description)
-        };
-        self.styles = ko.observable();
-        self.sceneGraph = ko.observable();
-        self.vegaSpec = ko.observable();
-
-        // two initial test properties for tree placement
-        self.treeX = ko.observable( 'treeX' in data ? data.treeX : physicalWidth / 2.0 );
-        self.treeY = ko.observable( 'treeY' in data ? data.treeY : physicalHeight / 2.0 );
-*/
 
         self.moveElementUp = function(el) {
               var tempList = self.elements().slice(0);

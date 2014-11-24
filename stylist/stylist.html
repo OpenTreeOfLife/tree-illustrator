@@ -40,7 +40,6 @@
             <button class="btn btn-small" onclick="resizeViewportToShowAll(); return false;">Fit contents</button>
             &nbsp; &nbsp; &nbsp;
             <button class="btn btn-small" onclick="toggleFixedRulers(this); return false;">Hide rulers</button>
-            <button class="btn btn-small" onclick="togglePhysicalUnits(this); return false;">Work in cm</button>
         </div>
     </div>
    </div><!-- .row-fluid -->
@@ -377,7 +376,7 @@
                                data-bind="value: height,
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {keyup: refreshViz, change: refreshViz}" />&nbsp;
-                        &nbsp;(<span data-bind="text: $root.unitsAbbreviation()">cm</span>)
+                        &nbsp;(<span data-bind="text: $root.unitsDisplayAbbreviation()">cm</span>)
                     </div>
                 </div>
                 <div class="control-group">
@@ -396,7 +395,7 @@
                                data-bind="value: rootY,
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {keyup: refreshViz, change: refreshViz}" />&nbsp;
-                        &nbsp;(<span data-bind="text: $root.unitsAbbreviation()">cm</span> from top left)
+                        &nbsp;(<span data-bind="text: $root.unitsDisplayAbbreviation()">cm</span> from top left)
                     </div>
                 </div>
             </form>

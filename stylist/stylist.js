@@ -681,14 +681,6 @@ function getStyleByName( styleName ) {
     return styleInfo.style;
 }
 
-function testTransform(arg1, arg2, arg3) {
-    console.log("testTransform");
-    console.log(arg1);
-    console.log(arg2);
-    console.log(arg3);
-    return true;
-}
-
 function toggleFixedRulers(toggle) {
     var rulersAreHidden = $('#viz-outer-frame').hasClass('hide-rulers');
     var $toggleBtn = $(toggle);
@@ -703,22 +695,6 @@ function toggleFixedRulers(toggle) {
     }
     updateViewportViewbox();
     zoomViewport('REFRESH');
-}
-
-function togglePhysicalUnits(toggle) {
-    var $toggleBtn = $(toggle);
-    if (physicalUnits === 'INCHES') {
-        physicalUnits = 'CENTIMETERS';
-        physicalWidth = inchesToCentimeters(physicalWidth);
-        physicalHeight = inchesToCentimeters(physicalHeight);
-        $toggleBtn.text('Work in inches');
-    } else {
-        physicalUnits = 'INCHES';
-        physicalWidth = centimetersToInches(physicalWidth);
-        physicalHeight = centimetersToInches(physicalHeight);
-        $toggleBtn.text('Work in cm');
-    }
-    refreshViz();
 }
 
 function initTreeIllustratorWindow() {
@@ -1251,7 +1227,7 @@ function getPrintableSVG( options ) {
     */
 
     // shift the main SVG dimensions to physical units (for more accurate print size)
-    var unitSuffix = getPhysicalUnitSuffix();
+    var unitSuffix = ill.unitsCssSuffix();
     // reckon physical size in default (print-ready) ppi to "freeze" the pixel size of the top-level SVG
     illustration
         /* N.B. Relying on "natural" SVG res (90 ppi) prints not-quite to scale!
