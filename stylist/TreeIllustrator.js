@@ -168,7 +168,11 @@ var TreeIllustrator = function(window, document, $, ko) {
             'metadata': {
                 'type': 'IllustratedTree',
                 'name': "Untitled ("+ newID +")",
-                'source': {'type': dataSourceTypes.BUILT_IN, 'value': buildStudyFetchURL( '2380' ) }, // "dummy-tree.json"},
+                'source': {
+                    'type': dataSourceTypes.BUILT_IN, 
+                    //'value': 'http://devapi.opentreeoflife.org/phylesystem/v1/study/tt_23?output_nexml2json=1.0' }, 
+                    'value': './placeholder-tree.json' 
+                },
                 'description': "",
                 'dois': [ ]
             },
