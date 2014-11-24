@@ -83,14 +83,14 @@ function centimetersToPixels( cm, ppi ) {
 }
 
 function pixelsToPhysicalUnits( px, ppi ) {
-    if (physicalUnits === 'INCHES') {
+    if (ill.style.printSize.units() === TreeIllustrator.units.INCHES) {
         return pixelsToInches( px, ppi );
     } else {
         return pixelsToCentimeters( px, ppi );
     }
 }
 function physicalUnitsToPixels( units, ppi ) {
-    if (physicalUnits === 'INCHES') {
+    if (ill.style.printSize.units() === TreeIllustrator.units.INCHES) {
         return inchesToPixels( units, ppi );
     } else {
         return centimetersToPixels( units, ppi );
@@ -107,11 +107,6 @@ function getPhysicalUnitSuffix() {
 
 // ruler metrics (adjust for legibility)
 var rulerWidth = 25;  // px
-
-// TODO: These key properties should be driven from the loaded illustration
-var physicalUnits = 'INCHES'; // 'CENTIMETERS' | 'INCHES'
-var physicalWidth = 4.0;      // in the chosen units
-var physicalHeight = 5.0;
 
 /* Maintain a few independent scales (in pixels/inch) to support the
  * illustration editor. These will sometimes align, but it's vital that we can
@@ -256,8 +251,8 @@ var availableStyles = [
                 "enter": {
                   "x": {"value": 0},
                   "y": {"value": 0}, // {"scale": "g", "field": "key"},
-                  "height": {"value": physicalUnitsToPixels(physicalHeight, internal_ppi) },  // {"group": "height"}, // {"scale": "g", "band": true},
-                  "width": {"value": physicalUnitsToPixels(physicalWidth, internal_ppi) }     // {"group": "width"},
+                  "height": {"value": 11 },  // {"group": "height"}, // {"scale": "g", "band": true},
+                  "width": {"value": 8.5 }     // {"group": "width"},
                 },
                 "update": {
                   //"transform": {"value":"rotate(-25)"}  // ???
@@ -265,48 +260,6 @@ var availableStyles = [
               },
 
           "scales": [
-/*
-            {
-              "name": "time", 
-              "type": "linear",
-              "range": "width",
-              //"domain": {"data": "phyloTree", transform: {"type": "pluck", "field": "phyloNodes"}, "field": "x"}
-              "domain": [0, 1]
-            },
-*/
-            {
-              "name": "x", 
-              "range": "width", 
-              "nice": false,
-              //"domain": {"data": "phyloTree", transform: [{"type": "pluck", "field": "phyloNodes"}], "field": "x" }
-              "domain": [0, 1]  // {"data": "phyloTree", "field": "data.trees.length"}
-            },
-            {
-              // height in cm
-              "name": "height-cm", 
-              "type": "linear",
-              "nice": false,
-              "domain": [0, (physicalUnits === 'INCHES' ? inchesToCentimeters(physicalHeight) : physicalHeight) ],  // {"data": "phyloTree", "field": "data.trees.length"}
-              "range": [0, physicalUnitsToPixels(physicalHeight, internal_ppi)] //"height"
-              //"domain": {"data": "phyloTree", transform: {"type": "pluck", "field": "phyloNodes"}, "field": "y"}
-            }
-            ,
-            {
-              "name": "inches-across", 
-              "nice": true,
-              "domain": [0, (physicalUnits === 'INCHES' ? physicalWidth : centimetersToInches(physicalWidth, internal_ppi)) ],  // {"data": "phyloTree", "field": "data.trees.length"}
-              "range": "width"
-              //"domain": {"data": "phyloTree", transform: [{"type": "pluck", "field": "phyloNodes"}], "field": "x" }
-              //"domain": [0, 1]  // {"data": "phyloTree", "field": "data.trees.length"}
-            }
-            ,
-            {
-              "name": "cm-down", 
-              "range": "height", 
-              "nice": true//,
-              //"domain": {"data": "phyloTree", transform: [{"type": "pluck", "field": "phyloNodes"}], "field": "x" }
-              //"domain": [0, 1]  // {"data": "phyloTree", "field": "data.trees.length"}
-            }
           ],
 
           "axes": [
@@ -613,40 +566,6 @@ $(document).ready(function() {
     $('#browser-ppi-indicator').text(browser_ppi);
     $('#display-ppi-indicator').text(display_ppi);
 
-    // update some of our available styles
-/*
-    var mainGroupProperties = availableStyles[0].style.marks[0].properties.enter;
-    if (mainGroupProperties) {
-        mainGroupProperties.height.value = physicalUnitsToPixels(physicalHeight, internal_ppi);
-        mainGroupProperties.width.value = physicalUnitsToPixels(physicalWidth, internal_ppi);
-        mainGroupProperties.x.value = physicalUnitsToPixels(physicalWidth/2.0, internal_ppi);
-        mainGroupProperties.y.value = physicalUnitsToPixels(physicalHeight/2.0, internal_ppi);
-    }
-*/
-    // nudge default tree into center of canvas
-    var defaultTreeProperties = availableStyles[0].style.marks[0].marks[0].properties.enter;
-    defaultTreeProperties.x.value = physicalUnitsToPixels(physicalWidth/2.0, internal_ppi);
-    defaultTreeProperties.y.value = physicalUnitsToPixels(physicalHeight/2.0, internal_ppi);
-
-    var cmHeightScale = availableStyles[0].style.marks[0].scales[1];
-    if (cmHeightScale) {
-        cmHeightScale.domain = [
-            0, 
-            (physicalUnits === 'INCHES' ? inchesToCentimeters(physicalHeight, internal_ppi) : physicalHeight) 
-        ];
-        cmHeightScale.range = [
-            0, 
-            physicalUnitsToPixels(physicalHeight, display_ppi) 
-        ];
-    }
-    var inWidthScale = availableStyles[0].style.marks[0].scales[2];
-    if (inWidthScale) {
-        inWidthScale.domain = [
-            0, 
-            (physicalUnits === 'INCHES' ? physicalWidth : centimetersToInches(physicalWidth))
-        ];
-    }
-
     // create the viewModel (a full vega spec?) and build a matching UI
     viewModel = {
         style: availableStyles[0].style,  // see above
@@ -833,7 +752,7 @@ function initTreeIllustratorWindow() {
     $scrollingViewport.css('margin-right', -(rulerWidth+1)+"px");
 
     // reset units display; clear old rulers
-    $rulerUnitsDisplay.text( physicalUnits === 'INCHES' ? "in" : "cm" );
+    $rulerUnitsDisplay.text( ill.style.printSize.units() === TreeIllustrator.units.INCHES ? "in" : "cm" );
     
     // adjust viewport/viewbox to reflect current magnification (display_ppi)
     updateViewportViewbox( $scrollingViewport );
@@ -863,7 +782,7 @@ function initTreeIllustratorWindow() {
     var topRuler = d3.select("#fixed-ruler-top svg")
         .attr("width", viewportWidth+"px")
         .attr("height", rulerWidth+"px")
-    drawRuler(topRuler, 'HORIZONTAL', physicalUnits, topRulerScale);
+    drawRuler(topRuler, 'HORIZONTAL', ill.style.printSize.units(), topRulerScale);
 
     var leftRulerScale = d3.scale.linear()
         .domain([
@@ -877,7 +796,7 @@ function initTreeIllustratorWindow() {
     var leftRuler = d3.select("#fixed-ruler-left svg")
         .attr("width", rulerWidth+"px")
         .attr("height", viewportHeight+"px")
-    drawRuler(leftRuler, 'VERTICAL', physicalUnits, leftRulerScale);
+    drawRuler(leftRuler, 'VERTICAL', ill.style.printSize.units(), leftRulerScale);
     
     enableViewportMask();
 }
@@ -1147,8 +1066,8 @@ function enableViewportMask() {
     d3.select("#illustration-bounds")
         .attr('x', 0)
         .attr('y', 0)
-        .attr('width', physicalUnitsToPixels(physicalWidth, internal_ppi))
-        .attr('height', physicalUnitsToPixels(physicalHeight, internal_ppi));
+        .attr('width', physicalUnitsToPixels(ill.style.printSize.width(), internal_ppi))
+        .attr('height', physicalUnitsToPixels(ill.style.printSize.height(), internal_ppi));
 
     // assign the mask to the main viewport (fades stuff outside the print area)
     viewportSVG.attr('mask', 'url(#viewport-mask)');
@@ -1219,8 +1138,8 @@ function showPrintingCropMarks() {
     // adjust placement of marks to match for illustration size
     var printTopEdge = 0;  // no need to set these
     var printLeftEdge = 0;
-    var printBottomEdge = physicalUnitsToPixels(physicalHeight, internal_ppi);
-    var printRightEdge = physicalUnitsToPixels(physicalWidth, internal_ppi);
+    var printBottomEdge = physicalUnitsToPixels(ill.style.printSize.height(), internal_ppi);
+    var printRightEdge = physicalUnitsToPixels(ill.style.printSize.width(), internal_ppi);
     d3.select('#crop-mark-top-right')
         .attr('transform', "translate("+ printRightEdge +", 0)");
     d3.select('#crop-mark-bottom-left')
@@ -1436,12 +1355,14 @@ function doNothing() {
 function getPrintAreaLandmarks() {
     // gather interesting coordinates in internal pixels
     return {
+        width: physicalUnitsToPixels(ill.style.printSize.width(), internal_ppi),
+        height: physicalUnitsToPixels(ill.style.printSize.height(), internal_ppi),
         leftX: 0,
-        centerX: physicalUnitsToPixels(physicalWidth / 2.0, internal_ppi),
-        rightX: physicalUnitsToPixels(physicalWidth, internal_ppi),
+        centerX: physicalUnitsToPixels(ill.style.printSize.width() / 2.0, internal_ppi),
+        rightX: physicalUnitsToPixels(ill.style.printSize.width(), internal_ppi),
         topY: 0,
-        centerY: physicalUnitsToPixels(physicalHeight / 2.0, internal_ppi),
-        bottomY: physicalUnitsToPixels(physicalHeight, internal_ppi)
+        centerY: physicalUnitsToPixels(ill.style.printSize.height() / 2.0, internal_ppi),
+        bottomY: physicalUnitsToPixels(ill.style.printSize.height(), internal_ppi)
     };
 }
 

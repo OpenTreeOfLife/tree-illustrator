@@ -123,8 +123,8 @@ var TreeIllustrator = function(window, document, $, ko) {
                 // choices and overrides from the style guide above
                 'printSize': {
                     'units': units.INCHES,  // OR units.CENTIMETERS
-                    'width': 11,  // in physical units
-                    'height': 8.5,   // in physical units
+                    'width': 8.5,  // in physical units
+                    'height': 11,   // in physical units
                 },
                 'fontFamily': "Times New Roman, Times, serif",
                 'minimumTextSize': 12,  
@@ -162,6 +162,7 @@ var TreeIllustrator = function(window, document, $, ko) {
     var getNewIllustratedTreeModel = function(illustration, options) {
         if (!options) options = {};
         var newID = illustration.getNextAvailableID('tree'); 
+        var landmarks = getPrintAreaLandmarks();
         var obj = {
             'id': newID,
             'metadata': {
@@ -172,9 +173,12 @@ var TreeIllustrator = function(window, document, $, ko) {
                 'dois': [ ]
             },
             'data': { },
-            'layout': treeLayouts.RECTANGLE,
-            'rootX': 0,   // TODO: use a bounding box instead?
-            'rootY': 0,
+            'layout': treeLayouts.CIRCLE,
+            'width': landmarks.width * 0.5,
+            'height': landmarks.height * 0.5,
+            'tipsAlignment': 'RIGHT',
+            'rootX': landmarks.centerX + jiggle(5),   // TODO: use a bounding box instead?
+            'rootY': landmarks.centerY + jiggle(5),
             'style': {
                 // incl. only deviations from the style guide above?
                 'edgeThickness': 2,  
@@ -326,6 +330,9 @@ var TreeIllustrator = function(window, document, $, ko) {
                 self.style.printSize.height( selectedSize.height() );
                 self.style.printSize.units( selectedSize.units() );
             }
+
+            // update visible canvas and d3 viz
+            refreshViz();
         };
         self.updatePrintSizeChooser = function() {
             // (de)select matching size after manual adjustments
@@ -345,6 +352,9 @@ var TreeIllustrator = function(window, document, $, ko) {
                 matchingSizeName = matchingSize.name();
             }
             $('#style-docsize-chooser').val(matchingSizeName);
+
+            // update visible canvas and d3 viz
+            refreshViz();
         };
         var getPrintSizeByName = function( name ) {
             var matchingSize = $.grep(
@@ -357,6 +367,22 @@ var TreeIllustrator = function(window, document, $, ko) {
             }
             return matchingSize;
         }
+        self.unitsFullName = ko.computed(function() {
+            switch( self.style.printSize.units() ) {
+                case units.INCHES:
+                    return "inches"
+                case units.CENTIMETERS:
+                    return "centimeters";
+            }
+        }, self, {deferEvaluation:true});
+        self.unitsAbbreviation = ko.computed(function() {
+            switch( self.style.printSize.units() ) {
+                case units.INCHES:
+                    return "in."
+                case units.CENTIMETERS:
+                    return "cm";
+            }
+        }, self, {deferEvaluation:true});
 
         self.useChosenFontFamily = function() {
             var fontName = $('#style-fontfamily-chooser').val();
@@ -600,6 +626,9 @@ var TreeIllustrator = function(window, document, $, ko) {
 
             // clear all groups and marks, and restore the empty illustration-elements group
             spec.marks = [ ];
+            // reckon the current width and height as internal px
+            var pxPrintWidth = physicalUnitsToPixels(self.style.printSize.width(), internal_ppi);
+            var pxPrintHeight = physicalUnitsToPixels(self.style.printSize.height(), internal_ppi);
             var illustrationElementsGroup = {
                 "type": "group",
                 "name": "illustration-elements",  // becomes marker class .illustration-elements
@@ -607,8 +636,8 @@ var TreeIllustrator = function(window, document, $, ko) {
                     "enter": {
                         "x": {"value": 0},
                         "y": {"value": 0},
-                        "height": {"value": physicalUnitsToPixels(physicalHeight, internal_ppi) },
-                        "width": {"value": physicalUnitsToPixels(physicalWidth, internal_ppi) }
+                        "height": {"value": pxPrintHeight },
+                        "width": {"value": pxPrintWidth }
                     }
                 },
                 "scales": [ ],
@@ -658,31 +687,41 @@ var TreeIllustrator = function(window, document, $, ko) {
                     }
 
                     // TODO: Shape the phyloTree using preferred tree layout and styles
-                    if (true) { 
-                        treeData.transform.push({ 
-                            "type": "phylogram", 
-                            "layout": "radial",
-                            //"radialArc": [90, 270],
-                            //"radialSweep": 'CLOCKWISE',
-                            "radialSweep": 'COUNTERCLOCKWISE',
-                            //"branchStyle": "diagonal",  // other options here?
-                            "branchLengths": "",  // empty/false, or a property name to compare?
-                            "width": 100,   // TODO: FIX these dimensions (they rotate)
-                            "height": 100, 
-                            "tipsAlignment": 'right'
-                        });
+                    var phylogramTransform = { 
+                        "type": "phylogram", 
+                        //"layout": "cartesian",
+                        //"radialArc": [90, 270],
+                        //"radialSweep": 'CLOCKWISE',
+                        "radialSweep": 'COUNTERCLOCKWISE',
+                        //"branchStyle": "diagonal",  // other options here?
+                        "branchLengths": "",  // empty/false, or a property name to compare?
+                        "width": el.width(),   // TODO: FIX these dimensions (they rotate)
+                        "height": el.height(), 
+                        "tipsAlignment": el.tipsAlignment()
+                    };
+                    treeData.transform.push( phylogramTransform );
+                    switch (el.layout()) { 
+                        case treeLayouts.RECTANGLE:
+                            phylogramTransform.layout = 'cartesian';
+                            break;
+                        case treeLayouts.CIRCLE:
+                            phylogramTransform.layout = 'radial';
+                            break;
+                        case treeLayouts.TRIANGLE:
+                            phylogramTransform.layout = 'cladogram';
+                            break;
                     }
+
                     spec.data.push(treeData);
 
                     // place new trees in the center of the printable area (slightly staggered for clarity)
-                    var landmarks = getPrintAreaLandmarks();
                     var treeMarks = { 
                         "type": "group",
                         "name": el.id(),  // becomes marker class .tree-3 or similar
                         "properties": {
                             "enter": {
-                                "x": {"value": landmarks.centerX + jiggle(5)},
-                                "y": {"value": landmarks.centerY + jiggle(5)}
+                                "x": {"value": el.rootX()},
+                                "y": {"value": el.rootY()}
                             },
                             "update": {
                                 //"transform": {"value":"scale(800,300)"}
@@ -813,6 +852,7 @@ var TreeIllustrator = function(window, document, $, ko) {
         // TODO: Include options to map selected data to visual style
         return self;
     }
+
     var IllustratedTree = function(illustration, data) {
         if ( !(this instanceof IllustratedTree) ) {
             console.warn("MISSING 'new' keyword, patching this now");
@@ -835,6 +875,20 @@ var TreeIllustrator = function(window, document, $, ko) {
         // TODO: Include options to map selected data to visual style
         return self;
     }
+    IllustratedTree.prototype = {
+        constructor: IllustratedTree,
+
+        useChosenLayout: function(newValue) {
+            var self = this;
+            if (newValue in treeLayouts) {
+                self.layout(newValue);
+            } else {
+                console.error("useChosenLayout(): Unknown tree layout '"+ newValue +"'!"); 
+            }
+            refreshViz();
+        }
+    };
+
     var SupportingDataset = function(illustration, data) {
         if ( !(this instanceof SupportingDataset) ) {
             console.warn("MISSING 'new' keyword, patching this now");
@@ -894,8 +948,13 @@ var TreeIllustrator = function(window, document, $, ko) {
 
     /* expose class constructors (and static methods) for instantiation */
     return {
+        // expose enumerations
         units: units,
         colorDepths: colorDepths,
+        treeLayouts: treeLayouts,
+        dataSourceTypes: dataSourceTypes,
+
+        // expose view-model classes
         Illustration: Illustration,
         SceneGraph: SceneGraph,
         IllustratedTree: IllustratedTree,

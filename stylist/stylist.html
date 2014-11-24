@@ -338,6 +338,67 @@
                                           valueUpdate: ['afterkeydown','input']" />
                     </div>
                 </div>
+                <div class="control-group">
+                    <label class="control-label" for="">Tree layout</label> 
+                    <div class="controls">
+                        <!-- button triplet, loosely bound via click handlers -->
+                        <div class="btn-group">
+                            <button class="btn"
+                                    data-bind="css: { active: layout() === TreeIllustrator.treeLayouts.RECTANGLE },
+                                               click: useChosenLayout.bind($data, TreeIllustrator.treeLayouts.RECTANGLE),
+                                               event: {keyup: refreshViz, change: refreshViz}"> 
+                                Rectangle </button>
+                            <button class="btn CIRCLE-button"
+                                    data-bind="css: { active: layout() === TreeIllustrator.treeLayouts.CIRCLE },
+                                               click: useChosenLayout.bind($data, TreeIllustrator.treeLayouts.CIRCLE),
+                                               event: {keyup: refreshViz, change: refreshViz}"> 
+                                Circle </button>
+                            <button class="btn TRIANGLE-button"
+                                    data-bind="css: { active: layout() === TreeIllustrator.treeLayouts.TRIANGLE },
+                                               click: useChosenLayout.bind($data, TreeIllustrator.treeLayouts.TRIANGLE),
+                                               event: {keyup: refreshViz, change: refreshViz}"> 
+                                Triangle </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="">Tree size</label> 
+                    <div class="controls mini-form" Xdata-bind="visible: style.printSize.name() === 'Custom size'">
+                        <label for="#tree-1-width-field">width</label> 
+                        <input id="tree-1-width-field" type="text" value="?"
+                               style="width: 2.0em;"
+                               data-bind="value: width,
+                                          valueUpdate: ['afterkeydown','input'],
+                                          event: {keyup: refreshViz, change: refreshViz}" />&nbsp;
+
+                        <label for="#tree-1-height-field">height</label> 
+                        <input id="tree-1-height-field" type="text" value="?"
+                               style="width: 2.0em;"
+                               data-bind="value: height,
+                                          valueUpdate: ['afterkeydown','input'],
+                                          event: {keyup: refreshViz, change: refreshViz}" />&nbsp;
+                        &nbsp;(<span data-bind="text: $root.unitsAbbreviation()">cm</span>)
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="">Root location</label> 
+                    <div class="controls mini-form">
+                        <label for="#tree-1-rootx-field">x</label> 
+                        <input id="tree-1-rootx-field" type="text" value="?"
+                               style="width: 2.0em;"
+                               data-bind="value: rootX,
+                                          valueUpdate: ['afterkeydown','input'],
+                                          event: {keyup: refreshViz, change: refreshViz}" />&nbsp;
+                        &nbsp;
+                        <label for="#tree-1-rooty-field">y</label> 
+                        <input id="tree-1-rooty-field" type="text" value="?"
+                               style="width: 2.0em;"
+                               data-bind="value: rootY,
+                                          valueUpdate: ['afterkeydown','input'],
+                                          event: {keyup: refreshViz, change: refreshViz}" />&nbsp;
+                        &nbsp;(<span data-bind="text: $root.unitsAbbreviation()">cm</span> from top left)
+                    </div>
+                </div>
             </form>
             <em>Once a tree is added, describe its origin and appearance</em>
             <ul>
