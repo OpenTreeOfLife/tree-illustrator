@@ -336,10 +336,12 @@
           <div class="accordion-inner">
             <form class="form-horizontal">
                 <div class="control-group">
-                    <label class="control-label" for="#tree-1-name-field">Tree name</label> 
+                    <label class="control-label"
+                           data-bind="attr: {for: '#'+ id() +'-name-field'}" >Tree name</label> 
                     <div class="controls">
-                        <input class="input-xlarge" type="text" id="tree-1-name-field" type="text" value="?" 
+                        <input class="input-xlarge" type="text" type="text" value="?" 
                                data-bind="value: metadata.name,
+                                          attr: {id: id() +'-name-field'},
                                           valueUpdate: ['afterkeydown','input']" />
                     </div>
                 </div>
@@ -369,17 +371,19 @@
                 <div class="control-group">
                     <label class="control-label" for="">Tree size</label> 
                     <div class="controls mini-form" Xdata-bind="visible: style.printSize.name() === 'Custom size'">
-                        <label for="#tree-1-width-field">width</label> 
-                        <input id="tree-1-width-field" type="text" value="?"
+                        <label data-bind="attr: {for: '#'+ id() +'-width-field'}" >width</label> 
+                        <input type="text" value="?"
                                style="width: 2.0em;"
                                data-bind="value: width,
+                                          attr: {id: id() +'-width-field'},
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {keyup: refreshViz, change: refreshViz}" />&nbsp;
 
-                        <label for="#tree-1-height-field">height</label> 
-                        <input id="tree-1-height-field" type="text" value="?"
+                        <label data-bind="attr: {for: '#'+ id() +'-height-field'}" >height</label> 
+                        <input type="text" value="?"
                                style="width: 2.0em;"
                                data-bind="value: height,
+                                          attr: {id: id() +'-height-field'},
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {keyup: refreshViz, change: refreshViz}" />&nbsp;
                         &nbsp;(<span data-bind="text: $root.unitsDisplayAbbreviation()">cm</span>)
@@ -388,17 +392,19 @@
                 <div class="control-group">
                     <label class="control-label" for="">Root location</label> 
                     <div class="controls mini-form">
-                        <label for="#tree-1-rootx-field">x</label> 
-                        <input id="tree-1-rootx-field" type="text" value="?"
+                        <label data-bind="attr: {for: '#'+ id() +'-rootx-field'}" >x</label> 
+                        <input type="text" value="?"
                                style="width: 2.0em;"
                                data-bind="value: rootX,
+                                          attr: {id: id() +'-rootx-field'},
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {keyup: refreshViz, change: refreshViz}" />&nbsp;
                         &nbsp;
-                        <label for="#tree-1-rooty-field">y</label> 
-                        <input id="tree-1-rooty-field" type="text" value="?"
+                        <label data-bind="attr: {for: '#'+ id() +'-rooty-field'}" >y</label> 
+                        <input type="text" value="?"
                                style="width: 2.0em;"
                                data-bind="value: rootY,
+                                          attr: {id: id() +'-rooty-field'},
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {keyup: refreshViz, change: refreshViz}" />&nbsp;
                         &nbsp;(<span data-bind="text: $root.unitsDisplayAbbreviation()">cm</span> from top left)
