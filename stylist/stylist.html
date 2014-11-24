@@ -91,7 +91,7 @@
 -->
 
 <div class="help-text">
-    Click the blocks below to explore the illustration editor.
+    Click the blocks below to modify this illustration.
 </div>
             
 <div class="accordion" id="ti-main-accordion">
@@ -293,6 +293,10 @@
     </div>
   </div>
 
+<div class="help-text">
+    Add elements to the illustration here. (These will display back to front.)
+</div>
+
 <!-- ko foreach: {data: elements, as: 'el'} -->
 
     <!-- ko if: $data instanceof TreeIllustrator.IllustratedTree -->
@@ -310,6 +314,7 @@
           <!-- /ko -->
           <!-- ko ifnot: $index() === 0 -->
             <i class="indicator move-up icon-chevron-up pull-right"
+               title="Move this element farther away"
                data-bind="click: $root.moveElementUp, clickBubble: false" ></i>
           <!-- /ko -->
 
@@ -319,6 +324,7 @@
           <!-- /ko -->
           <!-- ko ifnot: ($index() === $root.elements().length - 1) -->
             <i class="indicator move-down icon-chevron-down pull-right"
+               title="Move this element closer"
                data-bind="click: $root.moveElementDown, clickBubble: false" ></i>
           <!-- /ko -->
 
@@ -453,6 +459,7 @@
           <!-- /ko -->
           <!-- ko ifnot: $index() === 0 -->
             <i class="indicator move-up icon-chevron-up pull-right"
+               title="Move this element farther away"
                data-bind="click: $root.moveElementUp, clickBubble: false" ></i>
           <!-- /ko -->
 
@@ -462,6 +469,7 @@
           <!-- /ko -->
           <!-- ko ifnot: ($index() === $root.elements().length - 1) -->
             <i class="indicator move-down icon-chevron-down pull-right"
+               title="Move this element closer"
                data-bind="click: $root.moveElementDown, clickBubble: false" ></i>
           <!-- /ko -->
 
@@ -498,6 +506,7 @@
           <!-- /ko -->
           <!-- ko ifnot: $index() === 0 -->
             <i class="indicator move-up icon-chevron-up pull-right"
+               title="Move this element farther away"
                data-bind="click: $root.moveElementUp, clickBubble: false" ></i>
           <!-- /ko -->
 
@@ -507,6 +516,7 @@
           <!-- /ko -->
           <!-- ko ifnot: ($index() === $root.elements().length - 1) -->
             <i class="indicator move-down icon-chevron-down pull-right"
+               title="Move this element closer"
                data-bind="click: $root.moveElementDown, clickBubble: false" ></i>
           <!-- /ko -->
 
