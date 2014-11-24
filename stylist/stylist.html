@@ -55,28 +55,6 @@
               </span>
             </div>
 
-            <div style="margin-bottom: 1.0em; border-radius: 8px; border: 2px dashed #900; background-color: #fee; padding: 4px 6px;">
-                <label style="display: inline; margin-right: 0.5em;" for="tree-chooser">DEMO - Choose a tree to illustrate</label>
-                <select id="tree-chooser" style="margin-bottom: 0;"
-                        data-bind="options: availableTrees,
-                                   optionsValue: 'name',
-                                   optionsText: 'name',
-                                   event: {change: useChosenData}">
-                </select>
-<!--
-                <br/>
-                <label for="tree-upload">... or upload a tree file</label>
-                <br/>
-                <input id="tree-upload" type="file"></input>
-                <br/>
-                <label for="tree-url">... or enter its URL</label>
-                <br/>
-                <input id="tree-url" type="text" placeholder="Enter URL here"
-                       TODO-data-bind="event: {change: useChosenData}"
-                ></input>
--->
-            </div>
-
 <!--
             <div style="margin-bottom: 1em;">
                 <label for="style-chooser">Choose a general style for this illustration</label>
@@ -100,10 +78,10 @@
     <div class="accordion-heading panel-heading">
       <a class="accordion-toggle panel-title" data-toggle="collapse" data-parent="#ti-main-accordion" href="#ti-panel-general">
         About this illustration
-        <i class="help-rollover">Click to close this panel</i>
+        <i class="help-rollover">Click to open this panel</i>
       </a> 
     </div>
-    <div id="ti-panel-general" class="accordion-body panel-body collapse in">
+    <div id="ti-panel-general" class="accordion-body panel-body collapse">
       <div class="accordion-inner">
         <form class="form-horizontal">
             <div class="control-group">
@@ -346,6 +324,36 @@
                     </div>
                 </div>
                 <div class="control-group">
+                    <label class="control-label"
+                           data-bind="attr: {for: '#'+ id() +'-sourceurl-chooser'}" >Data source</label> 
+                    <div class="controls">
+                        <select style="margin-bottom: 0;"
+                                data-bind="options: availableTrees,
+                                           optionsValue: 'name',
+                                           optionsText: 'name',
+                                           attr: {id: id() +'-sourceurl-chooser'},
+                                           event: {change: useChosenTreeSourceURL.bind($data)}">
+                        </select>
+                    </div>
+                    <div class="controls mini-form" 
+                         data-bind="attr: {id: '#'+ id() +'-sourceurl-options'},
+                                            visible: $('#'+ id() +'-sourceurl-chooser').val() === 'Enter a phylesystem URL'">
+                        <!-- Show if 'Enter a phylesystem URL' is chosen -->
+<!--
+                        <label for="tree-upload">... or upload a tree file</label>
+                        <br/>
+                        <input id="tree-upload" type="file"></input>
+                        <br/>
+                        <label for="tree-url">... or enter its URL</label>
+                        <br/>
+-->
+                        <input id="tree-url" type="text" placeholder="Enter a phylesystem URL here"
+                               data-bind="event: {change: useChosenTreeSourceURL.bind($data)},
+                                          attr: {id: '#'+ id() +'-sourceurl-other'}"
+                        ></input>
+                    </div>
+                </div>
+                <div class="control-group">
                     <label class="control-label" for="">Tree layout</label> 
                     <div class="controls">
                         <!-- button triplet, loosely bound via click handlers -->
@@ -370,7 +378,7 @@
                 </div>
                 <div class="control-group">
                     <label class="control-label" for="">Tree size</label> 
-                    <div class="controls mini-form" Xdata-bind="visible: style.printSize.name() === 'Custom size'">
+                    <div class="controls mini-form">
                         <label data-bind="attr: {for: '#'+ id() +'-width-field'}" >width</label> 
                         <input type="text" value="?"
                                style="width: 2.0em;"

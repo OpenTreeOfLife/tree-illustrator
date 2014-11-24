@@ -886,6 +886,33 @@ var TreeIllustrator = function(window, document, $, ko) {
             }
             refreshViz();
         }
+        ,
+        useChosenTreeSourceURL: function() {
+            var self = this;
+            // pick up latest data from bound widgets
+            var $chooser = $('#'+ self.id() +'-sourceurl-chooser');
+            var chosenSource = $chooser.val();
+            // Add other source types here
+            if (chosenSource === 'Enter a phylesystem URL') {
+                self.metadata.source.type(dataSourceTypes.URL);
+                var $otherField = $('#'+ self.id() +'-sourceurl-other');
+                self.metadata.source.value( $.trim($otherField.val()) );
+            } else {
+                // find the matching URL and set it instead
+                var selectedTrees = $.grep(availableTrees, function(o) {return o.name === chosenSource;});
+                var treeInfo = null;
+                if (selectedTrees.length > 0) {
+                    treeInfo = selectedTrees[0];
+                }
+                if (!treeInfo) {
+                    console.warn("No tree found under '"+ treeName +"'!");
+                    return;
+                }
+                self.metadata.source.type(dataSourceTypes.URL);
+                self.metadata.source.value( treeInfo.url );
+            }
+            refreshViz();
+        }
     };
 
     var SupportingDataset = function(illustration, data) {

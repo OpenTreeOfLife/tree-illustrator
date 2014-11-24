@@ -16,6 +16,10 @@ if (typeof console == 'undefined') console = {
  */
 var availableTrees = [
     {
+        name: "Placeholder tree", 
+        url: './placeholder-tree.json'
+    },
+    {
         name: "Gazis, 2014", 
         /* TODO: provide more IDs here (esp. tree ID)
         studyID: 'pg_10',
@@ -39,6 +43,9 @@ var availableTrees = [
     {
         name: "Drew BT, 2014", 
         url: buildStudyFetchURL( 'pg_2821' )
+    },
+    {
+        name: "Enter a phylesystem URL"
     }
 ];
 
@@ -619,45 +626,6 @@ function buildStudyFetchURL( studyID ) {
     // ASSUMES we're using the phylesystem API to load studies from the OpenTree dev site
     var template = "http://api.opentreeoflife.org/phylesystem/v1/study/{STUDY_ID}?output_nexml2json=1.0.0&auth_token=ANONYMOUS"
     return template.replace('{STUDY_ID}', studyID);
-}
-
-function useChosenData() {
-    var treeName = $('#tree-chooser').val();
-    var selectedTrees = $.grep(availableTrees, function(o) {return o.name === treeName;});
-    var treeInfo = null;
-    if (selectedTrees.length > 0) {
-        treeInfo = selectedTrees[0];
-    }
-    if (!treeName || !treeInfo) {
-        console.warn("No tree found under '"+ treeName +"'!");
-        return;
-    }
-    //viewModel.data.table = [treeInfo]; // TODO: switch from 'table' to 'tree'?
-    viewModel.data = [{
-        'name':'phyloTree', 
-        'url':treeInfo.url, 
-        'format':{"type":"treejson"},  // initial match for JSON object, vs. array
-        'transform':[
-            {"type": "nexson", "treesCollectionPosition":0, "treePosition":0}  // to generic tree?
-                    ,
-                    { 
-                        "type": "phylogram", 
-                        "layout": "radial",
-                        //"radialArc": [90, 270],
-                        //"radialSweep": 'CLOCKWISE',
-                        "radialSweep": 'COUNTERCLOCKWISE',
-                        //"branchStyle": "diagonal",  // other options here?
-                        "branchLengths": "",  // empty/false, or a property name to compare?
-                        "width": 100,   // TODO: FIX these dimensions (they rotate)
-                        "height": 100, 
-                        "tipsAlignment": 'right'
-                    }
-            // TODO: add all possible properties (common to by all formats?)
-            // TODO: merge supporting data from other files? or do that downstream?
-            // TODO: final tailoring to phylogram layout (one, or several?)
-        ]
-    }];
-    refreshViz();
 }
 
 function useChosenStyle() {
