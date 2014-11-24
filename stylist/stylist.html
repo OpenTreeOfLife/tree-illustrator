@@ -329,6 +329,16 @@
         <div class="accordion-body panel-body collapse"
              data-bind="attr: {id: 'ti-panel-'+ id()}">
           <div class="accordion-inner">
+            <form class="form-horizontal">
+                <div class="control-group">
+                    <label class="control-label" for="#tree-1-name-field">Tree name</label> 
+                    <div class="controls">
+                        <input class="input-xlarge" type="text" id="tree-1-name-field" type="text" value="?" 
+                               data-bind="value: metadata.name,
+                                          valueUpdate: ['afterkeydown','input']" />
+                    </div>
+                </div>
+            </form>
             <em>Once a tree is added, describe its origin and appearance</em>
             <ul>
                 <li>tree source</li>

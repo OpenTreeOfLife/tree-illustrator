@@ -31,6 +31,10 @@ var TreeIllustrator = function(window, document, $, ko) {
         CIRCLE: 'CIRCLE',
         TRIANGLE: 'TRIANGLE'
     }
+    var dataSourceTypes = {
+        BUILT_IN: 'BUILT_IN',
+        URL: 'URL'
+    }
 
     /* Return the data model for a new illustration (our JSON representation) */
     var getNewIllustrationModel = function(options) {
@@ -49,7 +53,7 @@ var TreeIllustrator = function(window, document, $, ko) {
                 // TODO: Filter styles if they fall out of conformance?
                 'name': "Default styles",
                 'description': "Style guides are used to suggest and constrain the overall look of your illustration for a particular publication or context. You can try different styles using the <strong>Switch styles...</strong> button.", // captured when assigned
-                'source': {'type': "builtin", 'value': "DEFAULT"},  // URL, builtin
+                'source': {'type': dataSourceTypes.BUILT_IN, 'value': "DEFAULT"},
                 'version': {'type': "version number", 'value': "0.1"},  // git SHA, mod date, version number
                 'constraints': {
                     // list constrained labels and values, if any (items not listed are unconstrained)
@@ -163,6 +167,7 @@ var TreeIllustrator = function(window, document, $, ko) {
             'metadata': {
                 'type': 'IllustratedTree',
                 'name': "Untitled ("+ newID +")",
+                'source': {'type': dataSourceTypes.BUILT_IN, 'value': buildStudyFetchURL( '2380' ) }, // "dummy-tree.json"},
                 'description': "",
                 'dois': [ ]
             },
@@ -299,10 +304,10 @@ var TreeIllustrator = function(window, document, $, ko) {
         // case their dependencies will appear during ko.mapping
         self.styleGuideSourceHTML = ko.computed(function () {
             switch(self.styleGuide.source.type()) {
-                case 'URL':
+                case dataSourceTypes.URL:
                     var itsURL = self.styleGuide.source.value();
                     return '<a href='+ itsURL +' target="_blank">'+ itsURL +'</a>';
-                case 'builtin':
+                case dataSourceTypes.BUILT_IN:
                     return "Built-in";
             }
             return "Undefined"; 
@@ -630,11 +635,15 @@ var TreeIllustrator = function(window, document, $, ko) {
                     }
 
                     // TODO: Define data source (allow for inline tree data? in dataset? other sources?)
-                    if (true) { 
-                        // TODO: treeData.url = el.metadata.url;
-
-                        treeData.url = buildStudyFetchURL( '2380' );
-
+                    switch (el.metadata.source.type()) { 
+                        case dataSourceTypes.BUILT_IN:
+                        case dataSourceTypes.URL:
+                            // TODO: treeData.url = el.metadata.source.value;
+                            treeData.url = el.metadata.source.value();
+                            break;
+                        // TODO: add cases for other data sources
+                        default:
+                            console.error("Unknown source type for tree!");
                     }
 
                     /* Build an appropriate chain of data transforms */
@@ -665,13 +674,15 @@ var TreeIllustrator = function(window, document, $, ko) {
                     }
                     spec.data.push(treeData);
 
+                    // place new trees in the center of the printable area (slightly staggered for clarity)
+                    var landmarks = getPrintAreaLandmarks();
                     var treeMarks = { 
                         "type": "group",
                         "name": el.id(),  // becomes marker class .tree-3 or similar
                         "properties": {
                             "enter": {
-                                "x": {"value": physicalUnitsToPixels(physicalWidth/2.0, internal_ppi)},
-                                "y": {"value": physicalUnitsToPixels(physicalHeight/2.0, internal_ppi)}
+                                "x": {"value": landmarks.centerX + jiggle(5)},
+                                "y": {"value": landmarks.centerY + jiggle(5)}
                             },
                             "update": {
                                 //"transform": {"value":"scale(800,300)"}

@@ -1429,7 +1429,23 @@ $(document).ready(function() {
 });
 
 function doNothing() {
-    // occasionally useful in KO click bindings
+    // occasionally useful in Knockout.js click bindings
     return;
 }
 
+function getPrintAreaLandmarks() {
+    // gather interesting coordinates in internal pixels
+    return {
+        leftX: 0,
+        centerX: physicalUnitsToPixels(physicalWidth / 2.0, internal_ppi),
+        rightX: physicalUnitsToPixels(physicalWidth, internal_ppi),
+        topY: 0,
+        centerY: physicalUnitsToPixels(physicalHeight / 2.0, internal_ppi),
+        bottomY: physicalUnitsToPixels(physicalHeight, internal_ppi)
+    };
+}
+
+function jiggle( range ) {
+    // Return a number +- zero, within this range
+    return Math.round(Math.random() * range * 2) - range; 
+}
