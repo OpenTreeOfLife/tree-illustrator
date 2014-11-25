@@ -476,15 +476,12 @@ var availableStyles = [
  */
 var vegaSpec;
 function refreshViz(options) {
-    if (!viewModel.style) return;
     if (!options) options = {}; 
 
-    // build the "full" specification, adding study data to preset style
-    //vegaSpec = $.extend(true, {}, viewModel.style, {'data': viewModel.data});
     ill.updateVegaSpec();  // TODO: trigger updates on a more sensible basis
 
     vg.parse.spec(ill.vegaSpec, function(chart) {
-      var view = chart({el:"#viz-outer-frame", renderer:"svg"})  // , data:viewModel.data})  <== MUST BE INLINE, NOT URL!
+      var view = chart({el:"#viz-outer-frame", renderer:"svg"})  // , data:cachedData? })  <== MUST BE INLINE, NOT URL!
 /*
         .on("mouseover", function(event, item) {
           // invoke hover properties on cousin one hop forward in scenegraph
@@ -505,61 +502,6 @@ function refreshViz(options) {
 */
         .update();
 
-        // populate temporary vars for SVG-tree group, nodes, paths, root node
-        tg  = $('svg g g g g g g:eq(0) g')
-        tn = tg.find('g.type-symbol');
-        te = tg.find('g.type-path');
-        rn = tn.find('path').eq(0);
-/*
-        // what are the visual extents of all nodes?
-        var top = Number.MAX_VALUE;
-        var right = Number.MIN_VALUE;
-        var bottom = Number.MIN_VALUE;
-        var left = Number.MAX_VALUE;
-        $.each(tn.children(), function(index, n) {
-            var $n = $(n);
-            var os = $n.offset();
-            top = Math.min(top, os.top);
-            right = Math.max(right, os.left + $n.width());
-            bottom = Math.max(bottom, os.top + $n.height());
-            left = Math.min(left, os.left);
-        });
-        console.log("BOUNDS for all nodes:");
-        console.log("  top="+ top);
-        console.log("  right="+ right);
-        console.log("  bottom="+ bottom);
-        console.log("  left="+ left);
-
-        // what are the visual extents of all edges?
-        $.each(te.children(), function(index, e) {
-            var $e = $(e);
-            var os = $e.offset();
-            top = Math.min(top, os.top);
-            right = Math.max(right, os.left + $e.width());
-            bottom = Math.max(bottom, os.top + $e.height());
-            left = Math.min(left, os.left);
-        });
-        console.log("BOUNDS for all edges:");
-        console.log("  top="+ top);
-        console.log("  right="+ right);
-        console.log("  bottom="+ bottom);
-        console.log("  left="+ left);
-        // colorize nodes and edges to ROYGBV
-        colors = ['red','orange','#cc0','green','blue','violet'];
-        $.each(tn.find('path'), function(i, n) {
-            $(n).css('stroke', colors[i]);
-        });
-        $.each(te.find('path'), function(i, e) {
-            $(e).css('stroke', colors[i]);
-        });
-
-        // bring stuff into view //TODO: cleanup
-        //tn.attr('transform','translate(100,100)')
-        //te.attr('transform','translate(100,100)')
-*/
-
-        // ugly hack to remove the intervening FOREIGNOBJECT and DIV between our outer SVG and vega's SVG
-        ///$('#viz-vega-fo').replaceWith($('div.vega').contents());
         if (options.SHOW_ALL) {
             resizeViewportToShowAll();
         } else {
@@ -567,10 +509,8 @@ function refreshViz(options) {
         }
     });
 }
-var tg, tn, te, rn; 
 
-var viewModel;
-var ill;
+var ill;  
 $(document).ready(function() {
     // test for the preset ppi (pixels / inch) in this browser
     browser_ppi = $('#svg-toolbox').width() / 10.0;
@@ -579,41 +519,10 @@ $(document).ready(function() {
     $('#browser-ppi-indicator').text(browser_ppi);
     $('#display-ppi-indicator').text(display_ppi);
 
-    // create the viewModel (a full vega spec?) and build a matching UI
-    viewModel = {
-        style: availableStyles[0].style,  // see above
-        data: [
-            {
-                'name':"phyloTree", 
-                //'url': buildStudyFetchURL( 'pg_2823' ),   // TINY TREE
-                //'url': buildStudyFetchURL( 'pg_2818' ),     // BIG TREE
-                'url': availableTrees[0].url,
-                'format':{ "type":"treejson" },  // necessary to ingest a JS object (vs. array)
-                'transform':[
-                    // N.B. that this can include layout properties (size, etc)
-                    {"type": "nexson", "treesCollectionPosition":0, "treePosition":0}       // , "size": [230, 90]}
-                    ,
-                    { 
-                        "type": "phylogram", 
-                        // consolidate all other interesting phylogram choices here?
-                        "layout": "radial",
-                        //"radialArc": [90, 0],
-                        //"radialSweep": 'CLOCKWISE',
-                        "radialSweep": 'COUNTERCLOCKWISE',
-                        //"branchStyle": "diagonal",  // other options here?
-                        "branchLengths": "",  // empty/false, or a property name to compare?
-                        "width": 100,   // TODO: FIX these dimensions (they rotate)
-                        "height": 100, 
-                        "tipsAlignment": 'right'
-                    }
-                ]
-            }
-        ],
-        illustrationID: null,  // TODO: assign a key/ID when saved?
-        illustrationName: "Untitled"
-    };
-
+    // Use an Illustration object as our primary view model for KnockoutJS
+    // (by convention, it's usually named 'viewModel')
     ill = new TreeIllustrator.Illustration();
+
     var editorArea = $('#editor')[0];
     ko.applyBindings(ill, editorArea);
 
@@ -634,6 +543,7 @@ function buildStudyFetchURL( studyID ) {
     return template.replace('{STUDY_ID}', studyID);
 }
 
+/*
 function useChosenStyle() {
     viewModel.style = getChosenStyle();
     refreshViz();
@@ -654,6 +564,7 @@ function getStyleByName( styleName ) {
     }
     return styleInfo.style;
 }
+*/
 
 function toggleFixedRulers(toggle) {
     var rulersAreHidden = $('#viz-outer-frame').hasClass('hide-rulers');
