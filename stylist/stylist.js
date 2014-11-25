@@ -522,6 +522,8 @@ $(document).ready(function() {
     // Use an Illustration object as our primary view model for KnockoutJS
     // (by convention, it's usually named 'viewModel')
     ill = new TreeIllustrator.Illustration();
+    // add a single placeholder tree
+    ill.addIllustratedTree();
 
     var editorArea = $('#editor')[0];
     ko.applyBindings(ill, editorArea);
