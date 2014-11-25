@@ -31,6 +31,13 @@ var TreeIllustrator = function(window, document, $, ko) {
         CIRCLE: 'CIRCLE',
         TRIANGLE: 'TRIANGLE'
     }
+    var alignments = {
+        TOP: 'TOP',
+        RIGHT: 'RIGHT',
+        BOTTOM: 'BOTTOM',
+        LEFT: 'LEFT',
+        CENTER: 'CENTER'
+    }
     var dataSourceTypes = {
         BUILT_IN: 'BUILT_IN',
         URL: 'URL'
@@ -186,7 +193,7 @@ var TreeIllustrator = function(window, document, $, ko) {
             'width': landmarks.width * 0.5,
             'height': landmarks.height * 0.5,
             'radius': Math.min(landmarks.height, landmarks.width) * 0.3,
-            'tipsAlignment': 'RIGHT',
+            'tipsAlignment': alignments.RIGHT,
             'rootX': landmarks.centerX + jiggle(5),   // TODO: use a bounding box instead?
             'rootY': landmarks.centerY + jiggle(5),
 
@@ -953,6 +960,17 @@ var TreeIllustrator = function(window, document, $, ko) {
             }
             refreshViz();
         }
+        ,
+        useChosenTipsAlignment: function(newValue) {
+            var self = this;
+            if (newValue in alignments) {
+                self.tipsAlignment(newValue);
+            } else {
+                console.error("useChosenTipsAlignment(): Unknown tree layout '"+ newValue +"'!"); 
+            }
+            refreshViz();
+        }
+
     };
 
     var SupportingDataset = function(illustration, data) {
@@ -1018,6 +1036,7 @@ var TreeIllustrator = function(window, document, $, ko) {
         units: units,
         colorDepths: colorDepths,
         treeLayouts: treeLayouts,
+        alignments: alignments,
         dataSourceTypes: dataSourceTypes,
 
         // expose view-model classes

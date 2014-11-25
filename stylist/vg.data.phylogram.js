@@ -78,10 +78,12 @@
 vg.data.phylogram = function() {
     // caller-defined properties
     var layout = 'cartesian';  // 'cartesian' | 'radial' | 'cladogram' | ???
-    // Typically we will maintain proportional coordinates and distances;
-    // these will be scaled downstream using SVG group transforms.
+
+    // NOTE that width and height refer to the final display, so these might
+    // map to X or Y coordinates depending on orientation
     var width = 1.0;
     var height = 1.0;
+
     var radius = 0.5;
     var radialArc = [0, 360];  // angles of arc for a circular layout
     var radialSweep = 'CLOCKWISE';  // 'CLOCKWISE' or 'COUNTERCLOCKWISE'
@@ -108,7 +110,7 @@ vg.data.phylogram = function() {
       console.log('STARTING phylogram transform...');
 
       // scale all coordinates as directed
-      if (width !== 1) {
+      if ((width !== 1.0) || (height !== 1.0)) {
           data.phyloNodes.map(scalePoint);
       }
 
@@ -218,6 +220,11 @@ vg.data.phylogram = function() {
     
     phylogram.layout = function(s) {
       layout = s;
+      if (s === 'radial') {
+          // N.B. radial layout needs fixed (-90) orientation
+          orientation = -90;
+          descentAxis = 'x';
+      }
       return phylogram;
     };
       
@@ -273,23 +280,26 @@ vg.data.phylogram = function() {
         s = 'right';
       }
       tipsAlignment = s;
-      switch(tipsAlignment) {
-        case 'top':
-          orientation = 180;
-          descentAxis = 'y';
-          break;
-        case 'right':
-          orientation = -90;
-          descentAxis = 'x';
-          break;
-        case 'bottom':
-          orientation = 0;
-          descentAxis = 'y';
-          break;
-        case 'left':
-          orientation = 90;
-          descentAxis = 'x';
-          break;
+      // N.B. radial layout needs fixed (-90) orientation and descentAxis! Respect this.
+      if (layout !== 'radial') {
+          switch(tipsAlignment) {
+            case 'top':
+              orientation = 180;
+              descentAxis = 'y';
+              break;
+            case 'right':
+              orientation = -90;
+              descentAxis = 'x';
+              break;
+            case 'bottom':
+              orientation = 0;
+              descentAxis = 'y';
+              break;
+            case 'left':
+              orientation = 90;
+              descentAxis = 'x';
+              break;
+          }
       }
       return phylogram;
     };
@@ -312,8 +322,8 @@ vg.data.phylogram = function() {
     }
 
     phylogram.showFallbackLabels = function(b) {
-      showFallbackLabels = Boolean(b);
-      return phylogram;
+        showFallbackLabels = Boolean(b);
+        return phylogram;
     }
 
     var displacePoint = function(point, delta) {
@@ -323,20 +333,51 @@ vg.data.phylogram = function() {
         return point;
     }
 
+    // Return width *or* height, as appropriate for the current orientation
+    var getOuterDimensionForX = function() {
+        switch(orientation) {
+            case 0:
+            case 180:
+            case -180:
+                return width;
+
+            case 90:
+            case -90:
+            case 270:
+            case -270:
+                return height;
+        }
+        console.error("getOuterDimensionForX(): Unexpected value for orientation: '"+ orientation +"'");
+    }
+    var getOuterDimensionForY = function() {
+        switch(orientation) {
+            case 0:
+            case 180:
+            case -180:
+                return height;
+            case 90:
+            case -90:
+            case 270:
+            case -270:
+                return width;
+        }
+        console.error("getOuterDimensionForY(): Unexpected value for orientation: '"+ orientation +"'");
+    }
+
     var scalePoint = function(point) {
         // where point is any object having x and y properties
         // NOTE that we're scaling up from fractional values (0.0 - 1.0), so
         // the nominal width+height are also our scaling multipliers
-        point.x *= width;
+        point.x *= getOuterDimensionForX();
         if (layout === 'radial') {
             point.y *= radius;
         } else {
-            point.y *= height;
+            point.y *= getOuterDimensionForY();
         }
         // scale cartesian_x and y, if stored
         if ('cartesian_x' in point) {
-            point.cartesian_x *= width;
-            point.cartesian_y *= height;
+            point.cartesian_x *= getOuterDimensionForX();
+            point.cartesian_y *= getOuterDimensionForY();
         }
         return point;
     }
@@ -481,7 +522,7 @@ vg.data.phylogram = function() {
         }
         shiftAngle = endAngle;
     }
-    var proportionalY = ((d.y / width) * totalArcDegrees);
+    var proportionalY = ((d.y / getOuterDimensionForX()) * totalArcDegrees);
     // shift angle 90 degrees (from 0=down to 0=right)
     ///proportionalY -= 90;
 
@@ -830,7 +871,6 @@ vg.data.phylogram = function() {
     /* node labeling 
     // TODO: why is this SUPER-SLOW with large trees? like MINUTES to run...
     // Is there a faster/cruder way to clear the decks?
-    debugger;
     vis.selectAll('g.node text').remove();
 
     // provide an empty label as last resort, so we can see highlights

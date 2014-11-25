@@ -432,8 +432,38 @@
                         (<span data-bind="text: $root.unitsDisplayAbbreviation()">cm</span>)
                     </div>
                 </div>
+
                 <div class="control-group">
-                    <label class="control-label" for="">Root location</label> 
+                    <label class="control-label" data-bind="visible: layout() !== TreeIllustrator.treeLayouts.CIRCLE">Show tips on</label> 
+                    <div class="controls" data-bind="visible: layout() !== TreeIllustrator.treeLayouts.CIRCLE">
+                        <!-- button triplet, loosely bound via click handlers -->
+                        <div class="btn-group">
+                            <button class="btn"
+                                    data-bind="css: { active: tipsAlignment() === TreeIllustrator.alignments.TOP },
+                                               click: useChosenTipsAlignment.bind($data, TreeIllustrator.alignments.TOP),
+                                               event: {keyup: refreshViz, change: refreshViz}"> 
+                                Top </button>
+                            <button class="btn"
+                                    data-bind="css: { active: tipsAlignment() === TreeIllustrator.alignments.RIGHT },
+                                               click: useChosenTipsAlignment.bind($data, TreeIllustrator.alignments.RIGHT),
+                                               event: {keyup: refreshViz, change: refreshViz}"> 
+                                Right </button>
+                            <button class="btn"
+                                    data-bind="css: { active: tipsAlignment() === TreeIllustrator.alignments.BOTTOM },
+                                               click: useChosenTipsAlignment.bind($data, TreeIllustrator.alignments.BOTTOM),
+                                               event: {keyup: refreshViz, change: refreshViz}"> 
+                                Bottom </button>
+                            <button class="btn"
+                                    data-bind="css: { active: tipsAlignment() === TreeIllustrator.alignments.LEFT },
+                                               click: useChosenTipsAlignment.bind($data, TreeIllustrator.alignments.LEFT),
+                                               event: {keyup: refreshViz, change: refreshViz}"> 
+                                Left </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label" for="">Root node location</label> 
                     <div class="controls mini-form">
                         <label data-bind="attr: {for: '#'+ id() +'-rootx-field'}" >x</label> 
                         <input type="text" value="?"
@@ -456,9 +486,7 @@
             </form>
             <em>Once a tree is added, describe its origin and appearance</em>
             <ul>
-                <li>tree source</li>
                 <li>tree type (data format)</li>
-                <li>layout/geometry (circular, triangular, rectangular)</li>
                 <li>styles - <em>specify value+units, pick from options, or map to data</em>
                     <ul>
                         <li>edge thickness</li>
