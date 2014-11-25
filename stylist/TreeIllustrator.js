@@ -170,8 +170,9 @@ var TreeIllustrator = function(window, document, $, ko) {
                 'name': "Untitled ("+ newID +")",
                 'source': {
                     'type': dataSourceTypes.BUILT_IN, 
-                    //'value': 'http://devapi.opentreeoflife.org/phylesystem/v1/study/tt_23?output_nexml2json=1.0' }, 
-                    'value': './placeholder-tree.json' 
+                    'value': './placeholder-tree.json',
+                    'phylesystemStudyID': '',
+                    'phylesystemTreeID': ''
                 },
                 'description': "",
                 'dois': [ ]
@@ -887,29 +888,60 @@ var TreeIllustrator = function(window, document, $, ko) {
             refreshViz();
         }
         ,
-        useChosenTreeSourceURL: function() {
+        useChosenTreeDataSource: function() {
             var self = this;
             // pick up latest data from bound widgets
-            var $chooser = $('#'+ self.id() +'-sourceurl-chooser');
+            var $chooser = $('#'+ self.id() +'-datasource-chooser');
+            var $opentreeIDsPanel = $('#'+ self.id() +'-datasource-opentreeids-panel');
+            var $nexsonUrlPanel = $('#'+ self.id() +'-datasource-nexsonurl-panel');
+            var $fileUploadPanel = $('#'+ self.id() +'-datasource-upload-panel');
             var chosenSource = $chooser.val();
-            // Add other source types here
-            if (chosenSource === 'Enter a phylesystem URL') {
-                self.metadata.source.type(dataSourceTypes.URL);
-                var $otherField = $('#'+ self.id() +'-sourceurl-other');
-                self.metadata.source.value( $.trim($otherField.val()) );
-            } else {
-                // find the matching URL and set it instead
-                var selectedTrees = $.grep(availableTrees, function(o) {return o.name === chosenSource;});
-                var treeInfo = null;
-                if (selectedTrees.length > 0) {
-                    treeInfo = selectedTrees[0];
-                }
-                if (!treeInfo) {
-                    console.warn("No tree found under '"+ treeName +"'!");
-                    return;
-                }
-                self.metadata.source.type(dataSourceTypes.URL);
-                self.metadata.source.value( treeInfo.url );
+            switch(chosenSource) {
+                // Match against strings defined in stylist.js
+                case "Enter OpenTree study and tree ids":
+                    $opentreeIDsPanel.show();
+                    $nexsonUrlPanel.hide();
+                    $fileUploadPanel.hide();
+                    self.metadata.source.type(dataSourceTypes.URL);
+                    var studyID = self.metadata.source.phylesystemStudyID(); 
+                    var treeID = self.metadata.source.phylesystemTreeID();
+                    var treeNexsonURL = 'http://api.opentreeoflife.org/phylesystem/v1/study/'
+                                      + studyID +'/tree/'+ treeID +'?output_nexml2json=1.0.0';
+                    self.metadata.source.value( treeNexsonURL );
+                    break;
+
+                case "Enter URL to NexSON 1.0":
+                    $opentreeIDsPanel.hide();
+                    $nexsonUrlPanel.show();
+                    $fileUploadPanel.hide();
+                    self.metadata.source.type(dataSourceTypes.URL);
+                    var $otherField = $('#'+ self.id() +'-datasource-nexsonurl');
+                    self.metadata.source.value( $.trim($otherField.val()) );
+                    break;
+
+                case "Upload tree data":
+                    $opentreeIDsPanel.hide();
+                    $nexsonUrlPanel.hide();
+                    $fileUploadPanel.show();
+                    break;
+
+                default:
+                    // assume this is the name of an explicit URL
+                    $opentreeIDsPanel.hide();
+                    $nexsonUrlPanel.hide();
+                    $fileUploadPanel.hide();
+                    // find the matching URL and set it instead
+                    var selectedTrees = $.grep(availableTrees, function(o) {return o.name === chosenSource;});
+                    var treeInfo = null;
+                    if (selectedTrees.length > 0) {
+                        treeInfo = selectedTrees[0];
+                    }
+                    if (!treeInfo) {
+                        console.warn("No tree found under '"+ treeName +"'!");
+                        return;
+                    }
+                    self.metadata.source.type(dataSourceTypes.URL);
+                    self.metadata.source.value( treeInfo.url );
             }
             refreshViz();
         }

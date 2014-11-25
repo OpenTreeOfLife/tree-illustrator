@@ -325,32 +325,48 @@
                 </div>
                 <div class="control-group">
                     <label class="control-label"
-                           data-bind="attr: {for: '#'+ id() +'-sourceurl-chooser'}" >Data source</label> 
+                           data-bind="attr: {for: '#'+ id() +'-datasource-chooser'}" >Data source</label> 
                     <div class="controls">
                         <select style="margin-bottom: 0;"
                                 data-bind="options: availableTrees,
                                            optionsValue: 'name',
                                            optionsText: 'name',
-                                           attr: {id: id() +'-sourceurl-chooser'},
-                                           event: {change: useChosenTreeSourceURL.bind($data)}">
+                                           attr: {id: id() +'-datasource-chooser'},
+                                           event: {change: useChosenTreeDataSource.bind($data)}">
                         </select>
                     </div>
                     <div class="controls mini-form" 
-                         data-bind="attr: {id: '#'+ id() +'-sourceurl-options'},
-                                            visible: $('#'+ id() +'-sourceurl-chooser').val() === 'Enter a phylesystem URL'">
-                        <!-- Show if 'Enter a phylesystem URL' is chosen -->
-<!--
-                        <label for="tree-upload">... or upload a tree file</label>
-                        <br/>
-                        <input id="tree-upload" type="file"></input>
-                        <br/>
-                        <label for="tree-url">... or enter its URL</label>
-                        <br/>
--->
-                        <input id="tree-url" type="text" placeholder="Enter a phylesystem URL here"
-                               data-bind="event: {change: useChosenTreeSourceURL.bind($data)},
-                                          attr: {id: '#'+ id() +'-sourceurl-other'}"
+                         style="display: none; margin-top: 0.25em;"
+                         data-bind="attr: {id: id() +'-datasource-opentreeids-panel'}">
+                        <label for="#style-printsize-width-field">study id</label> 
+                        <input id="style-printsize-width-field" type="text" value="?"
+                               style="width: 2.0em;"
+                               data-bind="value: metadata.source.phylesystemStudyID,
+                                          valueUpdate: ['afterkeydown','input'],
+                                          event: {change: useChosenTreeDataSource.bind($data)}" />&nbsp;
+
+                        <label for="#style-printsize-height-field">tree id</label> 
+                        <input id="style-printsize-height-field" type="text" value="?"
+                               style="width: 2.0em;"
+                               data-bind="value: metadata.source.phylesystemTreeID,
+                                          valueUpdate: ['afterkeydown','input'],
+                                          event: {change: useChosenTreeDataSource.bind($data)}" />&nbsp;
+                        </div>
+                    <div class="controls" 
+                         style="display: none; margin-top: 0.25em;"
+                         data-bind="attr: {id: id() +'-datasource-nexsonurl-panel'}">
+                        <input id="tree-url" type="text" placeholder="URL should fetch Nexson 1.0"
+                               data-bind="event: {change: useChosenTreeDataSource.bind($data)},
+                                          attr: {id: id() +'-datasource-nexsonurl'}"
                         ></input>
+                    </div>
+                    <div class="controls" 
+                         style="display: none; margin-top: 0.25em;"
+                         data-bind="attr: {id: id() +'-datasource-upload-panel'}">
+                        <input type="file" disabled="disabled"
+                               data-bind="attr: {id: id() +'-datasource-upload'}"
+                        ></input>
+                        <br /><span style="color: #c33;">Coming soon</span>
                     </div>
                 </div>
                 <div class="control-group">

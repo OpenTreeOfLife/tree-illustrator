@@ -45,7 +45,13 @@ var availableTrees = [
         url: buildStudyFetchURL( 'pg_2821' )
     },
     {
-        name: "Enter a phylesystem URL"
+        name: "Enter OpenTree study and tree ids"
+    },
+    {
+        name: "Enter URL to NexSON 1.0"
+    },
+    {
+        name: "Upload tree data"
     }
 ];
 
