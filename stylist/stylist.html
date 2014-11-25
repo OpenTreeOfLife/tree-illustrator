@@ -351,7 +351,7 @@
                                data-bind="value: metadata.source.phylesystemTreeID,
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {change: useChosenTreeDataSource.bind($data)}" />&nbsp;
-                        </div>
+                    </div>
                     <div class="controls" 
                          style="display: none; margin-top: 0.25em;"
                          data-bind="attr: {id: id() +'-datasource-nexsonurl-panel'}">
@@ -394,7 +394,9 @@
                 </div>
                 <div class="control-group">
                     <label class="control-label" for="">Tree size</label> 
-                    <div class="controls mini-form">
+                    <div class="controls mini-form"
+                         style="margin-top: 0.25em;"
+                         data-bind="attr: {id: id() +'-layout-options'}">
                         <label data-bind="attr: {for: '#'+ id() +'-width-field'}" >width</label> 
                         <input type="text" value="?"
                                style="width: 2.0em;"
@@ -410,6 +412,15 @@
                                           attr: {id: id() +'-height-field'},
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {keyup: refreshViz, change: refreshViz}" />&nbsp;
+
+                        <label data-bind="attr: {for: '#'+ id() +'-radius-field'}" >radius</label> 
+                        <input type="text" value="?"
+                               style="width: 2.0em;"
+                               data-bind="value: radius,
+                                          attr: {id: id() +'-radius-field'},
+                                          valueUpdate: ['afterkeydown','input'],
+                                          event: {keyup: refreshViz, change: refreshViz}" />&nbsp;
+
                         &nbsp;(<span data-bind="text: $root.unitsDisplayAbbreviation()">cm</span>)
                     </div>
                 </div>

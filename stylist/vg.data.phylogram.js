@@ -82,6 +82,7 @@ vg.data.phylogram = function() {
     // these will be scaled downstream using SVG group transforms.
     var width = 1.0;
     var height = 1.0;
+    var radius = 0.5;
     var radialArc = [0, 360];  // angles of arc for a circular layout
     var radialSweep = 'CLOCKWISE';  // 'CLOCKWISE' or 'COUNTERCLOCKWISE'
     var branchStyle = ''; 
@@ -204,6 +205,7 @@ vg.data.phylogram = function() {
       data.orientation = orientation;  // implicit in tipsAlignment?
       data.width = width;
       data.height = height;
+      data.radius = radius;
       data.branchStyle = branchStyle;
       data.branchLengths = branchLengths;
       data.nodeLabelSource = nodeLabelSource;
@@ -253,6 +255,11 @@ vg.data.phylogram = function() {
       
     phylogram.height = function(i) {
       height = i;
+      return phylogram;
+    };
+      
+    phylogram.radius = function(i) {
+      radius = i;
       return phylogram;
     };
       

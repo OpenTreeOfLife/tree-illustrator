@@ -181,6 +181,7 @@ var TreeIllustrator = function(window, document, $, ko) {
             'layout': treeLayouts.CIRCLE,
             'width': landmarks.width * 0.5,
             'height': landmarks.height * 0.5,
+            'radius': Math.min(landmarks.height, landmarks.width) * 0.3,
             'tipsAlignment': 'RIGHT',
             'rootX': landmarks.centerX + jiggle(5),   // TODO: use a bounding box instead?
             'rootY': landmarks.centerY + jiggle(5),
@@ -656,6 +657,7 @@ var TreeIllustrator = function(window, document, $, ko) {
                     var treeData = {
                         'name': dataSourceName,
                         'format': {"type":"treejson"},  // initial match for JSON object, vs. array
+                         // TODO: support args for "treesCollectionPosition", "treePosition" or "treeID"?
                         'transform': [
                             // TODO: add all possible properties (common to by all formats?)
                             // TODO: merge supporting data from other files? or do that downstream?
