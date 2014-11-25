@@ -328,7 +328,11 @@ vg.data.phylogram = function() {
         // NOTE that we're scaling up from fractional values (0.0 - 1.0), so
         // the nominal width+height are also our scaling multipliers
         point.x *= width;
-        point.y *= height;
+        if (layout === 'radial') {
+            point.y *= radius;
+        } else {
+            point.y *= height;
+        }
         // scale cartesian_x and y, if stored
         if ('cartesian_x' in point) {
             point.cartesian_x *= width;

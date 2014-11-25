@@ -397,31 +397,39 @@
                     <div class="controls mini-form"
                          style="margin-top: 0.25em;"
                          data-bind="attr: {id: id() +'-layout-options'}">
-                        <label data-bind="attr: {for: '#'+ id() +'-width-field'}" >width</label> 
+
+                        <!-- Marker classes "{LAYOUT}-option" hide/show these widgets based on chosen layout -->
+                        <label data-bind="attr: {for: '#'+ id() +'-width-field'},
+                                          visible: layout() !== TreeIllustrator.treeLayouts.CIRCLE">width</label> 
                         <input type="text" value="?"
-                               style="width: 2.0em;"
+                               style="width: 2.0em; margin-right: 0.5em;"
                                data-bind="value: width,
                                           attr: {id: id() +'-width-field'},
                                           valueUpdate: ['afterkeydown','input'],
-                                          event: {keyup: refreshViz, change: refreshViz}" />&nbsp;
+                                          event: {keyup: refreshViz, change: refreshViz},
+                                          visible: layout() !== TreeIllustrator.treeLayouts.CIRCLE" />
 
-                        <label data-bind="attr: {for: '#'+ id() +'-height-field'}" >height</label> 
+                        <label data-bind="attr: {for: '#'+ id() +'-height-field'},
+                                          visible: layout() !== TreeIllustrator.treeLayouts.CIRCLE">height</label> 
                         <input type="text" value="?"
-                               style="width: 2.0em;"
+                               style="width: 2.0em; margin-right: 0.5em;"
                                data-bind="value: height,
                                           attr: {id: id() +'-height-field'},
                                           valueUpdate: ['afterkeydown','input'],
-                                          event: {keyup: refreshViz, change: refreshViz}" />&nbsp;
+                                          event: {keyup: refreshViz, change: refreshViz},
+                                          visible: layout() !== TreeIllustrator.treeLayouts.CIRCLE" />
 
-                        <label data-bind="attr: {for: '#'+ id() +'-radius-field'}" >radius</label> 
+                        <label data-bind="attr: {for: '#'+ id() +'-radius-field'},
+                                          visible: layout() === TreeIllustrator.treeLayouts.CIRCLE">radius</label> 
                         <input type="text" value="?"
-                               style="width: 2.0em;"
+                               style="width: 2.0em; margin-right: 0.5em;"
                                data-bind="value: radius,
                                           attr: {id: id() +'-radius-field'},
                                           valueUpdate: ['afterkeydown','input'],
-                                          event: {keyup: refreshViz, change: refreshViz}" />&nbsp;
+                                          event: {keyup: refreshViz, change: refreshViz},
+                                          visible: layout() === TreeIllustrator.treeLayouts.CIRCLE" />
 
-                        &nbsp;(<span data-bind="text: $root.unitsDisplayAbbreviation()">cm</span>)
+                        (<span data-bind="text: $root.unitsDisplayAbbreviation()">cm</span>)
                     </div>
                 </div>
                 <div class="control-group">

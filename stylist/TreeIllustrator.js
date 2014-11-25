@@ -179,12 +179,17 @@ var TreeIllustrator = function(window, document, $, ko) {
             },
             'data': { },
             'layout': treeLayouts.CIRCLE,
+            /* Overload the model with all layout properties. We'll use the
+             * ones that current apply *and* retain last-known values for
+             * others, in case the user switches back to a prior layout
+             */
             'width': landmarks.width * 0.5,
             'height': landmarks.height * 0.5,
             'radius': Math.min(landmarks.height, landmarks.width) * 0.3,
             'tipsAlignment': 'RIGHT',
             'rootX': landmarks.centerX + jiggle(5),   // TODO: use a bounding box instead?
             'rootY': landmarks.centerY + jiggle(5),
+
             'style': {
                 // incl. only deviations from the style guide above?
                 'edgeThickness': 2,  
@@ -699,6 +704,7 @@ var TreeIllustrator = function(window, document, $, ko) {
                         "branchLengths": "",  // empty/false, or a property name to compare?
                         "width": el.width(),   // TODO: FIX these dimensions (they rotate)
                         "height": el.height(), 
+                        "radius": el.radius(), 
                         "tipsAlignment": el.tipsAlignment()
                     };
                     treeData.transform.push( phylogramTransform );
