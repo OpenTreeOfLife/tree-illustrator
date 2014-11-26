@@ -286,6 +286,10 @@
             <span data-bind="html: el.metadata.name, attr: {'title': el.id}">NAME</span>
             <i class="help-rollover">Click to open this panel</i>
 
+            <i class="indicator icon-remove pull-right remove-element"
+               title="Remove this tree from the illustration"
+               data-bind="click: $root.confirmRemoveElement, clickBubble: false" ></i>
+
           <!-- ko if: $index() === 0 -->
             <i class="indicator move-up icon-chevron-up move-disabled pull-right"
                data-bind="click: doNothing, clickBubble: false" ></i>
@@ -530,6 +534,10 @@
             <span data-bind="html: el.metadata.name, attr: {'title': el.id}">NAME</span>
             <i class="help-rollover">Click to open this panel</i>
 
+            <i class="indicator icon-remove pull-right remove-element"
+               title="Remove this dataset from the illustration"
+               data-bind="click: $root.confirmRemoveElement, clickBubble: false" ></i>
+
           <!-- ko if: $index() === 0 -->
             <i class="indicator move-up icon-chevron-up move-disabled pull-right"
                data-bind="click: doNothing, clickBubble: false" ></i>
@@ -576,6 +584,10 @@
              data-bind="attr: {href: '#ti-panel-'+ id()}">
             <span data-bind="html: el.metadata.name, attr: {'title': el.id}">NAME</span>
             <i class="help-rollover">Click to open this panel</i>
+
+            <i class="indicator icon-remove pull-right remove-element"
+               title="Remove this ornament from the illustration"
+               data-bind="click: $root.confirmRemoveElement, clickBubble: false" ></i>
 
           <!-- ko if: $index() === 0 -->
             <i class="indicator move-up icon-chevron-up move-disabled pull-right"

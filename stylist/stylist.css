@@ -185,9 +185,9 @@ g.outer-axis text {
     color: #777;
     padding-left: 0.75em;
 }
-.move-up, .move-down, .move-disabled {
+.move-up, .move-down, .move-disabled, .remove-element {
    border: 6px solid transparent;
-   margin: -6px 0;
+   margin: -3px -10px -6px 10px;
 }
 .move-disabled {
     opacity: 0.3;

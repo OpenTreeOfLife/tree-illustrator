@@ -190,8 +190,8 @@ var TreeIllustrator = function(window, document, $, ko) {
              * ones that current apply *and* retain last-known values for
              * others, in case the user switches back to a prior layout
              */
-            'width': landmarks.width * 0.5,
-            'height': landmarks.height * 0.5,
+            'width': landmarks.width * 0.4,
+            'height': landmarks.height * 0.4,
             'radius': Math.min(landmarks.height, landmarks.width) * 0.3,
             'tipsAlignment': alignments.RIGHT,
             'rootX': landmarks.centerX + jiggle(5),   // TODO: use a bounding box instead?
@@ -512,6 +512,25 @@ var TreeIllustrator = function(window, document, $, ko) {
               tempList[currentPos] = tempList[nextPos];
               tempList[nextPos] = el;
               self.elements(tempList);
+        }
+        self.confirmRemoveElement = function(el) {
+            var displayName, removeMethod;
+            if (el instanceof IllustratedTree) {
+                if (confirm("Are you sure you want to remove this tree? This cannot be undone!")) {
+                    self.removeIllustratedTree(el);
+                }
+            } else if (el instanceof SupportingDataset) {
+                if (confirm("Are you sure you want to remove this dataset? This cannot be undone!")) {
+                    self.removeSupportingDataset(el);
+                }
+            } else if (el instanceof Ornament) {
+                if (confirm("Are you sure you want to remove this ornament? This cannot be undone!")) {
+                    self.removeOrnament(el);
+                }
+            } else {
+                console.error("confirmRemoveElement(): unexpeced element type: '"+ el.metadata.type() +"'!");
+                return;
+            }
         }
 
         /* Instead of explicitly defining all possible members, let's
