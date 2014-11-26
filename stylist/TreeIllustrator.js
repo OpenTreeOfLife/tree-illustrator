@@ -729,6 +729,77 @@ var TreeIllustrator = function(window, document, $, ko) {
 
                     spec.data.push(treeData);
 
+                    // set label properties (esp. positioning) based on the chosen layout
+                    var textHeight = 5;   // TODO: adjustable font size (convert pt to px)
+                    var halfTextHeight = textHeight * 0.4;   // TODO: adjustable font size (convert pt to px)
+                    var initialLabelProperties = {
+                        "fontSize": {"value": textHeight} 
+                    };
+                    switch (el.layout()) { 
+                        case treeLayouts.RECTANGLE:
+                            // Label offsets depend on orientation
+                            var labelNudgeX, labelNudgeY, labelAlign, labelRotation;
+                            var nodeLabelGap = 6;  // TODO: base this on font size
+                            switch (el.tipsAlignment()) {
+                                case alignments.TOP:
+                                    // NOTE the odd mapping of X and Y
+                                    labelNudgeX = nodeLabelGap;
+                                    labelNudgeY = halfTextHeight;
+                                    labelAlign = 'left';
+                                    labelRotation = -90;
+                                    break;
+                                case alignments.RIGHT:
+                                    labelNudgeX = nodeLabelGap;
+                                    labelNudgeY = halfTextHeight;
+                                    labelAlign = 'left';
+                                    labelRotation = 0;
+                                    break;
+                                case alignments.BOTTOM:
+                                    labelNudgeX = nodeLabelGap;
+                                    labelNudgeY = halfTextHeight;
+                                    labelAlign = 'left';
+                                    labelRotation = 90;
+                                    break;
+                                case alignments.LEFT:
+                                    labelNudgeX = -nodeLabelGap;
+                                    labelNudgeY = halfTextHeight;
+                                    labelAlign = 'right';
+                                    labelRotation = 0;
+                                    break;
+                            }
+                            // Add simple properties for cartesian / rectangular layouts
+                            $.extend(initialLabelProperties, {
+                                "x": {"field": "x"},
+                                "y": {"field": "y"},
+                                "dx": {"value": labelNudgeX},
+                                "dy": {"value": labelNudgeY},
+                                "align": {"value": labelAlign},
+                                "angle": {"value": labelRotation}
+                            });
+                            break;
+                        case treeLayouts.CIRCLE:
+                           /* Add properties for radial/polar layouts.
+                            * Radius and theta (angle from origin, in radians) are the
+                            * alternatives to X and Y for polar projection, and assume
+                            * that the x and y properties represent the origin or center
+                            * of the layout, ie, the root node. See discussion at
+                            *  https://github.com/trifacta/vega/pull/187
+                            */
+                            $.extend(initialLabelProperties, {
+                                "x": {"value": 0},  // this is origin for radial/polar projection
+                                "y": {"value": 0},
+                                "radius": {"field": "radius"},  // px from origin
+                                "theta": {"field": "theta"},  // in radians (what direction from origin)
+                                "align": {"field": 'align'},  // NOTE that some labels are flipped 180deg for legibility
+                                "angle": {"field": "angle"}   // in degrees
+                            });
+                            break;
+                        case treeLayouts.TRIANGLE:
+                            // TODO: what happens here?
+                            break;
+                    }
+
+
                     // place new trees in the center of the printable area (slightly staggered for clarity)
                     var treeMarks = { 
                         "type": "group",
@@ -797,29 +868,7 @@ var TreeIllustrator = function(window, document, $, ko) {
                                             "type": "text",
                                             "from": {"data": dataSourceName, "transform": [{"type":"pluck", "field":"phyloNodes" }] },
                                             "properties": {
-                                                "enter": {
-                                                    /* Properties for cartesian / rectangular layouts
-                                                    "x": {"scale": "time", "field": "x", "mult":1},
-                                                    "y": {"scale": "y", "field": "y", "mult":1.0}
-                                                    "dx": {"value": -6},
-                                                    "dy": {"value": -6},
-                                                    */
-
-                                                    /* Properties for radial/polar layouts.
-                                                    * Radius and theta (angle from origin, in radians) are the
-                                                    * alternatives to X and Y for polar projection, and assume
-                                                    * that the x and y properties represent the origin or center
-                                                    * of the layout, ie, the root node. See discussion at
-                                                    *  https://github.com/trifacta/vega/pull/187
-                                                    */
-                                                    "x": {"value": 0},  // this is origin for radial/polar projection
-                                                    "y": {"value": 0},
-                                                    "radius": {"field": "radius"},  // px from origin
-                                                    "theta": {"field": "theta"},  // in radians (what direction from origin)
-                                                    "align": {"field": 'align'},  // NOTE that some labels are flipped 180deg for legibility
-                                                    "angle": {"field": "angle"},  // in degrees
-                                                    "fontSize": {"value": 5} // TODO: adjustable font size (convert pt to px)
-                                                },
+                                                "enter": initialLabelProperties,
                                                 "update": {
                                                     "text": {"field": "ottTaxonName"},
                                                     "fill": {"value":"black"}

@@ -614,11 +614,11 @@ vg.data.phylogram = function() {
   
     /* layout generators (position points in 1.0, 1.0 space) */
     var cartesianLayout = function(data) {
-        // do nothing
+        // just nudge all points to put the root node at 0,0
+        moveRootToOrigin(data);
     }
-    var radialLayout = function(data) {
-        // project points (nodes) to radiate out from center
 
+    var moveRootToOrigin = function (data) {
         // move all points to put the root node at origin (0.0)
         var rootNode = data.phyloNodes[0];  // I believe this is always true
         var nudgeRootToOrigin = {x: -(rootNode.x), y: -(rootNode.y)};
@@ -626,6 +626,11 @@ vg.data.phylogram = function() {
             return displacePoint(point, nudgeRootToOrigin);
         };
         data.phyloNodes.map(alignPointsToOrigin);
+    }
+
+    var radialLayout = function(data) {
+        // project points (nodes) to radiate out from center
+        moveRootToOrigin(data);
         
         var preserveCartesianCoordinates = function(point) {
             point.cartesian_x = point.x;
@@ -696,6 +701,7 @@ vg.data.phylogram = function() {
   
   
   var buildCartesian = function(selector, nodes, options) {
+console.log("buildCartesian...");
     options = options || {}
     var w = options.width || d3.select(selector).style('width') || d3.select(selector).attr('width'),
         h = options.height || d3.select(selector).style('height') || d3.select(selector).attr('height'),
@@ -940,6 +946,7 @@ vg.data.phylogram = function() {
   }
   
   var buildRadial = function(nodes, links, options) {
+console.log("buildRadial...");
     options = options || {}
     /* set width, radius, space for edge labels
     var w = options.width || d3.select(selector).style('width') || d3.select(selector).attr('width'),
