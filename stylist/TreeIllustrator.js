@@ -140,7 +140,11 @@ var TreeIllustrator = function(window, document, $, ko) {
                     // specified in pt, but echoed using physical units above
                 'backgroundColor': "#fdd",
                 'border': "none",
-                // TODO: add default line color, thickness, node shape/size, etc.
+                // add default line color, thickness, node shape/size, etc.
+                'edgeColor': "#777",
+                'edgeThickness': 0.8,
+                'nodeColor': "#339",
+                'nodeShape': 'circle'  // TODO: should be an enumerated  value
             },
             'elements': [
             ],
@@ -199,8 +203,9 @@ var TreeIllustrator = function(window, document, $, ko) {
 
             'style': {
                 // incl. only deviations from the style guide above?
-                'edgeThickness': 2,  
-                'edgeColor': '#933'
+                'edgeThickness': 1.5,  
+                'edgeColor': '#aaa',
+                'labeTextHeight': illustration.style.minimumTextSize()
             },
         };
         /* TODO: Apply optional modifications?
@@ -728,7 +733,7 @@ var TreeIllustrator = function(window, document, $, ko) {
                         "radialSweep": 'COUNTERCLOCKWISE',
                         //"branchStyle": "diagonal",  // other options here?
                         "branchLengths": "",  // empty/false, or a property name to compare?
-                        "width": el.width(),   // TODO: FIX these dimensions (they rotate)
+                        "width": el.width(),
                         "height": el.height(), 
                         "radius": el.radius(), 
                         "tipsAlignment": el.tipsAlignment()
@@ -749,7 +754,7 @@ var TreeIllustrator = function(window, document, $, ko) {
                     spec.data.push(treeData);
 
                     // set label properties (esp. positioning) based on the chosen layout
-                    var textHeight = 5;   // TODO: adjustable font size (convert pt to px)
+                    var textHeight = self.style.minimumTextSize();   // TODO: adjustable font size (convert pt to px)
                     var halfTextHeight = textHeight * 0.4;   // TODO: adjustable font size (convert pt to px)
                     var initialLabelProperties = {
                         "fontSize": {"value": textHeight} 
@@ -852,8 +857,8 @@ var TreeIllustrator = function(window, document, $, ko) {
                               "properties": {
                                 "update": {
                                   "path": {"field": "path"}, // , "transform":{"scale":"x"}},
-                                  "stroke": {"value": "#888"},
-                                  "strokeWidth": {"value": 1.0}
+                                  "stroke": {"value": el.style.edgeColor()},
+                                  "strokeWidth": {"value": el.style.edgeThickness()}
                                 },
                                 "hover": {
                                  // "stroke": {"value": "red"}
