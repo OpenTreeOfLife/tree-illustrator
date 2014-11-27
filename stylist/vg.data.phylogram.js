@@ -63,9 +63,8 @@
       skipBranchLengthScaling
   
   buildCladogram(nodes, links, options)
-    Creates a radial dendrogram.
-    Options: same as build, but without diagonal, skipTicks, and 
-      skipBranchLengthScaling
+    Creates a "triangular" dendrogram
+    Options: TODO
 
   rightAngleDiagonal()
     Similar to d3.diagonal except it create an orthogonal crook instead of a
@@ -144,7 +143,7 @@ vg.data.phylogram = function() {
                     pathGenerator = radialRightAngleDiagonal();
                     break;
                 case 'cladogram':
-                    pathGenerator = d3.svg.line();
+                    pathGenerator = straightLineDiagonal();
                     break;
                 case 'cartesian':
                     pathGenerator = rightAngleDiagonal();
@@ -153,6 +152,9 @@ vg.data.phylogram = function() {
                     // allow for moretraditional paths
                     pathGenerator = d3.svg[branchStyle]();
             }
+            break;
+        case 'straightLineDiagonal':
+            pathGenerator = straightLineDiagonal();
             break;
         case 'radialRightAngleDiagonal':
             pathGenerator = radialRightAngleDiagonal();
@@ -273,7 +275,7 @@ vg.data.phylogram = function() {
     phylogram.tipsAlignment = function(s) {
       // This places the tips on the specified edge, and sets the 
       // orientation (rotation angle)
-      // N.B. Ignore this when making for radial layouts!
+      // N.B. Ignore this when using a radial layout!
       var expectedValues = ['top','right','bottom','left'];
       s = $.trim(s).toLowerCase();
       if ($.inArray(s, expectedValues) === -1) {
@@ -458,6 +460,35 @@ vg.data.phylogram = function() {
 
   /* path generators */
 
+  var straightLineDiagonal = function(d) {
+    // do-nothing projection (just isolates x and y)
+    var projection = function(d) { return [d.x, d.y]; }
+    
+    var path = function(pathData) {
+      return "M" + pathData[0] + ' ' + pathData[1];
+    }
+    
+    function diagonal(d) {
+      var pathData = [d.source, d.target];
+      pathData = pathData.map(projection);
+      return path(pathData);
+    }
+    
+    diagonal.projection = function(x) {
+      if (!arguments.length) return projection;
+      projection = x;
+      return diagonal;
+    };
+    
+    diagonal.path = function(x) {
+      if (!arguments.length) return path;
+      path = x;
+      return diagonal;
+    };
+    
+    return diagonal;
+  }
+
   var rightAngleDiagonal = function(d) {
     // do-nothing projection (just isolates x and y)
     var projection = function(d) { return [d.x, d.y]; }
@@ -614,6 +645,8 @@ vg.data.phylogram = function() {
   
     /* layout generators (position points in 1.0, 1.0 space) */
     var cartesianLayout = function(data) {
+        // place all nodes for the radial layout (already done)
+
         // just nudge all points to put the root node at 0,0
         moveRootToOrigin(data);
     }
@@ -629,6 +662,7 @@ vg.data.phylogram = function() {
     }
 
     var radialLayout = function(data) {
+        // place all nodes for the radial layout
         // project points (nodes) to radiate out from center
         moveRootToOrigin(data);
         
@@ -650,7 +684,135 @@ vg.data.phylogram = function() {
         });
     }
     var cladogramLayout = function(data) {
+        // place all nodes for the "triangular" cladogram layout
         // TODO: support branch lengths?
+
+        // project points (nodes) to radiate out from center
+        moveRootToOrigin(data);
+        
+        /* Precalculate available leaf-node positions (based on number of
+         * leaves, final width & height, and tip alignment). Then do
+         * depth-first traversal from the root to assign the leaves to these
+         * positions, placing all ancestors along the way.
+         */
+        var leafNodes = $.grep(data.phyloNodes, function(n) {
+            return n['^ot:isLeaf'] === true;
+        });
+
+        var nLeaves = leafNodes.length;
+        var maxNodeDepth = 0;
+        var depthStep;
+
+        // Reckon parallel edges' slope as Y/X (based on orientation below)
+        var leadingEdgeSlope, trailingEdgeSlope;  
+
+        var leafPositions = [ ];
+        var startingLeafX, leafXstep, 
+            startingLeafY, leafYstep;
+        switch(tipsAlignment) {
+            case 'top':
+                startingLeafX = -(width / 2.0);
+                leafXstep = width / (nLeaves-1);
+                startingLeafY = -height;
+                leafYstep = 0;
+                leadingEdgeSlope = -(width/2.0) / -(height);
+                break;
+            case 'right':
+                startingLeafX = width;
+                leafXstep = 0;
+                startingLeafY = -(height / 2.0);
+                leafYstep = height / (nLeaves-1);
+                leadingEdgeSlope = (height/2.0) / -(width);
+                break;
+            case 'bottom':
+                startingLeafX = -(width / 2.0);
+                leafXstep = width / (nLeaves-1);
+                startingLeafY = height;
+                leafYstep = 0;
+                leadingEdgeSlope = -(width/2.0) / height;
+                break;
+            case 'left':
+                startingLeafX = -width;
+                leafXstep = 0;
+                startingLeafY = -(height / 2.0);
+                leafYstep = height / (nLeaves-1);
+                leadingEdgeSlope = -(height/2.0) / -(width);
+                break;
+        }
+        trailingEdgeSlope = -(leadingEdgeSlope);
+
+        leafNodes.map(function(n, i) { 
+            leafPositions.push({
+                'x': startingLeafX + (leafXstep * i), 
+                'y': startingLeafY + (leafYstep * i)
+            });    
+            maxNodeDepth = Math.max( maxNodeDepth, n.depth );
+        });
+        // how far should we move on the descent axis for each step in depth?
+        switch(tipsAlignment) {
+            case 'top':
+                depthStep = -(height / maxNodeDepth);
+                break;
+            case 'bottom':
+                depthStep = height / maxNodeDepth;
+                break;
+            case 'right':
+                depthStep = width / maxNodeDepth;
+                break;
+            case 'left':
+                depthStep = -(width / maxNodeDepth);
+                break;
+        }
+
+        var rootNode = data.phyloNodes[0];  // I believe this is always true
+        distributeChildrenAsCladogram(rootNode, leafPositions, depthStep);
+
+        // Scale the resulting layout to match width and height
+    }
+   
+    var distributeChildrenAsCladogram = function(node, leafPositions, depthStep) {
+        if (!node.children || node.children.length === 0) { return; }
+        var extents = {
+            minX:  Number.MAX_VALUE,
+            maxX: -Number.MAX_VALUE,
+            minY:  Number.MAX_VALUE,
+            maxY: -Number.MAX_VALUE
+        };
+        node.children.map(function(n, i) {
+            if (n['^ot:isLeaf'] === true) {
+                // capture the next available leaf position
+                var leafPos = leafPositions.shift();
+                n.x = leafPos.x;
+                n.y = leafPos.y;
+
+                extents.minX = Math.min(n.x, extents.minX);
+                extents.minY = Math.min(n.y, extents.minY);
+                extents.maxX = Math.max(n.x, extents.maxX);
+                extents.maxY = Math.max(n.y, extents.maxY);
+            } else {
+                var childExtents = distributeChildrenAsCladogram(n, leafPositions, depthStep);
+                // position based on my depth and my children's positions
+                switch(tipsAlignment) {
+                    case 'top':
+                    case 'bottom':
+                        n.y = depthStep * n.depth;
+                        // x should be midpoint of all descendants' x
+                        n.x = (childExtents.maxX + childExtents.minX) / 2.0;
+                        break;
+                    case 'right':
+                    case 'left':
+                        n.x = depthStep * n.depth;
+                        // y should be midpoint of all descendants' y
+                        n.y = (childExtents.maxY + childExtents.minY) / 2.0;
+                        break;
+                }
+                extents.minX = Math.min(childExtents.minX, extents.minX);
+                extents.minY = Math.min(childExtents.minY, extents.minY);
+                extents.maxX = Math.max(childExtents.maxX, extents.maxX);
+                extents.maxY = Math.max(childExtents.maxY, extents.maxY);
+            }
+        });
+        return extents;
     }
 
     return phylogram;
@@ -701,7 +863,6 @@ vg.data.phylogram = function() {
   
   
   var buildCartesian = function(selector, nodes, options) {
-console.log("buildCartesian...");
     options = options || {}
     var w = options.width || d3.select(selector).style('width') || d3.select(selector).attr('width'),
         h = options.height || d3.select(selector).style('height') || d3.select(selector).attr('height'),
@@ -946,7 +1107,6 @@ console.log("buildCartesian...");
   }
   
   var buildRadial = function(nodes, links, options) {
-console.log("buildRadial...");
     options = options || {}
     /* set width, radius, space for edge labels
     var w = options.width || d3.select(selector).style('width') || d3.select(selector).attr('width'),
