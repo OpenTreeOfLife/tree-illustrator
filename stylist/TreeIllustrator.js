@@ -203,7 +203,7 @@ var TreeIllustrator = function(window, document, $, ko) {
 
             'style': {
                 // incl. only deviations from the style guide above?
-                'edgeThickness': 0.5,  
+                'edgeThickness': 1.0,  
                 'edgeColor': '#999',
                 'labeTextHeight': illustration.style.minimumTextSize()
             },
