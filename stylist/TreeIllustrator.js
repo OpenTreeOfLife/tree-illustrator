@@ -203,8 +203,8 @@ var TreeIllustrator = function(window, document, $, ko) {
 
             'style': {
                 // incl. only deviations from the style guide above?
-                'edgeThickness': 1.5,  
-                'edgeColor': '#aaa',
+                'edgeThickness': 0.5,  
+                'edgeColor': '#999',
                 'labeTextHeight': illustration.style.minimumTextSize()
             },
         };
@@ -761,6 +761,7 @@ var TreeIllustrator = function(window, document, $, ko) {
                     };
                     switch (el.layout()) { 
                         case treeLayouts.RECTANGLE:
+                        case treeLayouts.TRIANGLE:
                             // Label offsets depend on orientation
                             var labelNudgeX, labelNudgeY, labelAlign, labelRotation;
                             var nodeLabelGap = 6;  // TODO: base this on font size
@@ -801,6 +802,7 @@ var TreeIllustrator = function(window, document, $, ko) {
                                 "angle": {"value": labelRotation}
                             });
                             break;
+
                         case treeLayouts.CIRCLE:
                            /* Add properties for radial/polar layouts.
                             * Radius and theta (angle from origin, in radians) are the
@@ -817,9 +819,6 @@ var TreeIllustrator = function(window, document, $, ko) {
                                 "align": {"field": 'align'},  // NOTE that some labels are flipped 180deg for legibility
                                 "angle": {"field": "angle"}   // in degrees
                             });
-                            break;
-                        case treeLayouts.TRIANGLE:
-                            // TODO: what happens here?
                             break;
                     }
 
