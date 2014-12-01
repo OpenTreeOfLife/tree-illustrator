@@ -236,7 +236,7 @@ vg.data.phylogram = function() {
     };
       
     phylogram.width = function(i) {
-      width = i;
+      width = Number(i);
       return phylogram;
     };
       
@@ -263,12 +263,12 @@ vg.data.phylogram = function() {
     };
       
     phylogram.height = function(i) {
-      height = i;
+      height = Number(i);
       return phylogram;
     };
       
     phylogram.radius = function(i) {
-      radius = i;
+      radius = Number(i);
       return phylogram;
     };
       
@@ -531,7 +531,7 @@ vg.data.phylogram = function() {
     // a = angle? or something else?
 
     // Angle is influenced by the specified size, arc and sweep.
-    // map Y coordinate to total spedified width
+    // map Y coordinate to total specified width
     var totalArcDegrees;
     // force both angles to positive numbers
     var startAngle = (radialArc[0] + 360) % 360;
@@ -700,11 +700,12 @@ vg.data.phylogram = function() {
         });
 
         var nLeaves = leafNodes.length;
-        var maxNodeDepth = 0;
-        var depthStep;
 
-        // Reckon parallel edges' slope as Y/X (based on orientation below)
-        var leadingEdgeSlope, trailingEdgeSlope;  
+        /* How far should we move on the descent axis for each step in depth?
+         * NOTE that we'll normalize this to match the original width or height
+         * later; for now, let's match the distance between leaf nodes.
+         */
+        var depthStep;
 
         var leafPositions = [ ];
         var startingLeafX, leafXstep, 
@@ -715,59 +716,67 @@ vg.data.phylogram = function() {
                 leafXstep = width / (nLeaves-1);
                 startingLeafY = -height;
                 leafYstep = 0;
-                leadingEdgeSlope = -(width/2.0) / -(height);
+                depthStep = -leafXstep;
                 break;
             case 'right':
                 startingLeafX = width;
                 leafXstep = 0;
                 startingLeafY = -(height / 2.0);
                 leafYstep = height / (nLeaves-1);
-                leadingEdgeSlope = (height/2.0) / -(width);
+                depthStep = leafYstep;
                 break;
             case 'bottom':
                 startingLeafX = -(width / 2.0);
                 leafXstep = width / (nLeaves-1);
                 startingLeafY = height;
                 leafYstep = 0;
-                leadingEdgeSlope = -(width/2.0) / height;
+                depthStep = leafXstep;
                 break;
             case 'left':
                 startingLeafX = -width;
                 leafXstep = 0;
                 startingLeafY = -(height / 2.0);
                 leafYstep = height / (nLeaves-1);
-                leadingEdgeSlope = -(height/2.0) / -(width);
+                depthStep = -leafYstep;
                 break;
         }
-        trailingEdgeSlope = -(leadingEdgeSlope);
 
         leafNodes.map(function(n, i) { 
             leafPositions.push({
                 'x': startingLeafX + (leafXstep * i), 
                 'y': startingLeafY + (leafYstep * i)
             });    
-            maxNodeDepth = Math.max( maxNodeDepth, n.depth );
         });
-        // how far should we move on the descent axis for each step in depth?
-        switch(tipsAlignment) {
-            case 'top':
-                depthStep = -(height / maxNodeDepth);
-                break;
-            case 'bottom':
-                depthStep = height / maxNodeDepth;
-                break;
-            case 'right':
-                depthStep = width / maxNodeDepth;
-                break;
-            case 'left':
-                depthStep = -(width / maxNodeDepth);
-                break;
-        }
 
         var rootNode = data.phyloNodes[0];  // I believe this is always true
-        distributeChildrenAsCladogram(rootNode, leafPositions, depthStep);
+        var fullExtents = distributeChildrenAsCladogram(rootNode, leafPositions, depthStep);
 
-        // Scale the resulting layout to match width and height
+        // realign root node to origin (it gets "pushed" far away by complex trees)
+        moveRootToOrigin(data);
+
+        // Scale the resulting layout to match the desired width (or height)
+        switch(tipsAlignment) {
+            case 'top':
+            case 'bottom':
+                // width is already good; height should be squeezed (or stretched)
+                var squeeze = height / (fullExtents.maxY - fullExtents.minY);
+                var fitToHeight = function(point) {
+                    point.y *= squeeze;
+                    return point;
+                }
+                data.phyloNodes.map(fitToHeight);
+                break;
+            case 'right':
+            case 'left':
+                // height is already good; width should be squeezed (or stretched)
+                var squeeze = width / (fullExtents.maxX - fullExtents.minX);
+                var fitToWidth = function(point) {
+                    point.x *= squeeze;
+                    return point;
+                }
+                data.phyloNodes.map(fitToWidth);
+                break;
+        }
     }
    
     var distributeChildrenAsCladogram = function(node, leafPositions, depthStep) {
