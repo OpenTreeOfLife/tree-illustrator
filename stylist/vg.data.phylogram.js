@@ -776,10 +776,12 @@ vg.data.phylogram = function() {
             minX:  Number.MAX_VALUE,
             maxX: -Number.MAX_VALUE,
             minY:  Number.MAX_VALUE,
-            maxY: -Number.MAX_VALUE
+            maxY: -Number.MAX_VALUE,
+            descendantLeafCount: 0
         };
         node.children.map(function(n, i) {
             if (n['^ot:isLeaf'] === true) {
+console.log("I'm a LEAF NODE with this name: "+ n.ottTaxonName);
                 // capture the next available leaf position
                 var leafPos = leafPositions.shift();
                 n.x = leafPos.x;
@@ -789,19 +791,51 @@ vg.data.phylogram = function() {
                 extents.minY = Math.min(n.y, extents.minY);
                 extents.maxX = Math.max(n.x, extents.maxX);
                 extents.maxY = Math.max(n.y, extents.maxY);
+                extents.descendantLeafCount += 1;
             } else {
+console.log("I'm a NON-leaf node ("+ n['@id'] +") with "+ n.children.length +" children");
                 var childExtents = distributeChildrenAsCladogram(n, leafPositions, depthStep);
-                // position based on my depth and my children's positions
+                /* Position this node based on its depth and children's positions.
+                 * Note that we need to place it on the descent axis so that it
+                 * maintains (if possible) the proper angled edges for the
+                 * cladogram layout. This sometimes means we need to force
+                 * longer edges between this node and its children.
+                 */
                 switch(tipsAlignment) {
                     case 'top':
+                        n.y = Math.max(
+                            childExtents.maxY - depthStep,  // one step closer to root
+                            childExtents.minY - ((childExtents.descendantLeafCount - 1) * depthStep)
+                        );
+                        // x should be midpoint of all descendants' x
+                        n.x = (childExtents.maxX + childExtents.minX) / 2.0;
+                        break;
                     case 'bottom':
-                        n.y = childExtents.minY - depthStep; 
+                        n.y = Math.min(
+                            childExtents.minY - depthStep,  // one step closer to root
+                            childExtents.maxY - ((childExtents.descendantLeafCount - 1) * depthStep)
+                        );
                         // x should be midpoint of all descendants' x
                         n.x = (childExtents.maxX + childExtents.minX) / 2.0;
                         break;
                     case 'right':
+console.log(">>> report from inner node with these children:");
+$.each(n.children, function(i,n) { console.log("       ["+i+"]" + (n.ottTaxonName || '<unnamed>')); });
+console.log("    child extents:");
+console.log(childExtents);
+                        n.x = Math.min(
+                            childExtents.minX - depthStep,  // one step closer to root
+                            childExtents.maxX - ((childExtents.descendantLeafCount - 1) * depthStep)
+                        );
+                        // y should be midpoint of all descendants' y
+                        n.y = (childExtents.maxY + childExtents.minY) / 2.0;
+console.log("    final.x = "+ n.x);
+                        break;
                     case 'left':
-                        n.x = childExtents.minX - depthStep; 
+                        n.x = Math.max(
+                            childExtents.maxX - depthStep,  // one step closer to root
+                            childExtents.minX - ((childExtents.descendantLeafCount - 1) * depthStep)
+                        );
                         // y should be midpoint of all descendants' y
                         n.y = (childExtents.maxY + childExtents.minY) / 2.0;
                         break;
@@ -810,7 +844,9 @@ vg.data.phylogram = function() {
                 extents.minY = Math.min(n.y, childExtents.minY, extents.minY);
                 extents.maxX = Math.max(n.x, childExtents.maxX, extents.maxX);
                 extents.maxY = Math.max(n.y, childExtents.maxY, extents.maxY);
+                extents.descendantLeafCount += childExtents.descendantLeafCount;
             }
+console.log(extents);
         });
         return extents;
     }
