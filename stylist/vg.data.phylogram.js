@@ -795,21 +795,21 @@ vg.data.phylogram = function() {
                 switch(tipsAlignment) {
                     case 'top':
                     case 'bottom':
-                        n.y = depthStep * n.depth;
+                        n.y = childExtents.minY - depthStep; 
                         // x should be midpoint of all descendants' x
                         n.x = (childExtents.maxX + childExtents.minX) / 2.0;
                         break;
                     case 'right':
                     case 'left':
-                        n.x = depthStep * n.depth;
+                        n.x = childExtents.minX - depthStep; 
                         // y should be midpoint of all descendants' y
                         n.y = (childExtents.maxY + childExtents.minY) / 2.0;
                         break;
                 }
-                extents.minX = Math.min(childExtents.minX, extents.minX);
-                extents.minY = Math.min(childExtents.minY, extents.minY);
-                extents.maxX = Math.max(childExtents.maxX, extents.maxX);
-                extents.maxY = Math.max(childExtents.maxY, extents.maxY);
+                extents.minX = Math.min(n.x, childExtents.minX, extents.minX);
+                extents.minY = Math.min(n.y, childExtents.minY, extents.minY);
+                extents.maxX = Math.max(n.x, childExtents.maxX, extents.maxX);
+                extents.maxY = Math.max(n.y, childExtents.maxY, extents.maxY);
             }
         });
         return extents;
