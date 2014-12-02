@@ -185,14 +185,14 @@
                 <div class="controls mini-form" Xdata-bind="visible: style.printSize.name() === 'Custom size'">
                     <label for="#style-printsize-width-field">width</label> 
                     <input id="style-printsize-width-field" type="text" value="?"
-                           style="width: 2.0em;"
+                           style="width: 3.0em;"
                            data-bind="value: style.printSize.width,
                                       valueUpdate: ['afterkeydown','input'],
                                       event: {keyup: updatePrintSizeChooser, change: updatePrintSizeChooser}" />&nbsp;
 
                     <label for="#style-printsize-height-field">height</label> 
                     <input id="style-printsize-height-field" type="text" value="?"
-                           style="width: 2.0em;"
+                           style="width: 3.0em;"
                            data-bind="value: style.printSize.height,
                                       valueUpdate: ['afterkeydown','input'],
                                       event: {keyup: updatePrintSizeChooser, change: updatePrintSizeChooser}" />
@@ -235,7 +235,7 @@
                 <label class="control-label" for="#style-mintextsize-field">Minimum text size</label> 
                 <div class="controls">
                     <input id="style-mintextsize-field" type="text" value="?"
-                      style="width: 2.0em;"
+                      style="width: 3.0em;"
                       data-bind="value: style.minimumTextSize,
                                  valueUpdate: ['afterkeydown','input']" />&nbsp;
                     <span data-bind="html: minTextSizeHelper">
@@ -247,7 +247,7 @@
                 <label class="control-label" for="#style-minlinethickness-field">Minimum line thickness</label> 
                 <div class="controls">
                     <input id="style-minlinethickness-field" type="text" value="?"
-                      style="width: 2.0em;"
+                      style="width: 3.0em;"
                       data-bind="value: style.minimumLineThickness,
                                  valueUpdate: ['afterkeydown','input']" />&nbsp;
                     <span data-bind="html: minLineThicknessHelper">
@@ -344,14 +344,14 @@
                          data-bind="attr: {id: id() +'-datasource-opentreeids-panel'}">
                         <label for="#style-printsize-width-field">study id</label> 
                         <input id="style-printsize-width-field" type="text" value="?"
-                               style="width: 2.0em;"
+                               style="width: 3.0em;"
                                data-bind="value: metadata.source.phylesystemStudyID,
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {change: useChosenTreeDataSource.bind($data)}" />&nbsp;
 
                         <label for="#style-printsize-height-field">tree id</label> 
                         <input id="style-printsize-height-field" type="text" value="?"
-                               style="width: 2.0em;"
+                               style="width: 3.0em;"
                                data-bind="value: metadata.source.phylesystemTreeID,
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {change: useChosenTreeDataSource.bind($data)}" />&nbsp;
@@ -406,8 +406,8 @@
                         <label data-bind="attr: {for: '#'+ id() +'-width-field'},
                                           visible: layout() !== TreeIllustrator.treeLayouts.CIRCLE">width</label> 
                         <input type="text" value="?"
-                               style="width: 2.0em; margin-right: 0.5em;"
-                               data-bind="value: width,
+                               style="width: 3.0em; margin-right: 0.5em;"
+                               data-bind="value: physicalWidth,
                                           attr: {id: id() +'-width-field'},
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {keyup: refreshViz, change: refreshViz},
@@ -416,8 +416,8 @@
                         <label data-bind="attr: {for: '#'+ id() +'-height-field'},
                                           visible: layout() !== TreeIllustrator.treeLayouts.CIRCLE">height</label> 
                         <input type="text" value="?"
-                               style="width: 2.0em; margin-right: 0.5em;"
-                               data-bind="value: height,
+                               style="width: 3.0em; margin-right: 0.5em;"
+                               data-bind="value: physicalHeight,
                                           attr: {id: id() +'-height-field'},
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {keyup: refreshViz, change: refreshViz},
@@ -426,8 +426,8 @@
                         <label data-bind="attr: {for: '#'+ id() +'-radius-field'},
                                           visible: layout() === TreeIllustrator.treeLayouts.CIRCLE">radius</label> 
                         <input type="text" value="?"
-                               style="width: 2.0em; margin-right: 0.5em;"
-                               data-bind="value: radius,
+                               style="width: 3.0em; margin-right: 0.5em;"
+                               data-bind="value: physicalRadius,
                                           attr: {id: id() +'-radius-field'},
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {keyup: refreshViz, change: refreshViz},
@@ -471,16 +471,16 @@
                     <div class="controls mini-form">
                         <label data-bind="attr: {for: '#'+ id() +'-rootx-field'}" >x</label> 
                         <input type="text" value="?"
-                               style="width: 2.0em;"
-                               data-bind="value: rootX,
+                               style="width: 3.0em;"
+                               data-bind="value: physicalRootX,
                                           attr: {id: id() +'-rootx-field'},
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {keyup: refreshViz, change: refreshViz}" />&nbsp;
                         &nbsp;
                         <label data-bind="attr: {for: '#'+ id() +'-rooty-field'}" >y</label> 
                         <input type="text" value="?"
-                               style="width: 2.0em;"
-                               data-bind="value: rootY,
+                               style="width: 3.0em;"
+                               data-bind="value: physicalRootY,
                                           attr: {id: id() +'-rooty-field'},
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {keyup: refreshViz, change: refreshViz}" />&nbsp;

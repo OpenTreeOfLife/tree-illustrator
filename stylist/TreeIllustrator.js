@@ -953,6 +953,14 @@ var TreeIllustrator = function(window, document, $, ko) {
 
         // safely refer to this instance
         var self = this;
+
+        // Bind to writable computed observables, so users can "think in physical units"
+        self.physicalWidth = wrapFieldWithPhysicalUnits(self, 'width');
+        self.physicalHeight = wrapFieldWithPhysicalUnits(self, 'height');
+        self.physicalRadius = wrapFieldWithPhysicalUnits(self, 'radius');
+        self.physicalRootX = wrapFieldWithPhysicalUnits(self, 'rootX');
+        self.physicalRootY = wrapFieldWithPhysicalUnits(self, 'rootY');
+
         ko.mapping.fromJS(data, Illustration.mappingOptions, self);
 
         // Add validation for fields that need it
@@ -1101,6 +1109,25 @@ var TreeIllustrator = function(window, document, $, ko) {
         return self;
     }
 
+    /* We'll often want to show values using the chosen physical units (inches
+     * or cm), but store them as internal SVG pixels. This makes it easy to
+     * declare these as computed properties, eg, wrap width => 'physicalWidth'
+     */
+    var wrapFieldWithPhysicalUnits = function(obj, fieldName, precision) {
+        // Display using selected precision (number of places), with hundredths by default.
+        precision = precision || 2;  
+        return ko.computed({
+            read: function() {
+                var physicalValue = pixelsToPhysicalUnits(obj[ fieldName ](), internal_ppi);
+                return Number(Math.round(physicalValue + "e+" + precision) + "e-" + precision);
+            },
+            write: function(value) {
+                obj[ fieldName ]( physicalUnitsToPixels(value, internal_ppi));
+            },
+            owner: obj,
+            deferEvaluation: true
+        })
+    }
 
     /* expose class constructors (and static methods) for instantiation */
     return {
