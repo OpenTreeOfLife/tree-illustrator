@@ -631,8 +631,8 @@ function initTreeIllustratorWindow() {
     // (no event for this except on the window, it's an on-demand thing)
     var mainGroupProperties = availableStyles[0].style.marks[0].properties.enter;
 
-    var viewportWidth = $scrollingViewport.children()[0].scrollWidth;
-    var viewportHeight = $scrollingViewport.children()[0].scrollHeight;
+    var viewportWidth = $scrollingViewport[0].scrollWidth;
+    var viewportHeight = $scrollingViewport[0].scrollHeight;
     var topRulerScale = d3.scale.linear()
         .domain([
             pixelsToPhysicalUnits(viewbox.x, internal_ppi),
@@ -644,7 +644,7 @@ function initTreeIllustratorWindow() {
         ]);
     var topRuler = d3.select("#fixed-ruler-top svg")
         .attr("width", viewportWidth+"px")
-        .attr("height", rulerWidth+"px")
+        .attr("height", rulerWidth+"px");
     drawRuler(topRuler, 'HORIZONTAL', ill.style.printSize.units(), topRulerScale);
 
     var leftRulerScale = d3.scale.linear()
@@ -658,7 +658,7 @@ function initTreeIllustratorWindow() {
         ]);
     var leftRuler = d3.select("#fixed-ruler-left svg")
         .attr("width", rulerWidth+"px")
-        .attr("height", viewportHeight+"px")
+        .attr("height", viewportHeight+"px");
     drawRuler(leftRuler, 'VERTICAL', ill.style.printSize.units(), leftRulerScale);
     
     enableViewportMask();
