@@ -704,7 +704,8 @@
          units) to determine the default ppi for this browser.
      -->
     <svg id="svg-toolbox" width="10in" height="10in" 
-         style="position: absolute; top: -12in; background-color: orange;">
+         style="position: absolute; top: -12in; background-color: orange;"
+         xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
       <defs>
         <!-- Keep volatile masks, backdrops, etc. here -->
         <mask id="viewport-mask">
@@ -769,8 +770,8 @@
    <div class="span6"> 
     <div id="viz-outer-frame">
         <div id="fixed-ruler-units" class="viz-fixed-ruler">&nbsp;</div>
-        <div id="fixed-ruler-top" class="viz-fixed-ruler"><svg></svg></div>
-        <div id="fixed-ruler-left" class="viz-fixed-ruler"><svg></svg></div>
+        <div id="fixed-ruler-top"   class="viz-fixed-ruler"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg></div>
+        <div id="fixed-ruler-left"  class="viz-fixed-ruler"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg></div>
     </div>
     <div style="float: left; margin-top: 2em;">
         <button class="btn btn-small" style="float: left; margin-right: 12px;" 
