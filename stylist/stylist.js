@@ -839,14 +839,19 @@ function resizeViewportToShowAll() {
     zoomViewport( newMagnification );  // calls initTreeIllustratorWindow();
 }
 function getMinimalIllustrationBoundingBox() {
-    // just the region defined for printing
-    return $('#illustration-background')[0].getBBox();
+    // Return just the region defined for printing (copying its properties
+    // to a simple Object, to prevent NoModificationAllowedError in IE)
+    var bbox = $('#illustration-background')[0].getBBox();
+    return $.extend({}, bbox);
 }
 function getInclusiveIllustrationBoundingBox() {
-    // Fetch the region defined for printing, PLUS any "out of bounds" SVG elements.
-    return d3.select('g.illustration-elements').node().getBBox();
+    // Fetch the region defined for printing, PLUS any "out of bounds" SVG
+    // elements. Again, we'll copying its properties to a simple Object, to
+    // prevent NoModificationAllowedError in IE.
+    var bbox = d3.select('g.illustration-elements').node().getBBox();
     /* REMINDER: This designated group should contain all illustration elements
        and an invisible box matching the printed area. */
+    return $.extend({}, bbox);
 }
 function getDiagnosticBoundingBox() {
     // gather outermost bounds based on diagnostic elements found
@@ -864,7 +869,7 @@ function getDiagnosticBoundingBox() {
     if (description) {
         bbox = getCombinedBoundingBox( bbox, description.getBBox() );
     }
-    return bbox;
+    return $.extend({}, bbox);
 }
 function getCombinedBoundingBox( box1, box2 ) {
     // reckon the "union" of two bounding boxes
