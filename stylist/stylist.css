@@ -224,3 +224,29 @@ g.outer-axis text {
 .mini-form input {
     display: inline-block;
 }
+
+/* diagnostic styles for viewport, masks, etc.
+#viewport-bounds {
+    stroke: red !important;
+}
+#illustration-bounds {
+    fill: pink !important;
+    stroke: green !important;
+}
+#illustration-background {
+    fill: orange !important;
+    stroke: brown !important;
+}
+#viewport-background {
+    fill: yellow !important;
+    stroke: purple !important;
+}
+#viz-outer-frame div.vega {
+    overflow: visible !important;
+}
+#viz-outer-frame div.vega > svg {
+    fill: pink !important;
+    stroke: red !important;
+    stroke-width: 4px !important;
+}
+*/

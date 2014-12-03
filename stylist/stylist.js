@@ -213,9 +213,7 @@ function updateViewportViewbox($viewport) {
     svg.setAttribute('width', svgWidth);
     svg.setAttribute('height', svgHeight);
 
-
     // TODO: nudge scrollbars to hold a steady view?
-
 
     svg.setAttribute('viewBox', (viewbox.x +' '+ viewbox.y +' '+ viewbox.width +' '+viewbox.height));
     $('#viewbox-indicator').html(svg.getAttribute('viewBox'));
@@ -622,15 +620,13 @@ function initTreeIllustratorWindow() {
 
     // sync scrolling of rulers to viewport
     //TODO: delegate these for one-time call!
-    $scrollingViewport.unbind('scroll').on('scroll', function() {
+    $scrollingViewport.off('scroll').on('scroll', function() {
         $topRuler.scrollLeft($scrollingViewport.scrollLeft());
         $leftRuler.scrollTop($scrollingViewport.scrollTop());
     });
     
     // sync resizing of rulers to viewport
     // (no event for this except on the window, it's an on-demand thing)
-    var mainGroupProperties = availableStyles[0].style.marks[0].properties.enter;
-
     var viewportWidth = $scrollingViewport[0].scrollWidth;
     var viewportHeight = $scrollingViewport[0].scrollHeight;
     var topRulerScale = d3.scale.linear()
@@ -902,6 +898,19 @@ function getCombinedBoundingBox( box1, box2 ) {
     return bbox;
 }
 
+/* Annoying browser quirk! Firefox/Mac (and possibly others?) have different SVG
+ * masking behavior, where the mask itself must transform along with the SVG it is
+ * masking. In these cases, we need to match scale and "invert" X and Y
+ * position of the mask.
+ */
+var svgMaskRequiresTransform = $.browser.mozilla;  //  && $.browser.version < "35";
+/* NOTE that test this will fail when we upgrade to jQuery 1.9+! In that case, consider:
+    * the jQuery Migrate plugin or this snippet:
+      https://github.com/jquery/jquery-migrate/blob/e6bda6a84c294eb1319fceb48c09f51042c80892/src/core.js#L50
+    * Modernizr (though it doesn't seem to detect this particular quirk)
+    * sniffing the JS 'navigator' object for more information  
+ */
+
 /* Manage re-usable SVG elements in the viewport. These are typically defined
    in a persistent SVG defs element, where they can be modified and re-used
    (including multiple instances) for masking, clipping, and optional printed
@@ -918,6 +927,21 @@ function enableViewportMask() {
         return null;
     }
     var mask = d3.select('#viewport-mask');
+
+    if (svgMaskRequiresTransform) {
+        // set explicit size and scale for the viewport mask itself
+        d3.select("#viewport-mask")
+            .attr('maskUnits', 'userSpaceOnUse')
+            .attr('x', 0)
+            .attr('y', 0)
+            .attr('width', viewbox.width * viewportMagnification)
+            .attr('height', viewbox.height * viewportMagnification);
+        // scale the mask !? seems to be required for FF/Mac, at least
+        var maskGroupTransform = 'translate('+ -(viewbox.x * viewportMagnification) +','+ -(viewbox.y * viewportMagnification) +') scale('+ viewportMagnification +')';
+        //console.log(maskGroupTransform);
+        d3.select("#mask-shapes")
+            .attr('transform', maskGroupTransform);
+    }
 
     // match the mask's viewport-bounds to the current viewport size
     d3.select("#viewport-bounds")
