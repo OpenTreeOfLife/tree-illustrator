@@ -1115,6 +1115,7 @@ function hidePrintingRulers() {
 }
 
 function getPrintableSVG( options ) {
+    // TODO: Add an option to generate standalone SVG, vs. inline for HTML5
     if (!options) options = {};
 
     // shift SVG from editing to printing
@@ -1174,6 +1175,10 @@ function getPrintableSVG( options ) {
      * Capture the resulting SVG (ie, The Moment of Truth)... 
      */
     var combinedSVG = $('#viz-outer-frame div.vega').html();
+
+    // Replace Safari's weird namespace prefixes (NS1:, NS2:, etc) with the real deal
+    combinedSVG = combinedSVG.replace(/NS\d+:/gi, 'xlink:');
+
     /*
      * ... then unwind all these changes to restore our normal working view. 
      */
@@ -1205,7 +1210,14 @@ function printIllustration() {
         return;
     }
     var showDiagnostics = $('#toggle-printing-diagnostics').is(':checked');
-    w.document.write(getPrintableSVG( {INCLUDE_DIAGNOSTICS: showDiagnostics} ));
+
+    // generate a simple HTML5 page with inline SVG
+    // TODO: generate standalone SVG document (to save or share) instead?
+    var doc = w.document;
+    doc.open("text/html", "replace");
+    doc.write('<!DOCTYPE html><HTML><HEAD><TITLE>Tree Illustrator - SVG for printing</TITLE></HEAD><BODY></BODY></HTML>');
+    doc.close();
+    doc.body.innerHTML = getPrintableSVG( {INCLUDE_DIAGNOSTICS: showDiagnostics} );
     w.print();
     w.close();
 }
