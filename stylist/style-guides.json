@@ -1,0 +1,76 @@
+[
+    {
+        "name": "Default styles",
+        "description": "Simple, generally useful styles. These are assigned to new illustrations by default.",
+        "source": {"type":"BUILT_IN", "value":"DEFAULT"},
+        "version": {"type":"SEMANTIC", "value":"0.1" },
+        "constraints": {
+            "printSizes": [
+                {"name":"Letter size (portrait)", "width":8.5, "height":11, "units":"INCHES"},
+                {"name":"Letter size (landscape)", "width":11, "height":8.5, "units":"INCHES"},
+                {"name":"Quarter-page (portrait)", "width":4.25, "height":5.5, "units":"INCHES"},
+                {"name":"Quarter-page (landscape)", "width":5.5, "height":4.25, "units":"INCHES"},
+                {"name":"Custom size"}
+            ],
+            "fontFamilies": [
+                {"name":"Times New Roman", "value":"Times New Roman, Times, serif"},
+                {"name":"Helvetica","value":"Helvetica, Arial, sans"},
+                {"name":"Arial","value":"Arial, sans"},
+                {"name":"Something else"}
+            ],
+            "colorDepths": [
+                {"name":"Full color","value":"FULL_COLOR"},
+                {"name":"Grayscale","value":"GRAYSCALE"},
+                {"name":"Black and white (no gray)","value":"BLACK_AND_WHITE"}
+            ]
+        }
+    }
+    ,
+    {
+        "name": "Playing with the zoom",
+        "description": "Some fairly extreme options, chosen to demonstrate the Tree Illustrator's flexibility.",
+        "source": {"type":"BUILT_IN", "value":"DEFAULT"},
+        "version": {"type":"SEMANTIC", "value":"0.0a" },
+        "constraints": {
+            "printSizes": [
+                {"name":"Quarter-page (landscape)", "width":5.5, "height":4.25, "units":"INCHES"},
+                {"name":"Bookmark", "width":1.5, "height":6, "units":"INCHES"},
+                {"name":"Postage stamp", "width":1.5, "height":1.75, "units":"INCHES"},
+                {"name":"Conference poster", "width":48, "height":36, "units":"INCHES"},
+                {"name":"Custom size"}
+            ],
+            "fontFamilies": [
+                {"name":"Big and bold", "value":"Impact, Arial Black, sans serif"},
+                {"name":"Helvetica","value":"Helvetica, Arial, sans"},
+                {"name":"Typewriter","value":"Courier New, Courier, monospace"},
+                {"name":"Times New Roman", "value":"Times New Roman, Times, serif"},
+                {"name":"Something else"}
+            ],
+            "colorDepths": [
+                {"name":"Full color","value":"FULL_COLOR"},
+                {"name":"Grayscale","value":"GRAYSCALE"},
+                {"name":"Black and white (no gray)","value":"BLACK_AND_WHITE"}
+            ]
+        }
+    }
+    ,
+    {
+        "name":"Systematic Biology",
+        "description": "Sizes and constraints based on the <a href='#' target='_blank'>online submission guidelines</a> for this publication."
+    }
+    ,
+    {
+        "name":"Nature (US publication)",
+        "description": "Sizes and constraints based on the <a href='#' target='_blank'>online submission guidelines</a> for this publication."
+    }
+    ,
+    {
+        "name":"Modern (from SysBio)",
+        "description": "Simpler, more contemporary styles based on the Systematic Biology style guide."
+    }
+    ,
+    {
+        "name":"Jim's favorite styles",
+        "description": "Some things that work for me, including useful poster sizes."
+    }
+]
