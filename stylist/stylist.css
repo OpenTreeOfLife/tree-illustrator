@@ -245,6 +245,16 @@ g.outer-axis text {
     clear: left;
     border-top: 1px solid #eee;
     padding: 6px 0;
+    overflow: hidden;
+}
+#styleguide-chooser .match:hover {
+    background-color: #ffd;
+}
+#styleguide-chooser .match.assigned:hover {
+    background-color: #ddd;
+}
+#styleguide-chooser .match.assigned.previous-version:hover {
+    background-color: #dda;
 }
 #styleguide-chooser img.thumbnail {
     width: 60px;
@@ -252,7 +262,13 @@ g.outer-axis text {
     background-color: #eee;
     float: left;
     border: none;
-    margin: 0 8px 8px 0;
+    margin: 0 8px 8px 6px;
+}
+#styleguide-chooser .match .btn {
+    clear: left;
+    float: left;
+    width: 46px;
+    margin: -10px 0px 6px 6px;
 }
 #styleguide-chooser .name {
     font-weight: bold;

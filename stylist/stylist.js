@@ -240,6 +240,7 @@ function updateViewportViewbox($viewport) {
  * most visual properties, and constraints (soft or hard) that we can test
  * against.
  */
+var availableStyleGuides = null;
 function showStyleGuidePicker() {
     // for now, load from a static JSON file 
     var lookupURL = './style-guides.json';
@@ -266,6 +267,7 @@ function showStyleGuidePicker() {
             if (resultsJSON.length === 0) {
                 alert('No style guides found!');
             } else {
+                availableStyleGuides = resultsJSON;
                 var $chooser = $('#styleguide-chooser');
                 $chooser.find('.found-matches').empty();
                 var $currentNameDisplay = $chooser.find('#current-styleguide-name');
@@ -287,8 +289,31 @@ function showStyleGuidePicker() {
                     }
                 }
                 $chooser.find('#current-styleguide-source').html( ill.styleGuideSourceHTML() );
-                $.each(resultsJSON, function(i, match) {
-                    var $matchInfo = $('<div class="match"><img class="thumbnail"></img><div class="name"></div><div class="source"></div><div class="description"></div></div>');
+                $.each(availableStyleGuides, function(i, match) {
+                    // is this the illlustration's current style guide? compare name, source, version
+                    var isAssignedStyleGuide = false;
+                    var isPreviousVersionOfAssignedStyleGuide = false;
+                    if ((match.name === ill.styleGuide.name()) && (match.source.value === ill.styleGuide.source.value())) {
+                        isAssignedStyleGuide = true;
+                        if (match.version.value !== ill.styleGuide.version.value()) {
+                            isPreviousVersionOfAssignedStyleGuide = true;
+                        }
+                    }
+                    var $matchInfo = $('<div class="match"><img class="thumbnail"></img><div class="name"></div><div>Source: <span class="source"></span></div><div class="description"></div></div>');
+                    var $thumb = $matchInfo.find('.thumbnail');
+                    if (isAssignedStyleGuide) {
+                        $matchInfo.addClass('assigned');
+                        if (isPreviousVersionOfAssignedStyleGuide) {
+                            $matchInfo.addClass('previous-version');
+                            $thumb.after('<a class="btn btn-small" href="#" onclick="applyChosenStyleGuide(this); return false;">Update</a>');
+                        } else {
+                            $thumb.after('<a class="btn btn-small disabled" href="#" onclick="alert(\'This style guide is already applied to the current illustration.\'); return false;">Assigned</a>');
+                        }
+                    } else if (match.constraints) {
+                        $thumb.after('<a class="btn btn-small" href="#" onclick="applyChosenStyleGuide(this); return false;">Apply</a>');
+                    } else {
+                        $thumb.after('<a class="btn btn-small disabled" href="#" onclick="alert(\'Sorry, this is just an empty example.\'); return false;">Example</a>');
+                    }
                     $matchInfo.find('.thumbnail').attr('src', match.thumbnailSrc || './broken.png');
                     var $nameDisplay = $matchInfo.find('.name');
                     $nameDisplay.html(match.name || '<em>No name found</em>');
@@ -325,6 +350,9 @@ function showStyleGuidePicker() {
                         $sourceDisplay.html('<em>No source found</em>');
                     }
                     $matchInfo.find('.description').html( match.description || '<em>No description found</em>');
+                    // add a unique key to determine the chosen style guide later
+                    var sgKey = match.name +'|'+ (match.version ? match.version.value : "") +'|'+ (match.source ? match.source.value : "");
+                    $matchInfo.append('<input type="hidden" class="match-key" value="'+ sgKey +'" />');
                     $chooser.find('.found-matches').append($matchInfo);
                 });
                 $chooser.off('shown').on('shown', function() {
@@ -1146,4 +1174,30 @@ function getPrintAreaLandmarks() {
 function jiggle( range ) {
     // Return a number +- zero, within this range
     return Math.round(Math.random() * range * 2) - range; 
+}
+
+function applyChosenStyleGuide(clicked) {
+    var $clicked = $(clicked);
+    var $sgBlock = $clicked.closest('.match');
+    // TODO: replace this dumb matching with KO binding to actual data
+    var matchKey = $sgBlock.find('.match-key').val();
+    console.log("> Looking for matchKey: "+ matchKey);
+    var chosenStyleGuide = null;
+    $.each(availableStyleGuides, function(i, sg) {
+        // is this the illlustration's current style guide? compare name, source, version
+        var testKey  = sg.name +'|'+ sg.version.value +'|'+ sg.source.value;
+        console.log(">> comparing testKey: "+ testKey);
+        if (testKey === matchKey) {
+            chosenStyleGuide = sg;
+            return false;
+        }
+    });
+    if (!chosenStyleGuide) {
+        alert('Unable to match the chosen style guide!');
+        return;
+    }
+    // TODO: apply / merge this style guide into the current illustration
+    ill.applyStyleGuide(chosenStyleGuide);
+    // close the modal chooser
+    $sgBlock.closest('.modal-styleguide-chooser').find('.modal-header .close').click();
 }

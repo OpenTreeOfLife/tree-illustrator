@@ -617,6 +617,14 @@ var TreeIllustrator = function(window, document, $, ko) {
     Illustration.prototype = {
         constructor: Illustration,
 
+        applyStyleGuide: function(data) {
+            var self = this;
+            ko.mapping.fromJS(data, Illustration.mappingOptions, self.styleGuide);
+            self.updatePrintSizeChooser();
+            self.updateFontFamilyChooser();
+            refreshViz();
+        },
+
         addIllustratedTree: function() {
             var self = this;
             var tree = new IllustratedTree(self);
