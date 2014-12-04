@@ -30,18 +30,23 @@ var TreeIllustrator = function(window, document, $, ko) {
         RECTANGLE: 'RECTANGLE',
         CIRCLE: 'CIRCLE',
         TRIANGLE: 'TRIANGLE'
-    }
+    };
     var alignments = {
         TOP: 'TOP',
         RIGHT: 'RIGHT',
         BOTTOM: 'BOTTOM',
         LEFT: 'LEFT',
         CENTER: 'CENTER'
-    }
+    };
     var dataSourceTypes = {
         BUILT_IN: 'BUILT_IN',
         URL: 'URL'
-    }
+    };
+    var versionTypes = {
+        CHECKSUM: 'CHECKSUM',   // e.g., a git SHA
+        TIMESTAMP: 'TIMESTAMP', // e.g., a modification date
+        SEMANTIC: 'SEMANTIC'    // a conventional version number, e.g., "3.2.0a"
+    };
 
     /* Return the data model for a new illustration (our JSON representation) */
     var getNewIllustrationModel = function(options) {
@@ -59,9 +64,9 @@ var TreeIllustrator = function(window, document, $, ko) {
                 // TODO: Explicitly list all options somewhere else? 
                 // TODO: Filter styles if they fall out of conformance?
                 'name': "Default styles",
-                'description': "Style guides are used to suggest and constrain the overall look of your illustration for a particular publication or context. You can try different styles using the <strong>Switch styles...</strong> button.", // captured when assigned
+                'description': "Style guides are used to suggest and constrain the overall look of your illustration for a particular publication or context. You can try different styles using the <strong>Load styles...</strong> button.", // captured when assigned
                 'source': {'type': dataSourceTypes.BUILT_IN, 'value': "DEFAULT"},
-                'version': {'type': "version number", 'value': "0.1"},  // git SHA, mod date, version number
+                'version': {'type': versionTypes.SEMANTIC, 'value': "0.1"},
                 'constraints': {
                     // list constrained labels and values, if any (items not listed are unconstrained)
                     'printSizes': [
@@ -1137,6 +1142,7 @@ var TreeIllustrator = function(window, document, $, ko) {
         treeLayouts: treeLayouts,
         alignments: alignments,
         dataSourceTypes: dataSourceTypes,
+        versionTypes: versionTypes,
 
         // expose view-model classes
         Illustration: Illustration,

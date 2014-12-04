@@ -147,10 +147,10 @@
             <div class="control-group" style="margin-bottom: 0px;">
                 <label class="control-label">
                     <button class="btn btn-small pull-right"
-                            onclick="alert('Coming soon'); return false;"
+                            onclick="showStyleGuidePicker(); return false;"
                     >Load styles...</button>
                     <button class="btn btn-small pull-right"
-                            style="margin-top: 8px;"
+                            style="clear: right; margin-top: 8px;"
                             onclick="alert('Coming soon'); return false;"
                     >Save styles...</button>
                 </label>
@@ -825,5 +825,31 @@
   <script type="text/javascript">
     // Add truly page-specific logic here
   </script>
+
+    <!-- hidden template for style-guide chooser -->
+    <div class="modal hide fade modal-styleguide-chooser" id="styleguide-chooser" style="display: none;">
+        <div class="modal-header">
+          <a data-dismiss="modal" class="close">x</a>
+          <h3 id='dialog-heading'>
+             Choose a style guide
+          </h3>
+        </div>
+        <div class="modal-body" style="overflow-y: inherit;">
+            <div class="before-matches">
+                <div class="current-styleguide-values">
+                    <label style="margin-bottom: 0;">Current style guide:</label>
+                    <span id="current-styleguide-name" style="margin-bottom: 0.25em;">&nbsp;</span>
+                    <br/>
+                    <label>Source:</label>
+                    <span id="current-styleguide-source">&nbsp;</span>
+                </div>
+            </div>
+            <div class="found-matches" style="overflow-y: auto;"></div>
+        </div>
+        <div class="modal-footer">
+          <a data-dismiss="modal" class="btn" >Close</a>
+        </div>
+    </div>
+
 </html>
 

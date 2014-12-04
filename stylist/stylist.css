@@ -225,6 +225,42 @@ g.outer-axis text {
     display: inline-block;
 }
 
+/* styles for modal popups */
+.current-styleguide-values {
+    margin-top: -0.4em;    
+    margin-bottom: 0.4em;    
+}
+.current-styleguide-values label {
+    display: inline-block;
+    width: 10em;
+    text-align: right;
+}
+.current-styleguide-values span {
+    font-weight: bold;
+}
+.current-styleguide-values span a {
+    font-weight: normal;
+}
+#styleguide-chooser .match {
+    clear: left;
+    border-top: 1px solid #eee;
+    padding: 6px 0;
+}
+#styleguide-chooser img.thumbnail {
+    width: 60px;
+    height: 60px;
+    background-color: #eee;
+    float: left;
+    border: none;
+    margin: 0 8px 8px 0;
+}
+#styleguide-chooser .name {
+    font-weight: bold;
+}
+#styleguide-chooser .version {
+    font-weight: normal;
+    color: #999;
+}
 /* diagnostic styles for viewport, masks, etc.
 #viewport-bounds {
     stroke: red !important;

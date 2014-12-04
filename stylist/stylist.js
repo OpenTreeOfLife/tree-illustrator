@@ -240,231 +240,104 @@ function updateViewportViewbox($viewport) {
  * most visual properties, and constraints (soft or hard) that we can test
  * against.
  */
-var availableStyles = [
-    {
-        name: "Basic", 
-        style:  { 
-          "width": 800,
-          "height": 900,
-          "padding": {
-            "top": 0,
-            "left": 0,
-            "bottom": 0,
-            "right": 0
-          },
-          //, "viewport": [350, 350],
-          //"data": [{"name": "table"}],
-          "marks": [
-            {
-              "type": "group",
-              "name": "illustration-elements",  // becomes marker class .illustration-elements
-              "properties": {
-                "enter": {
-                  "x": {"value": 0},
-                  "y": {"value": 0}, // {"scale": "g", "field": "key"},
-                  "height": {"value": 11 },  // {"group": "height"}, // {"scale": "g", "band": true},
-                  "width": {"value": 8.5 }     // {"group": "width"},
-                },
-                "update": {
-                  //"transform": {"value":"rotate(-25)"}  // ???
-                }
-              },
+function showStyleGuidePicker() {
+    // for now, load from a static JSON file 
+    var lookupURL = './style-guides.json';
 
-          "scales": [
-          ],
-
-          "axes": [
-/* HIDING the internal rulers
-            {
-              "type": "x", 
-              "scale": "inches-across",
-              //"grid": true,
-              "orient": "top",
-              "title": "Inches",
-              //"ticks": 10,  // MISSING? what's up with that?
-              "properties": {
-                "ticks": {
-                  //"stroke": {"value": "steelblue"}
-                },
-                "majorTicks": {
-                  //"strokeWidth": {"value": 2}
-                },
-                "labels": {
-                  //"fill": {"value": "steelblue"},
-                  //"angle": {"value": 50},
-                  //"fontSize": {"value": 14},
-                  //"align": {"value": "left"},
-                  //"baseline": {"value": "middle"}
-                  //"dx": {"value": 3}
-                },
-                "title": {
-                  //"fill": {"value": "steelblue"},
-                  "fontSize": {"value": 10}
-                },
-                "axis": {
-                  "stroke": {"value": "#333"},
-                  "strokeWidth": {"value": 0.5}
-                }
-              }
+    //showModalScreen("Gathering style guides...", {SHOW_BUSY_BAR:true});
+    $.ajax({
+        global: false,  // suppress web2py's aggressive error handling?
+        type: 'GET',
+        dataType: 'json',
+        // crossdomain: true,
+        // contentType: "application/json; charset=utf-8",
+        url: lookupURL,
+        complete: function( jqXHR, textStatus ) {
+            //hideModalScreen();
+            if ((textStatus !== 'success') && (textStatus !== 'parsererror')) {
+                var errMsg = 'Sorry, there was an error looking up the available style guides. (See JS console for details.)';
+                alert(errMsg); 
+                console.warn(errMsg +'\n\ntextStatus='+ textStatus +'\n\n'+ jqXHR.responseText);
+                //showErrorMessage(errMsg);
+                return;
             }
-            ,
-            {
-                "type": "y", 
-                "scale": "height-cm",
-                "grid": false,
-                "orient": "left",
-                "title": "cm"
+            // convert raw response to JSON
+            var resultsJSON = $.parseJSON(jqXHR.responseText);
+            if (resultsJSON.length === 0) {
+                alert('No style guides found!');
+            } else {
+                var $chooser = $('#styleguide-chooser');
+                $chooser.find('.found-matches').empty();
+                var $currentNameDisplay = $chooser.find('#current-styleguide-name');
+                $currentNameDisplay.html( ill.styleGuide.name() );
+                if (ill.styleGuide.version) {
+                    // pivot based on version type
+                    switch(ill.styleGuide.version.type()) {
+                        case TreeIllustrator.versionTypes.CHECKSUM:
+                            $currentNameDisplay.append('<em class="version">&nbsp; &lt;'+ ill.styleGuide.version.value() +'&gt;</em>');
+                            break;
+                        case TreeIllustrator.versionTypes.TIMESTAMP:
+                            $currentNameDisplay.append('<em class="version">&nbsp;  as of '+ ill.styleGuide.version.value() +'</em>');
+                            break;
+                        case TreeIllustrator.versionTypes.SEMANTIC:
+                            $currentNameDisplay.append('<em class="version">&nbsp; v'+ ill.styleGuide.version.value() +'</em>');
+                            break;
+                        default:
+                            $currentNameDisplay.append('<em class="version">Unknown version type: '+ ill.styleGuide.version.value() +'</em>');
+                    }
+                }
+                $chooser.find('#current-styleguide-source').html( ill.styleGuideSourceHTML() );
+                $.each(resultsJSON, function(i, match) {
+                    var $matchInfo = $('<div class="match"><img class="thumbnail"></img><div class="name"></div><div class="source"></div><div class="description"></div></div>');
+                    $matchInfo.find('.thumbnail').attr('src', match.thumbnailSrc || './broken.png');
+                    var $nameDisplay = $matchInfo.find('.name');
+                    $nameDisplay.html(match.name || '<em>No name found</em>');
+                    if (match.version) {
+                        // pivot based on version type
+                        switch(match.version.type) {
+                            case TreeIllustrator.versionTypes.CHECKSUM:
+                                $nameDisplay.append('<em class="version">&nbsp; &lt;'+ match.version.value +'&gt;</em>');
+                                break;
+                            case TreeIllustrator.versionTypes.TIMESTAMP:
+                                $nameDisplay.append('<em class="version">&nbsp;  as of '+ match.version.value +'</em>');
+                                break;
+                            case TreeIllustrator.versionTypes.SEMANTIC:
+                                $nameDisplay.append('<em class="version">&nbsp; v'+ match.version.value +'</em>');
+                                break;
+                            default:
+                                $nameDisplay.append('<em class="version">Unknown version type: '+ match.source.type +'</em>');
+                        }
+                    }
+                    var $sourceDisplay = $matchInfo.find('.source');
+                    if (match.source) {
+                        // pivot based on source type
+                        switch(match.source.type) {
+                            case TreeIllustrator.dataSourceTypes.BUILT_IN:
+                                $sourceDisplay.html('<strong>Built-in</em>');
+                                break;
+                            case TreeIllustrator.dataSourceTypes.URL:
+                                $sourceDisplay.html('<a target="_blank" href="'+ match.source.value +'">'+ match.source.value +'</a>');
+                                break;
+                            default:
+                                $sourceDisplay.html('<em>Unknown source type: '+ match.source.type +'</em>');
+                        }
+                    } else {
+                        $sourceDisplay.html('<em>No source found</em>');
+                    }
+                    $matchInfo.find('.description').html( match.description || '<em>No description found</em>');
+                    $chooser.find('.found-matches').append($matchInfo);
+                });
+                $chooser.off('shown').on('shown', function() {
+                    // size scrolling list to fit in the current DOI-lookup popup window
+                    var $chooser = $('#styleguide-chooser');
+                    var resultsListHeight = $chooser.find('.modal-body').height() - $chooser.find('.before-matches').height();
+                    $chooser.find('.found-matches').outerHeight(resultsListHeight);
+                });
+                $chooser.modal('show');
             }
-*/
-         ],
-
-
-
-              //"from": {"data": "series"},
-              "marks": [
-
-        { 
-            "type": "group",
-            "name": "default-tree",  // becomes marker class .default-tree
-            "properties": {
-                "enter": {
-                    "x": {"value": 0},
-                    "y": {"value": 0}
-                },
-                "update": {
-                    //"transform": {"value":"scale(800,300)"}
-                    //"transform": {"value":"rotate(25) scale(20,20)"}
-                }
-            },
-            "marks": [
-
-            { /* N.B. This expects pre-existing links with 'source' and 'target' properties! The 'link' transform is 
-                 just to provide a rendered path of the desired type. */
-              "type": "path",
-              //"from": {"data": "phyloTree", "property": "links", "transform": [{"type": "link", "shape": "line"}]},
-              "from": {
-                "data": "phyloTree", 
-                "transform": [
-                  {"type":"pluck", "field":"phyloEdges" }
-                // how do apply the 'time' scale here? TRY brute-forcing x and y properties
-                  //{"type":"formula", "field":"source.x", "expr":"d.source.y"},
-                  //{"type":"formula", "field":"target.x", "expr":"d.target.y"},
-                  // {"type":"link", "shape":"line" }  // line | curve | diagonal | diagonalX | diagonalY
-                  // {"type":"phylogramLink", "shape":"rightAngleDiagonal" }  // rightAngleDiagonal | radialRightAngleDiagonal
-                ]
-              },
-              "properties": {
-                "update": {
-                  "path": {"field": "path"}, // , "transform":{"scale":"x"}},
-                  "stroke": {"value": "#888"},
-                  "strokeWidth": {"value": 1.0}
-                },
-                "hover": {
-                 // "stroke": {"value": "red"}
-                }
-              }
-            },
-
-    {   /* group node/label pairs, for easier event binding later */
-        "type":"group",
-        "marks":[
-            {
-              "type": "symbol",
-              //"from": {"data": "phyloTree", "transform": [{"type":"array", "fields":["phyloNodes"] }] },
-              //"from": {"data": "phyloTree", "transform": [{"type":"copy", "from":"phyloTree", "fields":["x", "y"] }] },
-              "from": {"data": "phyloTree", "transform": [{"type":"pluck", "field":"phyloNodes" }] },
-              "properties": {
-                "enter": {
-                  "x": {"XXscale": "x", "field": "x", "mult":1},
-                  "y": {"XXscale": "y", "field": "y", "mult":1}
-                },
-                "update": {
-                  "shape": {"value":"circle"},
-                  "size": {"value": 8},
-                  "fill": {"value": "black"}
-                },
-                "hover": {
-                 // "fill": {"value": "red"}
-                }
-              }
-            }
-            ,
-            {
-              "type": "text",
-              "from": {"data": "phyloTree", "transform": [{"type":"pluck", "field":"phyloNodes" }] },
-              "properties": {
-                "enter": {
-                  /* Properties for cartesian / rectangular layouts
-                  "x": {"scale": "time", "field": "x", "mult":1},
-                  "y": {"scale": "y", "field": "y", "mult":1.0}
-                  "dx": {"value": -6},
-                  "dy": {"value": -6},
-                  */
-
-                  /* Properties for radial/polar layouts.
-                   * Radius and theta (angle from origin, in radians) are the
-                   * alternatives to X and Y for polar projection, and assume
-                   * that the x and y properties represent the origin or center
-                   * of the layout, ie, the root node. See discussion at
-                   *  https://github.com/trifacta/vega/pull/187
-                   */
-                  "x": {"value": 0},  // this is origin for radial/polar projection
-                  "y": {"value": 0},
-                  "radius": {"field": "radius"},  // px from origin
-                  "theta": {"field": "theta"},  // in radians (what direction from origin)
-                  "align": {"field": 'align'},  // NOTE that some labels are flipped 180deg for legibility
-                  "angle": {"field": "angle"},  // in degrees
-
-                  "fontSize": {"value": 5}
-                        // TODO: adjustable font size (convert pt to px)
-                },
-                "update": {
-                  "text": {"field": "ottTaxonName"},
-                  //"text": {"field":"y"},
-                  "fill": {"value":"black"}
-                },
-                "hover": {
-                  "fill": {"value": "red"}
-                }
-              }
-            } /* end of label marks */
-           ]
-          } /* end of grouped node+label */ 
-           ,
-
-                ] /* end of inner group marks */
-            } /* end of inner group */
-
-              ] /* end of outer group marks */
-            } /* end of outer group */
-
-
-          ] /* end of Basic marks */
-        } /* end of Basic style */
-    }, /* end of Basic */
-
-    // more examples, just suggestive names for now
-    {
-        name: "Phylogram test", 
-        style:  { }
-    },
-    {
-        name: "Systematic Biology", 
-        style:  { }
-    },
-    {
-        name: "Nature (monochrome)", 
-        style:  { }
-    },
-    {
-        name: "Modern (from SysBio)", 
-        style:  { }
-    },
-    {
-        name: "Jim\'s favorites", 
-        style:  { }
-    }
-];
+        }
+    });
+}
 
 /* The current Vega spec is generated using the chosen style (above) and 
  * the illustration source and decisions made in the web UI. When the
