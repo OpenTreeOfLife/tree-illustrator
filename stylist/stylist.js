@@ -359,8 +359,11 @@ function showStyleGuidePicker() {
                     // size scrolling list to fit in the current DOI-lookup popup window
                     var $chooser = $('#styleguide-chooser');
                     var resultsListHeight = $chooser.find('.modal-body').height() - $chooser.find('.before-matches').height();
-                    $chooser.find('.found-matches').outerHeight(resultsListHeight);
+                    $chooser.find('.found-matches')
+                        .outerHeight(resultsListHeight)
+                        .css('visibility','visible');
                 });
+                $chooser.find('.found-matches').css('visibility','hidden');
                 $chooser.modal('show');
             }
         }

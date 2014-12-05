@@ -22,7 +22,15 @@
                 {"name":"Full color","value":"FULL_COLOR"},
                 {"name":"Grayscale","value":"GRAYSCALE"},
                 {"name":"Black and white (no gray)","value":"BLACK_AND_WHITE"}
-            ]
+            ],
+            "minimumTextSize": 12,  
+            "minimumLineThickness": 2,  
+            "backgroundColor": "#fff",
+            "border": "none",
+            "edgeColor": "#777",
+            "edgeThickness": 0.8,
+            "nodeColor": "#339",
+            "nodeShape": "circle"
         }
     }
     ,
@@ -50,7 +58,15 @@
                 {"name":"Full color","value":"FULL_COLOR"},
                 {"name":"Grayscale","value":"GRAYSCALE"},
                 {"name":"Black and white (no gray)","value":"BLACK_AND_WHITE"}
-            ]
+            ],
+            "minimumTextSize": 24,  
+            "minimumLineThickness": 9.0,  
+            "backgroundColor": "#fdd",
+            "border": "6px solid pink",
+            "edgeColor": "#933",
+            "edgeThickness": 4.5,
+            "nodeColor": "#88f",
+            "nodeShape": "diamond"
         }
     }
     ,

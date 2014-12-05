@@ -169,6 +169,29 @@
                     </div>
                 </div>
             </div>
+            <!-- list all hard constraints as static values -->
+            <div class="control-group">
+                <label class="control-label" for="#style-mintextsize-field">Minimum text size</label> 
+                <div class="controls">
+                    <div class="static-form-value">
+                        <span data-bind="text: styleGuide.constraints.minimumTextSize">?</span>
+                        <span data-bind="html: minTextSizeHelper">
+                            pt = ?
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="#style-minlinethickness-field">Minimum line thickness</label> 
+                <div class="controls">
+                    <div class="static-form-value">
+                        <span data-bind="text: styleGuide.constraints.minimumLineThickness">?</span>
+                        <span data-bind="html: minLineThicknessHelper">
+                            pt = ?
+                        </span>
+                    </div>
+                </div>
+            </div>
 
             <div class="control-group">
                 <label class="control-label" for="#style-docsize-chooser">Document size</label> 
@@ -232,36 +255,13 @@
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label" for="#style-mintextsize-field">Minimum text size</label> 
-                <div class="controls">
-                    <input id="style-mintextsize-field" type="text" value="?"
-                      style="width: 3.0em;"
-                      data-bind="value: style.minimumTextSize,
-                                 valueUpdate: ['afterkeydown','input']" />&nbsp;
-                    <span data-bind="html: minTextSizeHelper">
-                        pt = ?
-                    </span>
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label" for="#style-minlinethickness-field">Minimum line thickness</label> 
-                <div class="controls">
-                    <input id="style-minlinethickness-field" type="text" value="?"
-                      style="width: 3.0em;"
-                      data-bind="value: style.minimumLineThickness,
-                                 valueUpdate: ['afterkeydown','input']" />&nbsp;
-                    <span data-bind="html: minLineThicknessHelper">
-                        pt = ?
-                    </span>
-                </div>
-            </div>
-            <div class="control-group">
                 <label class="control-label" for="#style-colordepth-chooser">Color depth</label> 
                 <div class="controls">
                     <select id="style-colordepth-chooser"
                             data-bind="options: styleGuide.constraints.colorDepths,
                                        optionsText: 'name',
-                                       optionsValue: 'name'">
+                                       optionsValue: 'name',
+                                       event: {change: refreshViz}">
                     </select>
                 </div>
             </div>

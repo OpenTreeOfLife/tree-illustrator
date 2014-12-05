@@ -128,7 +128,18 @@ var TreeIllustrator = function(window, document, $, ko) {
                             'name': "Black and white (no gray)",
                             'value': colorDepths.BLACK_AND_WHITE
                         }
-                    ]
+                    ],
+                    'minimumTextSize': 12,  
+                        // specified in pt, but echoed using physical units above
+                    'minimumLineThickness': 2,  
+                        // specified in pt, but echoed using physical units above
+                    'backgroundColor': "#fdd",
+                    'border': "none",
+                    // add default line color, thickness, node shape/size, etc.
+                    'edgeColor': "#777",
+                    'edgeThickness': 0.8,
+                    'nodeColor': "#339",
+                    'nodeShape': 'circle'  // TODO: should be an enumerated  value
                 }
             },
             'style': {
@@ -139,10 +150,6 @@ var TreeIllustrator = function(window, document, $, ko) {
                     'height': 11,   // in physical units
                 },
                 'fontFamily': "Times New Roman, Times, serif",
-                'minimumTextSize': 12,  
-                    // specified in pt, but echoed using physical units above
-                'minimumLineThickness': 2,  
-                    // specified in pt, but echoed using physical units above
                 'backgroundColor': "#fdd",
                 'border': "none",
                 // add default line color, thickness, node shape/size, etc.
@@ -208,9 +215,11 @@ var TreeIllustrator = function(window, document, $, ko) {
 
             'style': {
                 // incl. only deviations from the style guide above?
+/*
                 'edgeThickness': 1.0,  
                 'edgeColor': '#999',
-                'labeTextHeight': illustration.style.minimumTextSize()
+                'labelTextHeight': illustration.styleGuide.constraints.minimumTextSize()
+*/
             },
         };
         /* TODO: Apply optional modifications?
@@ -450,6 +459,9 @@ var TreeIllustrator = function(window, document, $, ko) {
             var matchingFontName = 'Something else';
             if (matchingFont) {
                 matchingFontName = matchingFont.name();
+                $('#style-fontfamily-options').hide();
+            } else {
+                $('#style-fontfamily-options').show();
             }
             $('#style-fontfamily-chooser').val(matchingFontName);
         };
@@ -468,7 +480,7 @@ var TreeIllustrator = function(window, document, $, ko) {
         self.minTextSizeHelper = ko.computed(function() {
             // explain this size in chosen units
             var html;
-            var chosenSize = self.style.minimumTextSize();
+            var chosenSize = self.styleGuide.constraints.minimumTextSize();
             if (isNaN(chosenSize) || $.trim(chosenSize) === '') {
                 // rejects any non-numeric chars, allows whitespace and decimal
                 html = '<em>This value must be a number</em>';
@@ -489,7 +501,7 @@ var TreeIllustrator = function(window, document, $, ko) {
         self.minLineThicknessHelper = ko.computed(function() {
             // explain this size in chosen units
             var html;
-            var chosenSize = self.style.minimumLineThickness();
+            var chosenSize = self.styleGuide.constraints.minimumLineThickness();
             if (isNaN(chosenSize) || $.trim(chosenSize) === '') {
                 // rejects any non-numeric chars, allows whitespace and decimal
                 html = '<em>This value must be a number</em>';
@@ -620,6 +632,25 @@ var TreeIllustrator = function(window, document, $, ko) {
         applyStyleGuide: function(data) {
             var self = this;
             ko.mapping.fromJS(data, Illustration.mappingOptions, self.styleGuide);
+
+            /* Some properties are *forced* (rather then suggested) to comply
+             * with the active style guide. 
+             *
+             * TODO: Reconsider this! Each field should probably be defined
+             * either as a constraint OR a per-illustration * style assertion.
+             */
+            var forcedStyles = [
+                'backgroundColor',
+                'border',
+                'edgeColor',
+                'edgeThickness',
+                'nodeColor',
+                'nodeShape'
+            ];
+            $.each(forcedStyles, function(i, propName) {
+                self.style[propName]( self.styleGuide.constraints[propName]() );
+            });
+
             self.updatePrintSizeChooser();
             self.updateFontFamilyChooser();
             refreshViz();
@@ -665,6 +696,55 @@ var TreeIllustrator = function(window, document, $, ko) {
             self.elements.remove(obj);
             refreshViz();
             delete obj;
+        },
+
+        /* For a given element (eg, a tree, node, edge, ornament, or the
+         * illustration itself), get the most "local" matching style value for
+         * the specified property. By default, this should conform to the 
+         * illustration itself, or its active style guide.
+         */
+        getEffectiveStyle: function(obj, propName) {
+            var self = this;
+            if ('style' in obj) {
+                if (propName in obj.style) {
+                    // handle observables or simple values
+                    var rawValue = ko.utils.unwrapObservable(obj.style[propName]);
+                    var constrainedValue = self.getConstrainedStyle(propName, rawValue);
+                    return constrainedValue;
+                }
+            }
+            // property wasn't found locally; check the next "innermost" context 
+            if (obj instanceof IllustratedTree) {
+                return self.getEffectiveStyle(self, propName);
+            } else if (obj instanceof Illustration) {
+                console.error("getEffectiveStyle(): style '"+ propName +"' not found in this tree's style:");
+                console.error(obj.style);
+                return;
+            } else if (obj instanceof SupportingDataset) {
+                console.error("getEffectiveStyle(): SupportingDataset is not yet supported!");
+                return;
+            } else if (obj instanceof Ornament) {
+                console.error("getEffectiveStyle(): Ornament is not yet supported!");
+                return;
+            } else {
+                console.error("getEffectiveStyle(): unexpected context object:");
+                console.error(obj);
+                return;
+            }
+        },
+        getConstrainedStyle: function (propName, rawValue) {
+            var self = this;
+            switch(propName) {
+                case 'edgeThickness':
+                case 'borderThickness':
+                    // assume these are in common units (pt?)
+                    var thinnest = self.styleGuide.constraints.minimumLineThickness();
+                    return Math.max(rawValue, thinnest);
+                // TODO: add (many) more cases here, or constrain elsewhere..
+                default:
+                    // anything goes, return unchanged
+                    return rawValue;
+            }
         },
 
         updateVegaSpec: function(options) {
@@ -767,7 +847,7 @@ var TreeIllustrator = function(window, document, $, ko) {
                     spec.data.push(treeData);
 
                     // set label properties (esp. positioning) based on the chosen layout
-                    var textHeight = self.style.minimumTextSize();   // TODO: adjustable font size (convert pt to px)
+                    var textHeight = self.styleGuide.constraints.minimumTextSize();   // TODO: adjustable font size (convert pt to px)
                     var halfTextHeight = textHeight * 0.4;   // TODO: adjustable font size (convert pt to px)
                     var initialLabelProperties = {
                         "fontSize": {"value": textHeight} 
@@ -835,7 +915,6 @@ var TreeIllustrator = function(window, document, $, ko) {
                             break;
                     }
 
-
                     // place new trees in the center of the printable area (slightly staggered for clarity)
                     var treeMarks = { 
                         "type": "group",
@@ -851,7 +930,8 @@ var TreeIllustrator = function(window, document, $, ko) {
                             }
                         },
                         "marks": [
-                            { /* N.B. This expects pre-existing links with 'source' and 'target' properties! The 'link' transform is 
+                            { /* pathsfor tree edges 
+                                 N.B. This expects pre-existing links with 'source' and 'target' properties! The 'link' transform is 
                                  just to provide a rendered path of the desired type. */
                               "type": "path",
                               //"from": {"data": "phyloTree", "property": "links", "transform": [{"type": "link", "shape": "line"}]},
@@ -869,8 +949,8 @@ var TreeIllustrator = function(window, document, $, ko) {
                               "properties": {
                                 "update": {
                                   "path": {"field": "path"}, // , "transform":{"scale":"x"}},
-                                  "stroke": {"value": el.style.edgeColor()},
-                                  "strokeWidth": {"value": el.style.edgeThickness()}
+                                  "stroke": {"value": self.getEffectiveStyle(el, 'edgeColor')},
+                                  "strokeWidth": {"value": self.getEffectiveStyle(el, 'edgeThickness')}
                                 },
                                 "hover": {
                                  // "stroke": {"value": "red"}
@@ -932,8 +1012,6 @@ var TreeIllustrator = function(window, document, $, ko) {
                 }
             });
 
-
-
         }
     };
 
@@ -966,6 +1044,9 @@ var TreeIllustrator = function(window, document, $, ko) {
 
         // safely refer to this instance
         var self = this;
+
+        // point back to my parent illustration?
+        //self.illustration = illustration;
 
         // Bind to writable computed observables, so users can "think in physical units"
         self.physicalWidth = wrapFieldWithPhysicalUnits(self, 'width');
