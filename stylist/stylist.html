@@ -18,33 +18,48 @@
     <script src="stylist.js"></script>
     <script src="bootstrap.min.js"></script>
     <link rel="stylesheet" type="text/css" href="bootstrap.min.css"/>
-    <link rel="stylesheet" type="text/css" href="bootstrap-responsive.min.css"/>
+    <!--<link rel="stylesheet" type="text/css" href="bootstrap-responsive.min.css"/>-->
     <link rel="stylesheet" type="text/css" href="stylist.css"/>
     <link rel="stylesheet" type="text/css" media="print" href="stylist-print.css">
   </head>
   <body>
    <div class="container-fluid">
    <div class="row-fluid">
-    <div class="span12" style="margin-bottom: 0.5em;">
-        <h2 style="margin: 0 0 4px;">Tree Illustrator (prototype)</h2>
-        <em>
-            Pixels/inch: <strong id="display-ppi-indicator">-</strong>
-            &nbsp;
-            (default in this browser: <strong id="browser-ppi-indicator">-</strong>)
-        </em>
-        <div style="float: right;">
-            <button class="btn btn-small" onclick="zoomViewport('IN', this); return false;">Zoom in</button>
-            <button class="btn btn-small" onclick="zoomViewport('OUT', this); return false;">Zoom out</button>
-            &nbsp; &nbsp; &nbsp;
+
+   <div class="span6"> 
+    <div id="sticky-viewer-frame">
+        <div id="viz-top-control-bar" style="text-align: center; overflow: hidden;">
+            <button class="btn btn-small pull-right" onclick="toggleFixedRulers(this); return false;">Hide rulers</button>
+
+            <button class="btn btn-small pull-left" onclick="zoomViewport('IN', this); return false;">Zoom in</button>
+            <button class="btn btn-small pull-left" onclick="zoomViewport('OUT', this); return false;">Zoom out</button>
+
             <button class="btn btn-small" onclick="zoomViewport(1.0, this); return false;">Actual size</button>
             <button class="btn btn-small" onclick="resizeViewportToShowAll(); return false;">Fit contents</button>
-            &nbsp; &nbsp; &nbsp;
-            <button class="btn btn-small" onclick="toggleFixedRulers(this); return false;">Hide rulers</button>
         </div>
-    </div>
-   </div><!-- .row-fluid -->
-   <div class="row-fluid">
+
+        <div id="viz-outer-frame">
+            <div id="fixed-ruler-units" class="viz-fixed-ruler">&nbsp;</div>
+            <div id="fixed-ruler-top"   class="viz-fixed-ruler"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg></div>
+            <div id="fixed-ruler-left"  class="viz-fixed-ruler"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg></div>
+        </div>
+
+        <div id="viz-bottom-control-bar" Xstyle="float: left; margin-top: 2em;">
+            <button class="btn btn-small" style="float: left; margin-right: 12px;" 
+                    onclick="printIllustration(); return false;">Print actual size</button>
+            <label for="toggle-printing-diagnostics" class="checkbox" style="float: left;">
+                <input type="checkbox" id="toggle-printing-diagnostics" />Print rulers, crop marks, description
+            </label>
+        </div>
+    </div><!-- #stick-viewer-frame -->
+   </div><!-- .span6 -->
+
     <div id="editor" class="span6" style="padding-right: 20px;">
+
+        <div>
+            <h2 style="margin: 0 0 4px;">Tree Illustrator (prototype)</h2>
+        </div>
+
         <!--<form action="#" onsubmit="return false;">-->
             <div class="button-bar" style="margin-bottom: 1em;">
                 <button class="btn btn-small">Load illustration...</button>
@@ -697,6 +712,20 @@
                 <button class="btn btn-small">Save illustration as...</button>
               </span>
             </div>
+
+        <!-- diagnostic junk -->
+        <div style="margin-top: 1em;">
+            pixels/inch: <strong id="display-ppi-indicator">-</strong>
+            &nbsp;
+            (default in this browser: <strong id="browser-ppi-indicator">-</strong>)
+            <br/>
+            viewbox: <strong id="viewbox-indicator" style="font-size: 0.7em;">??</strong>
+            <br/>
+            viewportMagnfication: <strong id="mag-indicator">??</strong>
+            <br/>
+            SVG width: <strong id="svg-width-indicator">??</strong>, SVG height: <strong id="svg-height-indicator">??</strong>
+        </div>
+
     </div>
     
     <!-- Add a persistent SVG element to hold re-usable parts that we don't
@@ -767,30 +796,10 @@
       </defs>
     </svg>
 
-   <div class="span6"> 
-    <div id="viz-outer-frame">
-        <div id="fixed-ruler-units" class="viz-fixed-ruler">&nbsp;</div>
-        <div id="fixed-ruler-top"   class="viz-fixed-ruler"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg></div>
-        <div id="fixed-ruler-left"  class="viz-fixed-ruler"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg></div>
-    </div>
-    <div style="float: left; margin-top: 2em;">
-        <button class="btn btn-small" style="float: left; margin-right: 12px;" 
-                onclick="printIllustration(); return false;">Print actual size</button>
-        <label for="toggle-printing-diagnostics" class="checkbox" style="float: left;">
-            <input type="checkbox" id="toggle-printing-diagnostics" />Print rulers, crop marks, description
-        </label>
-        <div style="clear: left; float: left; margin-top: 1em;">
-            viewbox: <strong id="viewbox-indicator" style="font-size: 0.7em;">??</strong>
-            <br/>
-            viewportMagnfication: <strong id="mag-indicator">??</strong>
-            <br/>
-            SVG width: <strong id="svg-width-indicator">??</strong>, SVG height: <strong id="svg-height-indicator">??</strong>
-        </div>
-    </div>
-   </div><!-- .span6 -->
    </div><!-- .row-fluid -->
    </div><!-- .container-fluid -->
 
+<!--
     <hr style="clear: left;"/>
     <p>TODO here:</p>
     <ul>
@@ -822,6 +831,7 @@
             </ul>
         </li>
     </ul>
+-->
   </body>
   <script type="text/javascript">
     // Add truly page-specific logic here

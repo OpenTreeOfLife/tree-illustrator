@@ -435,9 +435,11 @@ $(document).ready(function() {
 
     // resizing the window should refresh/resize the viewport
     $(window).resize(function() {
+        matchViewportToWindowSize();
         zoomViewport('REFRESH');
     });
 
+    matchViewportToWindowSize();
     refreshViz( {SHOW_ALL: true} );
 });
 
@@ -666,6 +668,22 @@ function drawRuler( svgParent, orientation, units, scale ) {
                 .call(subticksAxis);
         }
     }
+}
+
+var topBarHeight, bottomBarHeight;
+function matchViewportToWindowSize() {
+    if (!topBarHeight) {
+        topBarHeight = $('#viz-top-control-bar').height();
+        bottomBarHeight = $('#viz-bottom-control-bar').height();
+        // freeze the control bars at their current height        
+        $('#viz-top-control-bar').height(topBarHeight);
+        $('#viz-bottom-control-bar').height(bottomBarHeight);
+    }
+    var columnHeight = $('#sticky-viewer-frame').height();
+    var availableHeight = columnHeight - topBarHeight - bottomBarHeight;
+    var $outerFrame = $("#viz-outer-frame");
+    var nudge = -60;
+    $outerFrame.height(availableHeight + nudge);
 }
 
 var viewportMagnification = 1.0;
