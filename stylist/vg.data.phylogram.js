@@ -106,7 +106,8 @@ vg.data.phylogram = function() {
     function phylogram(data) {
       // Expecting incoming data in the 'phylotree' format described here:
       //  https://github.com/OpenTreeOfLife/tree-illustrator/wiki/Building-on-D3-and-Vega
-      console.log('STARTING phylogram transform...');
+
+      //console.log('STARTING phylogram transform...');
 
       // scale all coordinates as directed
       if ((width !== 1.0) || (height !== 1.0)) {

@@ -13,9 +13,6 @@ var TreeIllustrator = function(window, document, $, ko) {
         return null;
     }
 
-    /* Here we can share information among all classes and instances */
-    //var shared = {};
-
     // define some simple enumerations (for legibility, and to avoid typos)
     var units = {
         INCHES: 'INCHES',
@@ -47,6 +44,29 @@ var TreeIllustrator = function(window, document, $, ko) {
         TIMESTAMP: 'TIMESTAMP', // e.g., a modification date
         SEMANTIC: 'SEMANTIC'    // a conventional version number, e.g., "3.2.0a"
     };
+
+    /* Here we can share information among all classes and instances */
+
+    /* Cache data to improve performance or reduce network traffic: 
+     *   - tree source loaded via AJAX
+     *   - intermediate tree data (after one or more transforms)
+     *   - supporting datasets
+     *   - etc.
+     * Note that initial use is by the 'stash' transform below.
+     */
+    var cache = { };
+    var setCachedData = function(key, value) {
+        // add (or update) the cache for this key
+        cache[key] = value;
+    }
+    var getCachedData = function(key) {
+        // retrieve this key's cache from the cache (or return null)
+        return (key in cache) ? cache[key] : null;
+    }
+    var clearCachedData = function(key) {
+        // add (or update) the cache for this key
+        delete cache[key];
+    }
 
     /* Return the data model for a new illustration (our JSON representation) */
     var getNewIllustrationModel = function(options) {
@@ -794,12 +814,23 @@ var TreeIllustrator = function(window, document, $, ko) {
                         ]
                     }
 
-                    // TODO: Define data source (allow for inline tree data? in dataset? other sources?)
+                    /* Define data source for this element (allow for inline tree data? in 
+                     * existing datasets? other kinds of sources?)
+                     * NOTE that we should use cached data when possible, to avoid 
+                     * an AJAX fetch each time we tweak the visual presentation of a tree!
+                     */
+                    var treeSourceCacheKey = 'ELEMENT-SOURCE-';
                     switch (el.metadata.source.type()) { 
                         case dataSourceTypes.BUILT_IN:
                         case dataSourceTypes.URL:
-                            // TODO: treeData.url = el.metadata.source.value;
-                            treeData.url = el.metadata.source.value();
+                            treeSourceCacheKey += $.trim(el.metadata.source.value());
+                            var cachedValue = getCachedData( treeSourceCacheKey );
+                            if (cachedValue) {
+                                // N.B. This data will be safely cloned by Vega when spec is parsed!
+                                treeData.values = cachedValue;
+                            } else {
+                                treeData.url = el.metadata.source.value();
+                            }
                             break;
                         // TODO: add cases for other data sources
                         default:
@@ -808,7 +839,15 @@ var TreeIllustrator = function(window, document, $, ko) {
 
                     /* Build an appropriate chain of data transforms */
 
-                    // TODO: First transform imports data from its source format to our basic phyloTree
+                    // Cache the source data, if not already found
+                    treeData.transform.push({
+                        "type": "stash", 
+                        "cachePath": 'TreeIllustrator.cache',
+                        "key": treeSourceCacheKey,
+                        "flush": false
+                    });
+
+                    // Next transform imports data from its source format to our basic phyloTree
                     if (true) { 
                         treeData.transform.push({
                             "type": "nexson", 
@@ -1232,6 +1271,7 @@ var TreeIllustrator = function(window, document, $, ko) {
         alignments: alignments,
         dataSourceTypes: dataSourceTypes,
         versionTypes: versionTypes,
+        cache: cache,
 
         // expose view-model classes
         Illustration: Illustration,
