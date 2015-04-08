@@ -20,15 +20,6 @@ var availableTrees = [
         url: './placeholder-tree.json'
     },
     {
-        name: "Gazis, 2014", 
-        /* TODO: provide more IDs here (esp. tree ID)
-        studyID: 'pg_10',
-        treeID: 'tree5',
-        otusID: 'otus2'
-        */ 
-        url: buildStudyFetchURL( 'pg_2818' )
-    },
-    {
         name: "Tuovila, 2013", 
         url: buildStudyFetchURL( '2380' )
         /* NOTE that this one has two trees!
@@ -1132,6 +1123,7 @@ function printIllustration() {
         return;
     }
     var showDiagnostics = $('#toggle-printing-diagnostics').is(':checked');
+    var leaveWindowOpen = $('#toggle-offer-svg').is(':checked');
 
     // generate a simple HTML5 page with inline SVG
     // TODO: generate standalone SVG document (to save or share) instead?
@@ -1139,9 +1131,20 @@ function printIllustration() {
     doc.open("text/html", "replace");
     doc.write('<!DOCTYPE html><HTML><HEAD><TITLE>Tree Illustrator - SVG for printing</TITLE></HEAD><BODY></BODY></HTML>');
     doc.close();
-    doc.body.innerHTML = getPrintableSVG( {INCLUDE_DIAGNOSTICS: showDiagnostics} );
-    w.print();
-    w.close();
+    var outputSVG = getPrintableSVG( {INCLUDE_DIAGNOSTICS: showDiagnostics} );
+    // let the browser render the new window so we can use its height
+    setTimeout(function() {
+        if (leaveWindowOpen) {
+            // write just the SVG to the new window, to be copied to clipboard
+            var itsClientHeight = $('html', doc)[0].clientHeight - 50;
+            doc.body.innerHTML = '<textarea style="width: 95%; height: '+ itsClientHeight +'px;">'+ outputSVG +'</textarea>';
+        } else {
+            // normal print+close behavior
+            doc.body.innerHTML = outputSVG;
+            w.print();
+            w.close();
+        }
+    }, 500);
 }
 
 /* Accordion UI helpers */

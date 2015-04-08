@@ -48,8 +48,11 @@
         <div id="viz-bottom-control-bar" Xstyle="float: left; margin-top: 2em;">
             <button class="btn btn-small" style="float: left; margin-right: 12px;" 
                     onclick="printIllustration(); return false;">Print actual size</button>
-            <label for="toggle-printing-diagnostics" class="checkbox" style="float: left;">
+            <label for="toggle-printing-diagnostics" class="checkbox" style="float: left; margin-right: 12px;">
                 <input type="checkbox" id="toggle-printing-diagnostics" />Print rulers, crop marks, description
+            </label>
+            <label for="toggle-offer-svg" class="checkbox" style="float: left;">
+                <input type="checkbox" id="toggle-offer-svg" />Show output SVG (to clip and save)
             </label>
         </div>
     </div><!-- #stick-viewer-frame -->
@@ -382,9 +385,20 @@
                     <div class="controls" 
                          style="display: none; margin-top: 0.25em;"
                          data-bind="attr: {id: id() +'-datasource-upload-panel'}">
+                        <select data-bind="attr: {id: id() +'-datasource-format'}" name="inputFormat" 
+                                class="input-block-level" style="margin-bottom: 3px;" 
+                                oninput="return true;" onchange="return true;">
+                            <option value="" selected="selected">What is the format of this tree?</option>
+                            <option value="newick">Newick</option>
+                            <option value="nexus" disabled="disabled">NEXUS (coming soon)</option>
+                            <option value="nexml" disabled="disabled">NeXML (coming soon)</option>
+                        </select>
+                        <textarea data-bind="attr: {id: id() +'-datasource-pasted'}" placeholder="Paste tree as text..."></textarea>
+                        <button data-bind="click: convertPastedDataToTree.bind($data, id())" style="margin: 3px 0;">Convert and update tree</button>
+                       <br/>
+                        <span style="color: #c33;">Coming soon:</span>
                         <input type="file" disabled="disabled"
                                data-bind="attr: {id: id() +'-datasource-upload'}" />
-                        <br /><span style="color: #c33;">Coming soon</span>
                     </div>
                 </div>
                 <div class="control-group">
@@ -499,6 +513,27 @@
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {keyup: refreshViz, change: refreshViz}" />&nbsp;
                         &nbsp;(<span data-bind="text: $root.unitsDisplayAbbreviation()">cm</span> from top left)
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label"
+                           data-bind="attr: {for: '#'+ id() +'-labelfield-chooser'}" >Label nodes with</label> 
+                    <div class="controls">
+                        <select style="margin-bottom: 0;"
+                                data-bind="attr: {id: id() +'-labelfield-chooser'},
+                                           options: [
+                                           {label: 'mapped taxon names', 
+                                            value: 'ottTaxonName'},
+                                           {label: 'explicit labels', 
+                                            value: 'explicitLabel'},
+                                           {label: 'original labels', 
+                                            value: 'originalLabel'}
+                                          ],
+                                          optionsText: 'label',
+                                          optionsValue: 'value',
+                                          value: nodeLabelField,
+                                          event: {change: refreshViz}">
+                        </select>
                     </div>
                 </div>
             </form>

@@ -88,6 +88,14 @@ console.log(data);
                 if ('^ot:ottId' in itsOTU) {
                     node.ottId = itsOTU['^ot:ottId'];
                 }
+                if ('@label' in itsOTU) {
+                    // This is uncommon, but appears in our converted Newick.
+                    // Yield to an explicit label on the node itself!
+                    console.log(">> stealing otu label '"+ itsOTU['@label'] +"' for this node");
+                    if ($.trim(node.explicitLabel) === '') {
+                        node.explicitLabel = itsOTU['@label'];
+                    }
+                }
             }
         }
     });

@@ -37,7 +37,8 @@ var TreeIllustrator = function(window, document, $, ko) {
     };
     var dataSourceTypes = {
         BUILT_IN: 'BUILT_IN',
-        URL: 'URL'
+        URL: 'URL',
+        UPLOAD: 'UPLOAD'
     };
     var versionTypes = {
         CHECKSUM: 'CHECKSUM',   // e.g., a git SHA
@@ -232,7 +233,7 @@ var TreeIllustrator = function(window, document, $, ko) {
             'tipsAlignment': alignments.RIGHT,
             'rootX': landmarks.centerX + jiggle(5),   // TODO: use a bounding box instead?
             'rootY': landmarks.centerY + jiggle(5),
-
+            'nodeLabelField': 'ottTaxonName',         // matches the placeholder tree
             'style': {
                 // incl. only deviations from the style guide above?
 /*
@@ -718,6 +719,38 @@ var TreeIllustrator = function(window, document, $, ko) {
             delete obj;
         },
 
+        /* For a given node, retrieve the best possible label field
+         * (optionally from a ranked list of fields) or its text.
+         *
+         * This is CURRENTLY UNUSED, but may be useful if we want to support
+         * fallback labeling based on a ranked list of sources, for example
+         *   ['explicitLabel', 'ottTaxonName', 'originalLabel']
+         */
+        getPreferredLabelField: function(node, rankedFields) {
+            if (!rankedFields) {
+                rankedFields = ['explicitLabel','ottTaxonName','originalLabel','ottId'];
+            }
+            var foundNonEmptyLabel = 'explicitLabel';  // a harmless default
+            $.each(rankedFields, function(i,fieldName) {
+                if (node[fieldName]) {
+                    foundNonEmptyLabel = fieldName;
+                    return false;  // stop checking
+                }
+            });
+            console.warn("Using label field '"+ foundNonEmptyLabel +"' for this node:");
+            console.warn(node);
+            return foundNonEmptyLabel;
+        },
+        getPreferredLabelText: function(node, rankedFields) {
+            var self = this;
+            var preferredField = self.getPreferredLabelField(node, rankedFields);
+            var preferredText = node[preferredField];
+            if (typeof preferredText === 'string') {
+                return preferredText;
+            }
+            return '';
+       },
+
         /* For a given element (eg, a tree, node, edge, ornament, or the
          * illustration itself), get the most "local" matching style value for
          * the specified property. By default, this should conform to the 
@@ -830,6 +863,21 @@ var TreeIllustrator = function(window, document, $, ko) {
                                 treeData.values = cachedValue;
                             } else {
                                 treeData.url = el.metadata.source.value();
+                            }
+                            break;
+                        case dataSourceTypes.UPLOAD:
+                            var sourceValue = $.trim(el.metadata.source.value());
+                            if (sourceValue === '') {
+                                console.log("updateVegaSpec(): ignoring empty paste/uploads for now");
+                                return;
+                            }
+                            var treeSourceCacheKey = ('PASTED-SOURCE-' + sourceValue);
+                            var cachedValue = getCachedData( treeSourceCacheKey );
+                            if (cachedValue) {
+                                // N.B. This data will be safely cloned by Vega when spec is parsed!
+                                treeData.values = cachedValue;
+                            } else {
+                                console.warn("Still waiting for pasted text (Newick?) of '"+ el.metadata.name() +"'to be converted...");
                             }
                             break;
                         // TODO: add cases for other data sources
@@ -1025,7 +1073,7 @@ var TreeIllustrator = function(window, document, $, ko) {
                                             "properties": {
                                                 "enter": initialLabelProperties,
                                                 "update": {
-                                                    "text": {"field": "ottTaxonName"},
+                                                    "text": {"field": el.nodeLabelField() },
                                                     "fill": {"value":"black"}
                                                 },
                                                 "hover": {
@@ -1174,6 +1222,96 @@ var TreeIllustrator = function(window, document, $, ko) {
             refreshViz();
         }
         ,
+        useChosenLabelField: function() {
+            var self = this;
+            // pick up latest data from bound widgets
+            var $chooser = $('#'+ self.id() +'-labelfield-chooser');
+            self.nodeLabelTextField = $chooser.val();
+            refreshViz();
+        }
+        ,
+        convertPastedDataToTree: function(treeID) {
+            // Try to convert pasted/uploaded text to nexson, using the conversion
+            // methods in the main open tree curation tool.
+            var self = this;  // the tree in question
+            var $pastedField = $('#'+ self.id() +'-datasource-pasted');
+            var pastedText = $.trim($pastedField.val());
+            if (pastedText === '') {
+                alert("Please paste Newick or other text into the text area provided, then try again.");
+                // TODO: clear any cached and internal values regardless, to hide an old tree?
+                return;
+            }
+            self.metadata.source.value( pastedText );
+            self.metadata.source.type(dataSourceTypes.UPLOAD);
+            var treeSourceCacheKey = ('PASTED-SOURCE-' + $.trim(self.metadata.source.value()));
+            // TODO: build up cache key with format + content?
+            var cachedValue = getCachedData( treeSourceCacheKey );
+            if (cachedValue) {
+                // N.B. This data will be safely cloned by Vega when spec is parsed!
+                // NOTE that we should still refresh immediately, in case the cached tree data was loaded
+                // created for another tree, or an earlier version of this one.
+                refreshViz();
+            } else {
+                // call opentree web services to convert to nexson
+                //TODO: Apply other pasted formats (and REMEMBER THEM in the saved illustration!)
+                //var $inputFormatChooser = $('#'+ self.id() +'-datasource-format');
+                //var inputFormat = $inputFormatChooser.val();
+                $.ajax({
+                    type: 'POST',
+                    dataType: 'json',
+                    // crossDomain: true,
+                    contentType: "application/json; charset=utf-8",
+                    url: 'https://devtree.opentreeoflife.org/curator/to_nexson',
+                    // NOTE that idPrefix and firstAvailable*ID args are currently required to get well-formed Nexson!
+                    data: ('{"output": "ot:nexson", '+
+                            '"auth_token": "ANONYMOUS", '+
+                            '"idPrefix": "", ' +
+                            '"firstAvailableEdgeID": "1", '+
+                            '"firstAvailableNodeID": "1", '+
+                            '"firstAvailableOTUID": "1", '+
+                            '"firstAvailableOTUsID": "1", '+
+                            '"firstAvailableTreeID": "1", '+
+                            '"firstAvailableTreesID": "1", '+
+                            '"firstAvailableAnnotationID": "1", '+
+                            '"firstAvailableAgentID": "1", '+
+                            '"firstAvailableMessageID": "1", '+
+                            '"inputFormat": '+ JSON.stringify('newick') +', '+
+                            '"content": '+ JSON.stringify($.trim(self.metadata.source.value())) +' }'),
+                    processData: false,
+                    complete: function( jqXHR, textStatus ) {
+                        // report errors or malformed data, if any
+                        if (textStatus !== 'success') {
+                            if (jqXHR.status >= 500) {
+                                // major server-side error, just show raw response for tech support
+                                var errMsg = 'Sorry, there was an error ('+ jqXHR.status +') converting this study to Nexson:\n\n'+ jqXHR.responseText;
+                                alert(errMsg);
+                                return;
+                            }
+                            // Server blocked the save due to major validation errors!
+                            var data = $.parseJSON(jqXHR.responseText);
+                            // TODO: This should be properly parsed JSON, show it more sensibly
+                            // (but for now, repeat the crude feedback used above)
+                            var errMsg = 'Sorry, there was an error ('+ jqXHR.status +') converting this study to Nexson:\n\n'+ jqXHR.responseText;
+                            alert(errMsg);
+                            return;
+                        }
+                        // Pasted tree was converted successfully; capture the Nexson as a string
+                        var data = $.parseJSON(jqXHR.responseText);
+
+                        // fix any quirks to conform to our expected Nexson structure
+                        fixUpConvertedNexson(data);
+
+                        // store it in the cache, at the key defined above
+                        setCachedData( treeSourceCacheKey, data );
+                        // adjust node-label field to show "explicit" labels (this will trigger a display refresh)
+                        var $labelChooser = $('#'+ self.id() +'-labelfield-chooser');
+                        $labelChooser.val('explicitLabel').change();
+                        //refreshViz();
+                    }
+                });
+            }
+        }
+        ,
         useChosenTipsAlignment: function(newValue) {
             var self = this;
             if (newValue in alignments) {
@@ -1260,6 +1398,33 @@ var TreeIllustrator = function(window, document, $, ko) {
             owner: obj,
             deferEvaluation: true
         })
+    }
+
+    /* Newick (and other?) formats converted Nexson may be missing some
+     * elements we expect. Add these now. */
+    var fixUpConvertedNexson = function(data) {
+        // 'data' is nexml in typical JSON wrapper
+        var nexml = data.data.nexml;
+        var nodeHasChildren = function(node, tree) {
+            var childFound = false;
+            $.each(tree.edge, function(i,edge) {
+                if (edge['@source'] === node['@id']) {
+                    childFound = true;
+                }
+            });
+            return childFound;
+        };
+        $.each(nexml.trees, function(i,treeCollection) { // mark childless nodes with 'ot:isleaf'
+            $.each(treeCollection.tree, function(i, tree) {
+                var leafNodes = $.grep(tree.node, function(node) { 
+                    if (nodeHasChildren(node,tree)) {
+                        // modify internal nodes?
+                    } else {
+                        node['^ot:isLeaf'] = true;
+                    }
+                });
+            });
+        });
     }
 
     /* expose class constructors (and static methods) for instantiation */
