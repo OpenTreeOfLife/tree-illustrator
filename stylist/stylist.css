@@ -293,6 +293,19 @@ g.outer-axis text {
     font-weight: normal;
     color: #999;
 }
+.element-styles {
+    scroll: y;
+    y-scroll: auto;
+}
+.element-styles thead {
+    background-color: #eee;
+}
+.element-styles th:last-child, .element-styles td:last-child {
+    text-align: right;
+}
+.element-styles tbody td:first-child {
+    padding-left: 20px;
+}
 /* diagnostic styles for viewport, masks, etc.
 #viewport-bounds {
     stroke: red !important;
