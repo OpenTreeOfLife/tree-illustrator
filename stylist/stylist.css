@@ -306,6 +306,11 @@ g.outer-axis text {
 .element-styles tbody td:first-child {
     padding-left: 20px;
 }
+.element-styles tbody tr.inherited-property {
+    font-style: italic;
+    color: #bbb;
+}
+
 /* diagnostic styles for viewport, masks, etc.
 #viewport-bounds {
     stroke: red !important;
