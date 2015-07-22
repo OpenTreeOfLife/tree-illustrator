@@ -311,6 +311,12 @@ g.outer-axis text {
     color: #bbb;
 }
 
+button.btn-strong-mini {
+    /* for 'f( )' buttons and other small-but-important things */
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
 /* diagnostic styles for viewport, masks, etc.
 #viewport-bounds {
     stroke: red !important;
