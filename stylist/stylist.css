@@ -311,10 +311,10 @@ g.outer-axis text {
     color: #bbb;
 }
 
-button.btn-strong-mini {
-    /* for 'f( )' buttons and other small-but-important things */
+button.btn-mini-function {
     font-weight: bold;
-    font-size: 1.2em;
+    font-style: italic;
+    font-family: serif;
 }
 
 /* diagnostic styles for viewport, masks, etc.
