@@ -67,7 +67,7 @@ debugger;
         // create my IFRAME element in the output of the current notebook cell
         var elementID = getNextAvailableWidgetID();
         // N.B. This ID is mostly for internal use; user probably calls this something else
-        this.append_display_data({
+        cell.append_display_data({
           'data': {
             'text/html': '<iframe id="'+ elementID +'" width="100%" height="500" \
                            src="http://rawgit.com/OpenTreeOfLife/tree-illustrator/master/stylist/stylist.html" \
