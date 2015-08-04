@@ -26,7 +26,6 @@
  */
 
 var IPythonTreeIllustrator = function(window, document, $) {
-debugger;
 
     // keep track of all active instances (widgets), keyed by element ID
     var widgets = { };
@@ -75,9 +74,10 @@ debugger;
                           </iframe>'
           } 
         })
-        self.element = $(elementID)[0];
+        var elementSelector = ('#'+ elementID);
+        self.element = $(elementSelector)[0];
 console.log("BEFORE self.window = "+ self.window);
-        self.window = $(elementID)[0].contentWindow;
+        self.window = self.element.contentWindow;
 console.log("AFTER self.window = "+ self.window);
         
         // add this instance to the registry above
