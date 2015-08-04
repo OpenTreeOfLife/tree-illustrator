@@ -25,7 +25,8 @@
  * [2] http://caniuse.com/#search=postMessage
  */
 
-var IPythonTreeIllustrator = function(window, document, $) {
+var IPythonTreeIllustrator = function(window, document, $, OutputArea) {
+debugger;
 
     // keep track of all active instances (widgets), keyed by element ID
     var widgets = { };
@@ -100,4 +101,4 @@ console.log("AFTER self.window = "+ self.window);
         // expose available classes
         IllustratorWidget: IllustratorWidget
     };
-}(window, document, $);
+}(window, document, $, OutputArea);
