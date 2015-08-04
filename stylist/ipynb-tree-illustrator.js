@@ -75,9 +75,9 @@ var IPythonTreeIllustrator = function(window, document, $) {
           } 
         })
         var elementSelector = ('#'+ elementID);
-        self.element = $(elementSelector)[0];
+        self.ti_element = $(elementSelector)[0];
 console.log("BEFORE self.window = "+ self.window);
-        self.window = self.element.contentWindow;
+        self.ti_window = self.ti_element.contentWindow;
 console.log("AFTER self.window = "+ self.window);
         
         // add this instance to the registry above
