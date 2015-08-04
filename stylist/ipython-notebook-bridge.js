@@ -1,5 +1,5 @@
 /*
- * This script adds cross-document messaging (postMessage) support, to allow
+ * This script adds cross-document messaging (postMessage) support [1,2], to allow
  * embedding one or many instances of the Tree Illustrator UI in an
  * IPython notebook. This lets us provide tree data from the surrounding
  * IPython session, and save SVG output or complete illustration JSON from each
@@ -8,6 +8,9 @@
  * This should be useful in pre-publication and exploratory scenarios for a
  * single user, or fairly easy collaboration, using Wakari or another notebook
  * server.
+ *
+ * [1] https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+ * [2] http://caniuse.com/#search=postMessage
  */
 
 // TODO: set expected calling domain when instance is created?
