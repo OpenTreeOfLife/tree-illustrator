@@ -25,7 +25,7 @@
  * [2] http://caniuse.com/#search=postMessage
  */
 
-var IPythonTreeIllustrator = function(window, document, $, OutputArea) {
+var IPythonTreeIllustrator = function(window, document, $) {
 debugger;
 
     // keep track of all active instances (widgets), keyed by element ID
@@ -47,8 +47,9 @@ debugger;
             return new IllustratorWidget(data);
         }
 
-        if (!cell || !(cell instanceof OutputArea)) {
-            console.warn("Missing notebook cell as first argument!");
+        if (!cell || !('append_output' in cell)) {
+            alert("Missing notebook cell as first argument! Try using 'this':"
+                + "\n\n  var ti = new IPythonTreeIllustrator.IllustratorWidget(this);");
             return null;
         }
 
@@ -101,4 +102,4 @@ console.log("AFTER self.window = "+ self.window);
         // expose available classes
         IllustratorWidget: IllustratorWidget
     };
-}(window, document, $, OutputArea);
+}(window, document, $);
