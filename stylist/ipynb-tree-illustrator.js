@@ -47,9 +47,10 @@ var IPythonTreeIllustrator = function(window, document, $) {
         }
 
         if (!cell || !('append_output' in cell)) {
-            throw new Error("Missing notebook cell as first argument! Try using 'this':"
+            alert("Missing notebook cell as first argument! Try 'this':"
                 + "\n  var ti = new IPythonTreeIllustrator.IllustratorWidget(this);"
                 + "\nREMINDER: Tree Illustrator doesn't currently work in static notebook views!");
+            return null;
         }
 
         if (!data || typeof(data) !== 'object') {
