@@ -47,9 +47,9 @@ var IPythonTreeIllustrator = function(window, document, $) {
         }
 
         if (!cell || !('append_output' in cell)) {
-            alert("Missing notebook cell as first argument! Try using 'this':"
-                + "\n\n  var ti = new IPythonTreeIllustrator.IllustratorWidget(this);");
-            return null;
+            throw new Error("Missing notebook cell as first argument! Try using 'this':"
+                + "\n  var ti = new IPythonTreeIllustrator.IllustratorWidget(this);")
+                + "\nREMINDER: Tree Illustrator doesn't currently work in static notebook views!")
         }
 
         if (!data || typeof(data) !== 'object') {
@@ -76,9 +76,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
         })
         var elementSelector = ('#'+ elementID);
         self.ti_element = $(elementSelector)[0];
-console.log("BEFORE self.window = "+ self.window);
         self.ti_window = self.ti_element.contentWindow;
-console.log("AFTER self.window = "+ self.window);
         
         // add this instance to the registry above
         widgets[elementID] = self;
