@@ -74,7 +74,7 @@
     d3.phylogram.rightAngleDiagonal for radial layouts.
 */
 
-vg.data.phylogram = function() {
+vg.transforms.phylogram = function() {
     // caller-defined properties
     var layout = 'cartesian';  // 'cartesian' | 'radial' | 'cladogram' | ???
 

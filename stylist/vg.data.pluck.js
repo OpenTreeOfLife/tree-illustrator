@@ -12,7 +12,7 @@
  *      ] 
  *  },
  */
-vg.data.pluck = function() {
+vg.transforms.pluck = function() {
 
   var field = null;
 

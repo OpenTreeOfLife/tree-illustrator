@@ -18,8 +18,9 @@
  * construct a simpler pipeline by providing cached data instead of URLs,
  * omitting unneeded transforms, etc.
  */
-vg.data.stash = function(test) {
-  var data = vg.accessor("data");      // incoming data to be (possibly) cached
+vg.transforms.stash = function(test) {
+  //var data = vg.accessor("data");      // incoming data to be (possibly) cached
+  var data;
 
   /* N.B. Vega always duplicates the incoming spec:
    *   https://github.com/trifacta/vega/blob/e8013b855ef8331d1a07b9ef266cc8fc2738e436/src/parse/spec.js#L7
@@ -43,13 +44,13 @@ vg.data.stash = function(test) {
       flush = false;    // if true, force new data into the cache
 
   function stash(data) {
-/*
 console.log("INCOMING data to stash transform:");
 console.log(data);
+/*
 */
     
     if (typeof cache === 'undefined') {
-        console.error('No cache has been set for the vg.data.stash transform!');
+        console.error('No cache has been set for the vg.transforms.stash transform!');
         return data;
     }
     /* Note that we always store a *copy* of the data, since Vega always clones
@@ -65,9 +66,9 @@ console.log(data);
         // N.B. vg.duplicate cleans up any weird methods and circular references
     }
 
-/*
     console.log("OUTGOING data from stash transform:");
     console.log(data);
+/*
 */
     return data;
   }

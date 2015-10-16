@@ -10,7 +10,7 @@
  * should produce the same output: a uniform JS object representing a
  * d3-ready tree (see https://github.com/OpenTreeOfLife/tree-illustrator/wiki/Building-on-D3-and-Vega#data-importers)
  */
-vg.data.nexson = function() {
+vg.transforms.nexson = function() {
   var layout = d3.layout.cluster()  // or tree (seems most basic)
                  //.children(function(d) { return d.values; }),
                  //.size([20,20])  // defaults to [1.0, 1.0]
