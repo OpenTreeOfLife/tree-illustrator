@@ -21,7 +21,7 @@
     "phylogeny"
   ],
   "dependencies": {
-    "vega": "2.2.6"
+    "vega": "2.2.x"
   },
   "devDependencies": {
     "browserify-shim": "^3.8.9",
