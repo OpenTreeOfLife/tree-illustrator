@@ -1,0 +1,37 @@
+{
+  "name": "tree-illustrator",
+  "version": "0.0.1",
+  "description": "Test of bundling all JS with browserify",
+  "author": "Jim Allman <jim@ibang.com>",
+  "contributors": [],
+  "scripts": {
+    "prepublish": "echo Now we would do some prepublish stuff..."
+  },
+  "main": "./stylist.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/opentreeoflife/tree-illustrator"
+  },
+  "bugs": {
+    "url": "https://github.com/opentreeoflife/tree-illustrator/issues"
+  },
+  "keywords": [
+    "tree", 
+    "visualization",
+    "phylogeny"
+  ],
+  "dependencies": {
+    "vega": "2.2.6"
+  },
+  "devDependencies": {
+    "browserify-shim": "^3.8.9",
+    "browserify-versionify": "^1.0.4",
+    "jstransform": "^11.0.2",
+    "through": "^2.3.8"
+  },
+  "preferGlobal": false,
+  "private": true,
+  "publishConfig": {},
+  "license": "BSD (2-clause)",
+  "browserify-shim": {}
+}
