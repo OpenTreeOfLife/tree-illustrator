@@ -18,11 +18,76 @@
  * construct a simpler pipeline by providing cached data instead of URLs,
  * omitting unneeded transforms, etc.
  */
+var vg  = require('vega'),
+    log  = require('vega-logging'),
+    Transform = require('vega/src/transforms/Transform');
+
+function Stash(graph) {
+  Transform.prototype.init.call(this, graph);
+  Transform.addParameters(this, {
+      cachePath: {type: 'field'},  // TODO: 'field' or 'value' here?
+      key: {type: 'value'},  // TODO?
+      flush: {type: 'value', default: false}
+  });
+  /* TODO: which (if any) of these is appropriate to return?
+  this.router(true);
+  return this.router(true).produces(true);
+  return this.mutates(true);
+  debugger;
+  return this.router(true);
+  */
+}
+
+var prototype = (Stash.prototype = Object.create(Transform.prototype));
+prototype.constructor = Stash;
+
+prototype.transform = function(input) {
+  log.debug(input, ['stashing']);
+
+  /* TODO
+  if (input.add.length || input.mod.length || input.rem.length) {
+    input.sort = dl.comparator(this.param('by').field);
+  }
+  */
+  return input;
+};
+
+module.exports = Stash;
+
+Stash.schema = {
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Stash transform",
+  "description": "Stores the incoming data (if it's not already found) in the" +
+    " specified object using the specified key, then passes it along unchanged.",
+  "type": "object",
+  "properties": {
+    "type": {"enum": ["stash"]},
+    "cachePath": {
+      "description": "A field pointing to the cache object",
+      "oneOf": [{"type": "string"}, {"$ref": "#/refs/signal"}]  // TODO: signal?
+    },
+    "key": {
+      "description": "A unique key for this data in the stash",
+      "oneOf": [{"type": "string"}, {"$ref": "#/refs/signal"}]  // TODO: signal?
+    },
+    "flush": {
+      "description": " If true, will replace any existing stashed data.", // TODO: confirm
+      "oneOf": [{"type": "boolean"}, {"$ref": "#/refs/signal"}],
+      "default": false
+    }
+  },
+  "additionalProperties": false,  // TODO: confirm this
+  "required": ["type", "key", "cachePath"]
+};
+
+
+
+/*
 vg.transforms.stash = function(test) {
   //var data = vg.accessor("data");      // incoming data to be (possibly) cached
   var data;
 
-  /* N.B. Vega always duplicates the incoming spec:
+  / * N.B. Vega always duplicates the incoming spec:
    *   https://github.com/trifacta/vega/blob/e8013b855ef8331d1a07b9ef266cc8fc2738e436/src/parse/spec.js#L7
    * ... so we can't accept the object itself as the incoming 'cache' argument,
    * or we'll just end up stashing to a clone. Instead, we expect 'cachePath' with
@@ -36,7 +101,7 @@ vg.transforms.stash = function(test) {
    *    });
    *
    * (This example should point to an object at window.TreeIllustrator.cache)
-   */
+   * /
   var cache;     // the cache itself (an associative array)
 
   // Expected arguments (and defaults for each)
@@ -46,16 +111,16 @@ vg.transforms.stash = function(test) {
   function stash(data) {
 console.log("INCOMING data to stash transform:");
 console.log(data);
-/*
-*/
+/ *
+* /
     
     if (typeof cache === 'undefined') {
         console.error('No cache has been set for the vg.transforms.stash transform!');
         return data;
     }
-    /* Note that we always store a *copy* of the data, since Vega always clones
+    / * Note that we always store a *copy* of the data, since Vega always clones
      * data in a spec (see comment above).
-     */
+     * /
     if (flush || !(key in cache)) {
         // be sure to cache the "raw" data as returned from source
         if ('data' in data) {
@@ -68,8 +133,8 @@ console.log(data);
 
     console.log("OUTGOING data from stash transform:");
     console.log(data);
-/*
-*/
+/ *
+* /
     return data;
   }
 
@@ -91,3 +156,4 @@ console.log(data);
 
   return stash;
 };
+*/
