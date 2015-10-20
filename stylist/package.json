@@ -16,13 +16,14 @@
     "url": "https://github.com/opentreeoflife/tree-illustrator/issues"
   },
   "keywords": [
-    "tree", 
+    "tree",
     "visualization",
     "phylogeny"
   ],
   "dependencies": {
     "jquery": "1.8.x",
-    "vega": "2.2.x"
+    "vega": "2.2.x",
+    "vega-logging": "1.0.x"
   },
   "devDependencies": {
     "browserify-shim": "^3.8.9",
