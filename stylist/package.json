@@ -5,7 +5,7 @@
   "author": "Jim Allman <jim@ibang.com>",
   "contributors": [],
   "scripts": {
-    "prepublish": "echo Now we would do some prepublish stuff..."
+    "prepublish": "echo Now we would do prepub stuff!"
   },
   "main": "./stylist.js",
   "repository": {
@@ -21,6 +21,7 @@
     "phylogeny"
   ],
   "dependencies": {
+    "jquery": "1.8.x",
     "vega": "2.2.x"
   },
   "devDependencies": {
@@ -28,6 +29,11 @@
     "browserify-versionify": "^1.0.4",
     "jstransform": "^11.0.2",
     "through": "^2.3.8"
+  },
+  "engineStrict": true,
+  "engines": {
+    "node": "0.12.7",
+    "npm": "2.11.3"
   },
   "preferGlobal": false,
   "private": true,
