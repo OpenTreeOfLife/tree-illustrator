@@ -4,6 +4,9 @@
  * closely with a web UI that's bound and enabled using KnockoutJS.
  */
 
+var $ = require('jquery'),
+    stashTransform = require('./vg.data.stash.js');
+
 // patch missing JS console on some (very) old browsers
 if (typeof console == 'undefined') console = {
     log: function(msg) {},
