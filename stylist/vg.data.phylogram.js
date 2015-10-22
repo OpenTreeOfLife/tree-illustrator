@@ -73,7 +73,71 @@
   radialRightAngleDiagonal()
     d3.phylogram.rightAngleDiagonal for radial layouts.
 */
+var vg  = require('vega'),
+    log  = require('vega-logging'),
+    Transform = require('vega/src/transforms/Transform');
 
+function Phylogram(graph) {
+  Transform.prototype.init.call(this, graph);
+  Transform.addParameters(this, {
+      cachePath: {type: 'field'},  // TODO: 'field' or 'value' here?
+      key: {type: 'value'},  // TODO?
+      flush: {type: 'value', default: false}
+  });
+  /* TODO: which (if any) of these is appropriate to return?
+  this.router(true);
+  return this.router(true).produces(true);
+  return this.mutates(true);
+  debugger;
+  return this.router(true);
+  */
+}
+
+var prototype = (Phylogram.prototype = Object.create(Transform.prototype));
+prototype.constructor = Phylogram;
+
+prototype.transform = function(input) {
+  log.debug(input, ['making a phylogram']);
+
+  /* TODO
+  if (input.add.length || input.mod.length || input.rem.length) {
+    input.sort = dl.comparator(this.param('by').field);
+  }
+  */
+  return input;
+};
+
+module.exports = Phylogram;
+
+Phylogram.schema = {
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Phylogram transform",
+  "description": "Projects hierarchical data (presumably a tree) into one of several layouts "+
+                 "and passes the results for downstream rendering.",
+  "type": "object",
+  "properties": {
+    "type": {"enum": ["phylogram"]},
+    /* TODO: review params
+    "cachePath": {
+      "description": "A field pointing to the cache object",
+      "oneOf": [{"type": "string"}, {"$ref": "#/refs/signal"}]  // TODO: signal?
+    },
+    "key": {
+      "description": "A unique key for this data in the stash",
+      "oneOf": [{"type": "string"}, {"$ref": "#/refs/signal"}]  // TODO: signal?
+    },
+    "flush": {
+      "description": " If true, will replace any existing stashed data.", // TODO: confirm
+      "oneOf": [{"type": "boolean"}, {"$ref": "#/refs/signal"}],
+      "default": false
+    }
+    */
+  },
+  "additionalProperties": false,  // TODO: confirm this
+  "required": ["type"]  // TODO: review params!
+};
+
+/*
 vg.transforms.phylogram = function() {
     // caller-defined properties
     var layout = 'cartesian';  // 'cartesian' | 'radial' | 'cladogram' | ???
@@ -459,7 +523,7 @@ vg.transforms.phylogram = function() {
     return coordAngle;
   }
 
-  /* path generators */
+  / * path generators * /
 
   var straightLineDiagonal = function(d) {
     // do-nothing projection (just isolates x and y)
@@ -644,7 +708,7 @@ vg.transforms.phylogram = function() {
     return diagonal;
   }
   
-    /* layout generators (position points in 1.0, 1.0 space) */
+    / * layout generators (position points in 1.0, 1.0 space) * /
     var cartesianLayout = function(data) {
         // place all nodes for the radial layout (already done)
 
@@ -691,21 +755,21 @@ vg.transforms.phylogram = function() {
         // project points (nodes) to radiate out from center
         moveRootToOrigin(data);
         
-        /* Precalculate available leaf-node positions (based on number of
+        / * Precalculate available leaf-node positions (based on number of
          * leaves, final width & height, and tip alignment). Then do
          * depth-first traversal from the root to assign the leaves to these
          * positions, placing all ancestors along the way.
-         */
+         * /
         var leafNodes = $.grep(data.phyloNodes, function(n) {
             return n['^ot:isLeaf'] === true;
         });
 
         var nLeaves = leafNodes.length;
 
-        /* How far should we move on the descent axis for each step in depth?
+        / * How far should we move on the descent axis for each step in depth?
          * NOTE that we'll normalize this to match the original width or height
          * later; for now, let's match the distance between leaf nodes.
-         */
+         * /
         var depthStep;
 
         var leafPositions = [ ];
@@ -811,12 +875,12 @@ vg.transforms.phylogram = function() {
             }
         });
 
-        /* Position this node based on its depth and children's positions.
+        / * Position this node based on its depth and children's positions.
          * Note that we need to place it on the descent axis so that it
          * maintains (if possible) the proper angled edges for the
          * cladogram layout. This sometimes means we need to force
          * longer edges between this node and its children.
-         */
+         * /
         switch(tipsAlignment) {
             case 'top':
                 node.y = Math.max(
@@ -866,9 +930,9 @@ vg.transforms.phylogram = function() {
 
 
 
-/***** SCRAP AREA *****/
+/ ***** SCRAP AREA ***** /
 
-/*
+/ *
   styleTreeNodes = function(vis) {
 
     vis.selectAll('g.node circle')
@@ -880,7 +944,7 @@ vg.transforms.phylogram = function() {
     vis.selectAll('g.root.node circle')
         .attr("r", 4.5);
   }
-*/
+* /
   
   function scaleBranchLengths(nodes, w) {
     // Visit all nodes and adjust y pos width distance metric
@@ -942,10 +1006,10 @@ vg.transforms.phylogram = function() {
                  .attr("in", "SourceGraphic")
                  .attr("in2", "tint")
                  .attr("in3", "BackgroundImage");
-               /* ALTERNATIVE SOLUTION, using feComposite
+               / * ALTERNATIVE SOLUTION, using feComposite
                d3.select(this).append("svg:feComposite")
                  .attr("in", "SourceGraphic");
-                */
+                * /
            });
     }
 
@@ -994,7 +1058,7 @@ vg.transforms.phylogram = function() {
         
     
     // DATA JOIN
-    /* more interactions and styles on final marks
+    / * more interactions and styles on final marks
     var path_links = vis.selectAll("path.link")
         .data(tree.links(nodes), function(d) { return d.source['@id'] +'_'+ d.target['@id']; });
 
@@ -1077,11 +1141,11 @@ vg.transforms.phylogram = function() {
     g_nodes
       .exit().remove();
 
-    */
+    * /
     // any dynamic readjustments of non-CSS attributes
     ///styleTreeNodes(vis);
     
-    /* node labeling 
+    / * node labeling 
     // TODO: why is this SUPER-SLOW with large trees? like MINUTES to run...
     // Is there a faster/cruder way to clear the decks?
     vis.selectAll('g.node text').remove();
@@ -1147,29 +1211,29 @@ vg.transforms.phylogram = function() {
         .attr("text-anchor", "start");
     }
     
-    */ 
+    * / 
 
     return {tree: tree, vis: vis}
   }
   
   var buildRadial = function(nodes, links, options) {
     options = options || {}
-    /* set width, radius, space for edge labels
+    / * set width, radius, space for edge labels
     var w = options.width || d3.select(selector).style('width') || d3.select(selector).attr('width'),
         r = w / 2,
         // NOTE the fudge factor here; longer labels will be clipped!
         labelWidth = options.skipLabels ? 10 : options.labelWidth || 120;
-    */
+    * /
     
-    /* build SVG, set size and offet (center is 0,0)
+    / * build SVG, set size and offet (center is 0,0)
     var vis = d3.select(selector).append("svg:svg")
         .attr("width", r * 2)
         .attr("height", r * 2)
       .append("svg:g")
         .attr("transform", "translate(" + r + "," + r + ")");
-    */
+    * /
         
-    /* set space with x as polar coordinates (360 degrees), y = 1.0 */
+    / * set space with x as polar coordinates (360 degrees), y = 1.0 * /
     var tree = d3.layout.tree()  // TODO: use cluster here?
       .size([360, 500])   // WAS ([360, r - labelWidth])
       // sort populous to sparse branches
@@ -1205,3 +1269,4 @@ vg.transforms.phylogram = function() {
     
     return {tree: tree, vis: vis}
   }
+*/

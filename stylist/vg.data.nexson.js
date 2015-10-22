@@ -10,6 +10,70 @@
  * should produce the same output: a uniform JS object representing a
  * d3-ready tree (see https://github.com/OpenTreeOfLife/tree-illustrator/wiki/Building-on-D3-and-Vega#data-importers)
  */
+var vg  = require('vega'),
+    log  = require('vega-logging'),
+    Transform = require('vega/src/transforms/Transform');
+
+function Nexson(graph) {
+  Transform.prototype.init.call(this, graph);
+  Transform.addParameters(this, {
+      // TODO: review params!
+      //size: {type: 'value', default: [1.0, 1.0]}
+  });
+  /* TODO: which (if any) of these is appropriate to return?
+  this.router(true);
+  return this.router(true).produces(true);
+  return this.mutates(true);
+  debugger;
+  return this.router(true);
+  */
+}
+
+var prototype = (Nexson.prototype = Object.create(Transform.prototype));
+prototype.constructor = Nexson;
+
+prototype.transform = function(input) {
+  log.debug(input, ['nexson conversion']);
+
+  /* TODO
+  if (input.add.length || input.mod.length || input.rem.length) {
+    input.sort = dl.comparator(this.param('by').field);
+  }
+  */
+  return input;
+};
+
+module.exports = Nexson;
+
+Nexson.schema = {
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Nexson transform",
+  "description": "Transforms NEXson data into a form suitable for use in the Tree Illustrator"
+               + " and d3.phylogram.js.",
+  "type": "object",
+  "properties": {
+    "type": {"enum": ["nexson"]},
+    /* TODO: review params!
+    "cachePath": {
+      "description": "A field pointing to the cache object",
+      "oneOf": [{"type": "string"}, {"$ref": "#/refs/signal"}]  // TODO: signal?
+    },
+    "key": {
+      "description": "A unique key for this data in the stash",
+      "oneOf": [{"type": "string"}, {"$ref": "#/refs/signal"}]  // TODO: signal?
+    },
+    "flush": {
+      "description": " If true, will replace any existing stashed data.", // TODO: confirm
+      "oneOf": [{"type": "boolean"}, {"$ref": "#/refs/signal"}],
+      "default": false
+    }
+    */
+  },
+  "additionalProperties": false,  // TODO: confirm this
+  "required": ["type"]  // TODO: add required params
+};
+
+/*
 vg.transforms.nexson = function() {
   var layout = d3.layout.cluster()  // or tree (seems most basic)
                  //.children(function(d) { return d.values; }),
@@ -34,10 +98,10 @@ vg.transforms.nexson = function() {
       treePosition = 0;
 
   function nexson(data, db, group) {
-/*
+/ *
 console.log("INCOMING data to nexson transform:");
 console.log(data);
-*/
+* /
     fullNexson = data['data'];  // stash the complete NEXson!
     nexml = fullNexson.data.nexml;
     var rootNode = getRootNode();  // defined below
@@ -59,9 +123,9 @@ console.log(data);
     // add all possible labels to each node
     var tree = getSpecifiedTree();
     $.each(data.phyloNodes, function(i, node) {
-        /* N.B. It's best to provide at least an empty string for all
+        / * N.B. It's best to provide at least an empty string for all
          * properties, to avoid showing 'undefined' labels in some browsers.
-         */
+         * /
         node.explicitLabel = '';
         node.originalLabel = '';
         node.ottTaxonName = '';
@@ -101,7 +165,7 @@ console.log(data);
     });
     
     data.phyloEdges = layout.links(data.phyloNodes);
-/* translate incoming keys to their output names?
+/ * translate incoming keys to their output names?
     var keys = vg.keys(output),
         len = keys.length;
 
@@ -117,13 +181,13 @@ console.log(data);
       }
       //d.children = getChildren(d);
     });
-*/
+* /
 
     
-/*
+/ *
     console.log("OUTGOING data from nexson transform:");
     console.log(data);
-*/
+* /
     return data;
   }
 
@@ -164,11 +228,11 @@ console.log(data);
     return nexson;
   };
 
-    /* 
+    / * 
      * NEXson-specific logic, encapsulated for easy access to nexml, etc.
      * 
      * Adapted from https://github.com/OpenTreeOfLife/opentree/blob/79aa1f4f72940c0f5708fd2ced56190d8c34ad9a/curator/static/js/study-editor.js
-     */
+     * /
     var fastLookups = {
         'NODES_BY_ID': null,
         'OTUS_BY_ID': null,
@@ -417,3 +481,4 @@ console.log(data);
 
   return nexson;
 };
+*/
