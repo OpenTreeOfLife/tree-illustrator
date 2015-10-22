@@ -1,6 +1,10 @@
 /* This module defines and exposes JS pseudo-classes to support a complex view
  * model for editing illustrations.
  */
+
+var utils = require('./ti-utils.js'),
+    stylist = require('./stylist.js');
+
 var TreeIllustrator = function(window, document, $, ko) {
 
     // Explicitly check for dependencies by passing them as args to the module
@@ -206,7 +210,10 @@ var TreeIllustrator = function(window, document, $, ko) {
     var getNewIllustratedTreeModel = function(illustration, options) {
         if (!options) options = {};
         var newID = illustration.getNextAvailableID('tree'); 
-        var landmarks = getPrintAreaLandmarks();
+        var landmarks = (typeof getPrintAreaLandmarks === 'function') ?
+            getPrintAreaLandmarks() :
+            // here's a bogus object as a pacifier
+            {width: 100, height: 100, centerX: 50, centerY: 50};
         var obj = {
             'id': newID,
             'metadata': {
@@ -231,8 +238,8 @@ var TreeIllustrator = function(window, document, $, ko) {
             'height': landmarks.height * 0.4,
             'radius': Math.min(landmarks.height, landmarks.width) * 0.3,
             'tipsAlignment': alignments.RIGHT,
-            'rootX': landmarks.centerX + jiggle(5),   // TODO: use a bounding box instead?
-            'rootY': landmarks.centerY + jiggle(5),
+            'rootX': landmarks.centerX + utils.jiggle(5),   // TODO: use a bounding box instead?
+            'rootY': landmarks.centerY + utils.jiggle(5),
             'nodeLabelField': 'ottTaxonName',         // matches the placeholder tree
             'style': {
                 // incl. only deviations from the style guide above?
@@ -1447,3 +1454,7 @@ var TreeIllustrator = function(window, document, $, ko) {
         StyleOverrides: StyleOverrides
     };
 }(window, document, $, ko);
+
+for (var name in TreeIllustrator) {
+    exports[ name ] = TreeIllustrator[ name ];
+}
