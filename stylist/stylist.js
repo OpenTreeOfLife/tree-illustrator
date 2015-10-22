@@ -5,7 +5,36 @@
  */
 
 var $ = require('jquery'),
+    vg = require('vega'),
+    TreeIllustrator = require('./TreeIllustrator.js'),
     stashTransform = require('./vg.data.stash.js');
+    pluckTransform = require('./vg.data.pluck.js');
+    nexsonTransform = require('./vg.data.nexson.js');
+    phylogramTransform = require('./vg.data.phylogram.js');
+
+//module.exports = function() { alert('hi from stylist'); };
+
+// register custom transforms with the installed vega
+vg.transforms['stash'] = stashTransform;
+vg.transforms['pluck'] = pluckTransform;
+vg.transforms['nexson'] = nexsonTransform;
+vg.transforms['phylogram'] = phylogramTransform;
+
+// Expose some members to outside code (eg, Knockout bindings, onClick
+// attributes...)
+global.TreeIllustrator = TreeIllustrator;
+/*** The globals below seem like code smell. Is there another way? */
+global.getPrintAreaLandmarks = getPrintAreaLandmarks;
+global.refreshViz = refreshViz;
+global.physicalUnitsToPixels = physicalUnitsToPixels;
+global.pixelsToPhysicalUnits = pixelsToPhysicalUnits;
+global.pointsToInches = pointsToInches;
+global.doNothing = doNothing;
+global.browser_ppi = browser_ppi;
+global.internal_ppi = internal_ppi;
+global.display_ppi = display_ppi;
+global.availableTrees = availableTrees;
+/* */
 
 // patch missing JS console on some (very) old browsers
 if (typeof console == 'undefined') console = {
@@ -1186,21 +1215,29 @@ function doNothing() {
 
 function getPrintAreaLandmarks() {
     // gather interesting coordinates in internal pixels
+    if (ill) {
+        return {
+            width: physicalUnitsToPixels(ill.style.printSize.width(), internal_ppi),
+            height: physicalUnitsToPixels(ill.style.printSize.height(), internal_ppi),
+            leftX: 0,
+            centerX: physicalUnitsToPixels(ill.style.printSize.width() / 2.0, internal_ppi),
+            rightX: physicalUnitsToPixels(ill.style.printSize.width(), internal_ppi),
+            topY: 0,
+            centerY: physicalUnitsToPixels(ill.style.printSize.height() / 2.0, internal_ppi),
+            bottomY: physicalUnitsToPixels(ill.style.printSize.height(), internal_ppi)
+        };
+    }
+    // return placeholder values
     return {
-        width: physicalUnitsToPixels(ill.style.printSize.width(), internal_ppi),
-        height: physicalUnitsToPixels(ill.style.printSize.height(), internal_ppi),
-        leftX: 0,
-        centerX: physicalUnitsToPixels(ill.style.printSize.width() / 2.0, internal_ppi),
-        rightX: physicalUnitsToPixels(ill.style.printSize.width(), internal_ppi),
-        topY: 0,
-        centerY: physicalUnitsToPixels(ill.style.printSize.height() / 2.0, internal_ppi),
-        bottomY: physicalUnitsToPixels(ill.style.printSize.height(), internal_ppi)
+        width:   1.0,
+        height:  1.0,
+        leftX:   0.0,
+        centerX: 0.5,
+        rightX:  1.0,
+        topY:    0.0,
+        centerY: 0.5,
+        bottomY: 1.0
     };
-}
-
-function jiggle( range ) {
-    // Return a number +- zero, within this range
-    return Math.round(Math.random() * range * 2) - range; 
 }
 
 function applyChosenStyleGuide(clicked) {
