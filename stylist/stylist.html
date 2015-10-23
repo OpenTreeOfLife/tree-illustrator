@@ -8,6 +8,9 @@
     <script src="knockout-2.3.0.js"></script>
     <script src="knockout.mapping-latest.debug.js"></script>
     <script src="knockout.validation.js"></script>
+    <script type="text/javascript">
+        // inline logic here?
+    </script>
     <script src="stylist-bundle.js"></script>
 <!--
     <script src="ti-bundle.js"></script>
@@ -38,13 +41,13 @@
    <div class="span6"> 
     <div id="sticky-viewer-frame">
         <div id="viz-top-control-bar" style="text-align: center; overflow: hidden;">
-            <button class="btn btn-small pull-right" onclick="toggleFixedRulers(this); return false;">Hide rulers</button>
+            <button class="btn btn-small pull-right" onclick="stylist.toggleFixedRulers(this); return false;">Hide rulers</button>
 
-            <button class="btn btn-small pull-left" onclick="zoomViewport('IN', this); return false;">Zoom in</button>
-            <button class="btn btn-small pull-left" onclick="zoomViewport('OUT', this); return false;">Zoom out</button>
+            <button class="btn btn-small pull-left" onclick="stylist.zoomViewport('IN', this); return false;">Zoom in</button>
+            <button class="btn btn-small pull-left" onclick="stylist.zoomViewport('OUT', this); return false;">Zoom out</button>
 
-            <button class="btn btn-small" onclick="zoomViewport(1.0, this); return false;">Actual size</button>
-            <button class="btn btn-small" onclick="resizeViewportToShowAll(); return false;">Fit contents</button>
+            <button class="btn btn-small" onclick="stylist.zoomViewport(1.0, this); return false;">Actual size</button>
+            <button class="btn btn-small" onclick="stylist.resizeViewportToShowAll(); return false;">Fit contents</button>
         </div>
 
         <div id="viz-outer-frame">
@@ -55,7 +58,7 @@
 
         <div id="viz-bottom-control-bar" Xstyle="float: left; margin-top: 2em;">
             <button class="btn btn-small" style="float: left; margin-right: 12px;" 
-                    onclick="printIllustration(); return false;">Print actual size</button>
+                    onclick="stylist.printIllustration(); return false;">Print actual size</button>
             <label for="toggle-printing-diagnostics" class="checkbox" style="float: left; margin-right: 12px;">
                 <input type="checkbox" id="toggle-printing-diagnostics" />Print rulers, crop marks, description
             </label>
@@ -288,7 +291,7 @@
                             data-bind="options: styleGuide.constraints.colorDepths,
                                        optionsText: 'name',
                                        optionsValue: 'name',
-                                       event: {change: refreshViz}">
+                                       event: {change: stylist.refreshViz}">
                     </select>
                 </div>
             </div>
@@ -435,7 +438,7 @@
 
           <!-- ko if: $index() === 0 -->
             <i class="indicator move-up icon-chevron-up move-disabled pull-right"
-               data-bind="click: doNothing, clickBubble: false" ></i>
+               data-bind="click: stylist.doNothing, clickBubble: false" ></i>
           <!-- /ko -->
           <!-- ko ifnot: $index() === 0 -->
             <i class="indicator move-up icon-chevron-up pull-right"
@@ -445,7 +448,7 @@
 
           <!-- ko if: ($index() === $root.elements().length - 1) -->
             <i class="indicator move-down icon-chevron-down move-disabled pull-right"
-               data-bind="click: doNothing, clickBubble: false" ></i>
+               data-bind="click: stylist.doNothing, clickBubble: false" ></i>
           <!-- /ko -->
           <!-- ko ifnot: ($index() === $root.elements().length - 1) -->
             <i class="indicator move-down icon-chevron-down pull-right"
@@ -475,7 +478,7 @@
                            data-bind="attr: {for: '#'+ id() +'-datasource-chooser'}" >Data source</label> 
                     <div class="controls">
                         <select style="margin-bottom: 0;"
-                                data-bind="options: availableTrees,
+                                data-bind="options: stylist.availableTrees,
                                            optionsValue: 'name',
                                            optionsText: 'name',
                                            attr: {id: id() +'-datasource-chooser'},
@@ -533,17 +536,17 @@
                             <button class="btn"
                                     data-bind="css: { active: layout() === TreeIllustrator.treeLayouts.RECTANGLE },
                                                click: useChosenLayout.bind($data, TreeIllustrator.treeLayouts.RECTANGLE),
-                                               event: {keyup: refreshViz, change: refreshViz}"> 
+                                               event: {keyup: stylist.refreshViz, change: stylist.refreshViz}"> 
                                 Rectangle </button>
                             <button class="btn CIRCLE-button"
                                     data-bind="css: { active: layout() === TreeIllustrator.treeLayouts.CIRCLE },
                                                click: useChosenLayout.bind($data, TreeIllustrator.treeLayouts.CIRCLE),
-                                               event: {keyup: refreshViz, change: refreshViz}"> 
+                                               event: {keyup: stylist.refreshViz, change: stylist.refreshViz}"> 
                                 Circle </button>
                             <button class="btn TRIANGLE-button"
                                     data-bind="css: { active: layout() === TreeIllustrator.treeLayouts.TRIANGLE },
                                                click: useChosenLayout.bind($data, TreeIllustrator.treeLayouts.TRIANGLE),
-                                               event: {keyup: refreshViz, change: refreshViz}"> 
+                                               event: {keyup: stylist.refreshViz, change: stylist.refreshViz}"> 
                                 Triangle </button>
                         </div>
                     </div>
@@ -562,7 +565,7 @@
                                data-bind="value: physicalWidth,
                                           attr: {id: id() +'-width-field'},
                                           valueUpdate: ['afterkeydown','input'],
-                                          event: {keyup: refreshViz, change: refreshViz},
+                                          event: {keyup: stylist.refreshViz, change: stylist.refreshViz},
                                           visible: layout() !== TreeIllustrator.treeLayouts.CIRCLE" />
 
                         <label data-bind="attr: {for: '#'+ id() +'-height-field'},
@@ -572,7 +575,7 @@
                                data-bind="value: physicalHeight,
                                           attr: {id: id() +'-height-field'},
                                           valueUpdate: ['afterkeydown','input'],
-                                          event: {keyup: refreshViz, change: refreshViz},
+                                          event: {keyup: stylist.refreshViz, change: stylist.refreshViz},
                                           visible: layout() !== TreeIllustrator.treeLayouts.CIRCLE" />
 
                         <label data-bind="attr: {for: '#'+ id() +'-radius-field'},
@@ -582,7 +585,7 @@
                                data-bind="value: physicalRadius,
                                           attr: {id: id() +'-radius-field'},
                                           valueUpdate: ['afterkeydown','input'],
-                                          event: {keyup: refreshViz, change: refreshViz},
+                                          event: {keyup: stylist.refreshViz, change: stylist.refreshViz},
                                           visible: layout() === TreeIllustrator.treeLayouts.CIRCLE" />
 
                         (<span data-bind="text: $root.unitsDisplayAbbreviation()">cm</span>)
@@ -597,22 +600,22 @@
                             <button class="btn"
                                     data-bind="css: { active: tipsAlignment() === TreeIllustrator.alignments.TOP },
                                                click: useChosenTipsAlignment.bind($data, TreeIllustrator.alignments.TOP),
-                                               event: {keyup: refreshViz, change: refreshViz}"> 
+                                               event: {keyup: stylist.refreshViz, change: stylist.refreshViz}"> 
                                 Top </button>
                             <button class="btn"
                                     data-bind="css: { active: tipsAlignment() === TreeIllustrator.alignments.RIGHT },
                                                click: useChosenTipsAlignment.bind($data, TreeIllustrator.alignments.RIGHT),
-                                               event: {keyup: refreshViz, change: refreshViz}"> 
+                                               event: {keyup: stylist.refreshViz, change: stylist.refreshViz}"> 
                                 Right </button>
                             <button class="btn"
                                     data-bind="css: { active: tipsAlignment() === TreeIllustrator.alignments.BOTTOM },
                                                click: useChosenTipsAlignment.bind($data, TreeIllustrator.alignments.BOTTOM),
-                                               event: {keyup: refreshViz, change: refreshViz}"> 
+                                               event: {keyup: stylist.refreshViz, change: stylist.refreshViz}"> 
                                 Bottom </button>
                             <button class="btn"
                                     data-bind="css: { active: tipsAlignment() === TreeIllustrator.alignments.LEFT },
                                                click: useChosenTipsAlignment.bind($data, TreeIllustrator.alignments.LEFT),
-                                               event: {keyup: refreshViz, change: refreshViz}"> 
+                                               event: {keyup: stylist.refreshViz, change: stylist.refreshViz}"> 
                                 Left </button>
                         </div>
                     </div>
@@ -627,7 +630,7 @@
                                data-bind="value: physicalRootX,
                                           attr: {id: id() +'-rootx-field'},
                                           valueUpdate: ['afterkeydown','input'],
-                                          event: {keyup: refreshViz, change: refreshViz}" />&nbsp;
+                                          event: {keyup: stylist.refreshViz, change: stylist.refreshViz}" />&nbsp;
                         &nbsp;
                         <label data-bind="attr: {for: '#'+ id() +'-rooty-field'}" >y</label> 
                         <input type="text" value="?"
@@ -635,7 +638,7 @@
                                data-bind="value: physicalRootY,
                                           attr: {id: id() +'-rooty-field'},
                                           valueUpdate: ['afterkeydown','input'],
-                                          event: {keyup: refreshViz, change: refreshViz}" />&nbsp;
+                                          event: {keyup: stylist.refreshViz, change: stylist.refreshViz}" />&nbsp;
                         &nbsp;(<span data-bind="text: $root.unitsDisplayAbbreviation()">cm</span> from top left)
                     </div>
                 </div>
@@ -656,7 +659,7 @@
                                           optionsText: 'label',
                                           optionsValue: 'value',
                                           value: nodeLabelField,
-                                          event: {change: refreshViz}">
+                                          event: {change: stylist.refreshViz}">
                         </select>
                     </div>
                 </div>
@@ -713,7 +716,7 @@
 
           <!-- ko if: $index() === 0 -->
             <i class="indicator move-up icon-chevron-up move-disabled pull-right"
-               data-bind="click: doNothing, clickBubble: false" ></i>
+               data-bind="click: stylist.doNothing, clickBubble: false" ></i>
           <!-- /ko -->
           <!-- ko ifnot: $index() === 0 -->
             <i class="indicator move-up icon-chevron-up pull-right"
@@ -723,7 +726,7 @@
 
           <!-- ko if: ($index() === $root.elements().length - 1) -->
             <i class="indicator move-down icon-chevron-down move-disabled pull-right"
-               data-bind="click: doNothing, clickBubble: false" ></i>
+               data-bind="click: stylist.doNothing, clickBubble: false" ></i>
           <!-- /ko -->
           <!-- ko ifnot: ($index() === $root.elements().length - 1) -->
             <i class="indicator move-down icon-chevron-down pull-right"
@@ -764,7 +767,7 @@
 
           <!-- ko if: $index() === 0 -->
             <i class="indicator move-up icon-chevron-up move-disabled pull-right"
-               data-bind="click: doNothing, clickBubble: false" ></i>
+               data-bind="click: stylist.doNothing, clickBubble: false" ></i>
           <!-- /ko -->
           <!-- ko ifnot: $index() === 0 -->
             <i class="indicator move-up icon-chevron-up pull-right"
@@ -774,7 +777,7 @@
 
           <!-- ko if: ($index() === $root.elements().length - 1) -->
             <i class="indicator move-down icon-chevron-down move-disabled pull-right"
-               data-bind="click: doNothing, clickBubble: false" ></i>
+               data-bind="click: stylist.doNothing, clickBubble: false" ></i>
           <!-- /ko -->
           <!-- ko ifnot: ($index() === $root.elements().length - 1) -->
             <i class="indicator move-down icon-chevron-down pull-right"

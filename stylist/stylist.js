@@ -12,29 +12,51 @@ var $ = require('jquery'),
     nexsonTransform = require('./vg.data.nexson.js');
     phylogramTransform = require('./vg.data.phylogram.js');
 
-//module.exports = function() { alert('hi from stylist'); };
+// Expose some members to outside code (eg, Knockout bindings, onClick
+// attributes...)
+var api = [
+    'TreeIllustrator',
+    'inchesToCentimeters',
+    'centimetersToInches',
+    'inchesToPoints',
+    'pointsToInches',
+    'centimetersToPoints',
+    'pointsToCentimeters',
+    'pixelsToInches',
+    'inchesToPixels',
+    'pixelsToCentimeters',
+    'centimetersToPixels',
+    'pixelsToPhysicalUnits',
+    'physicalUnitsToPixels',
+    'pointsToCentimeters',
+    'getPrintAreaLandmarks',
+    'toggleFixedRulers',
+    'refreshViz',
+    'doNothing',
+    'browser_ppi',
+    'internal_ppi',
+    'display_ppi',
+    'availableTrees',
+    'zoomViewport',
+    'printIllustration',
+    'resizeViewportToShowAll',
+    'availableStyleGuides',
+    'showStyleGuidePicker',
+    'ill'
+];
+$.each(api, function(i, methodName) {
+    // populate the default 'module.exports' object
+    exports[ methodName ] = eval( methodName );
+});
+
+//exports.stylist = this;  // is there any way to do this?
+global.TreeIllustrator = TreeIllustrator;
 
 // register custom transforms with the installed vega
 vg.transforms['stash'] = stashTransform;
 vg.transforms['pluck'] = pluckTransform;
 vg.transforms['nexson'] = nexsonTransform;
 vg.transforms['phylogram'] = phylogramTransform;
-
-// Expose some members to outside code (eg, Knockout bindings, onClick
-// attributes...)
-global.TreeIllustrator = TreeIllustrator;
-/*** The globals below seem like code smell. Is there another way? */
-global.getPrintAreaLandmarks = getPrintAreaLandmarks;
-global.refreshViz = refreshViz;
-global.physicalUnitsToPixels = physicalUnitsToPixels;
-global.pixelsToPhysicalUnits = pixelsToPhysicalUnits;
-global.pointsToInches = pointsToInches;
-global.doNothing = doNothing;
-global.browser_ppi = browser_ppi;
-global.internal_ppi = internal_ppi;
-global.display_ppi = display_ppi;
-global.availableTrees = availableTrees;
-/* */
 
 // patch missing JS console on some (very) old browsers
 if (typeof console == 'undefined') console = {
@@ -447,8 +469,13 @@ $(document).ready(function() {
     // Use an Illustration object as our primary view model for KnockoutJS
     // (by convention, it's usually named 'viewModel')
     ill = new TreeIllustrator.Illustration();
+    // export the new illustration
+    //global.ill = ill; // to a global?
+    exports.ill = ill; 
+
     // add a single placeholder tree
     ill.addIllustratedTree();
+
 
     var editorArea = $('#editor')[0];
     ko.applyBindings(ill, editorArea);

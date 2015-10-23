@@ -5,7 +5,9 @@
 var utils = require('./ti-utils.js'),
     stylist = require('./stylist.js');
 
-var TreeIllustrator = function(window, document, $, ko) {
+global.stylist = stylist;
+
+var TreeIllustrator = function(window, document, $, ko, stylist) {
 
     // Explicitly check for dependencies by passing them as args to the module
     if (typeof($) !== 'function') {
@@ -14,6 +16,10 @@ var TreeIllustrator = function(window, document, $, ko) {
     }
     if (!ko || typeof(ko) !== 'object') {
         alert("TreeIllustrator module cancelled, needs KnockoutJS (as 'ko')");
+        return null;
+    }
+    if (!stylist || typeof(stylist) !== 'object') {
+        alert("TreeIllustrator module cancelled, needs 'stylist' module (as 'stylist')");
         return null;
     }
 
@@ -397,7 +403,7 @@ var TreeIllustrator = function(window, document, $, ko) {
             }
 
             // update visible canvas and d3 viz
-            refreshViz();
+            stylist.refreshViz();
         };
         self.updatePrintSizeChooser = function() {
             // (de)select matching size after manual adjustments
@@ -419,7 +425,7 @@ var TreeIllustrator = function(window, document, $, ko) {
             $('#style-docsize-chooser').val(matchingSizeName);
 
             // update visible canvas and d3 viz
-            refreshViz();
+            stylist.refreshViz();
         };
         var getPrintSizeByName = function( name ) {
             var matchingSize = $.grep(
@@ -516,8 +522,8 @@ var TreeIllustrator = function(window, document, $, ko) {
                 // echo the new size (in pt) as inches/cm
                 chosenSize = parseFloat(chosenSize);
                 var convertedSize = self.style.printSize.units() === units.INCHES ?
-                    pointsToInches( chosenSize ) :
-                    pointsToCentimeters( chosenSize );
+                    stylist.pointsToInches( chosenSize ) :
+                    stylist.pointsToCentimeters( chosenSize );
                 convertedSize = convertedSize.toFixed(2);
                 var unitSuffix = self.style.printSize.units() === units.INCHES ?
                     'inches' : 'cm';
@@ -537,8 +543,8 @@ var TreeIllustrator = function(window, document, $, ko) {
                 // echo the new size (in pt) as inches/cm
                 chosenSize = parseFloat(chosenSize);
                 var convertedSize = self.style.printSize.units() === units.INCHES ?
-                    pointsToInches( chosenSize ) :
-                    pointsToCentimeters( chosenSize );
+                    stylist.pointsToInches( chosenSize ) :
+                    stylist.pointsToCentimeters( chosenSize );
                 convertedSize = convertedSize.toFixed(2);
                 var unitSuffix = self.style.printSize.units() === units.INCHES ?
                     'inches' : 'cm';
@@ -681,20 +687,20 @@ var TreeIllustrator = function(window, document, $, ko) {
 
             self.updatePrintSizeChooser();
             self.updateFontFamilyChooser();
-            refreshViz();
+            stylist.refreshViz();
         },
 
         addIllustratedTree: function() {
             var self = this;
             var tree = new IllustratedTree(self);
             self.elements.push(tree);
-            refreshViz();
+            stylist.refreshViz();
             return tree;
         },
         removeIllustratedTree: function(tree) {
             var self = this;
             self.elements.remove(tree);
-            refreshViz();
+            stylist.refreshViz();
             delete tree;
         },
 
@@ -702,13 +708,13 @@ var TreeIllustrator = function(window, document, $, ko) {
             var self = this;
             var ds  = new SupportingDataset(self);
             self.elements.push(ds);
-            refreshViz();
+            stylist.refreshViz();
             return ds;
         },
         removeSupportingDataset: function(ds) {
             var self = this;
             self.elements.remove(ds);
-            refreshViz();
+            stylist.refreshViz();
             delete ds;
         },
 
@@ -716,13 +722,13 @@ var TreeIllustrator = function(window, document, $, ko) {
             var self = this;
             var obj  = new Ornament(self);
             self.elements.push(obj);
-            refreshViz();
+            stylist.refreshViz();
             return obj;
         },
         removeOrnament: function(obj) {
             var self = this;
             self.elements.remove(obj);
-            refreshViz();
+            stylist.refreshViz();
             delete obj;
         },
 
@@ -817,8 +823,8 @@ var TreeIllustrator = function(window, document, $, ko) {
             // clear all groups and marks, and restore the empty illustration-elements group
             spec.marks = [ ];
             // reckon the current width and height as internal px
-            var pxPrintWidth = physicalUnitsToPixels(self.style.printSize.width(), internal_ppi);
-            var pxPrintHeight = physicalUnitsToPixels(self.style.printSize.height(), internal_ppi);
+            var pxPrintWidth = stylist.physicalUnitsToPixels(self.style.printSize.width(), stylist.internal_ppi);
+            var pxPrintHeight = stylist.physicalUnitsToPixels(self.style.printSize.height(), stylist.internal_ppi);
             var illustrationElementsGroup = {
                 "type": "group",
                 "name": "illustration-elements",  // becomes marker class .illustration-elements
@@ -1168,7 +1174,7 @@ var TreeIllustrator = function(window, document, $, ko) {
             } else {
                 console.error("useChosenLayout(): Unknown tree layout '"+ newValue +"'!"); 
             }
-            refreshViz();
+            stylist.refreshViz();
         }
         ,
         useChosenTreeDataSource: function() {
@@ -1226,7 +1232,7 @@ var TreeIllustrator = function(window, document, $, ko) {
                     self.metadata.source.type(dataSourceTypes.URL);
                     self.metadata.source.value( treeInfo.url );
             }
-            refreshViz();
+            stylist.refreshViz();
         }
         ,
         useChosenLabelField: function() {
@@ -1234,7 +1240,7 @@ var TreeIllustrator = function(window, document, $, ko) {
             // pick up latest data from bound widgets
             var $chooser = $('#'+ self.id() +'-labelfield-chooser');
             self.nodeLabelTextField = $chooser.val();
-            refreshViz();
+            stylist.refreshViz();
         }
         ,
         convertPastedDataToTree: function(treeID) {
@@ -1257,7 +1263,7 @@ var TreeIllustrator = function(window, document, $, ko) {
                 // N.B. This data will be safely cloned by Vega when spec is parsed!
                 // NOTE that we should still refresh immediately, in case the cached tree data was loaded
                 // created for another tree, or an earlier version of this one.
-                refreshViz();
+                stylist.refreshViz();
             } else {
                 // call opentree web services to convert to nexson
                 //TODO: Apply other pasted formats (and REMEMBER THEM in the saved illustration!)
@@ -1313,7 +1319,7 @@ var TreeIllustrator = function(window, document, $, ko) {
                         // adjust node-label field to show "explicit" labels (this will trigger a display refresh)
                         var $labelChooser = $('#'+ self.id() +'-labelfield-chooser');
                         $labelChooser.val('explicitLabel').change();
-                        //refreshViz();
+                        //stylist.refreshViz();
                     }
                 });
             }
@@ -1326,7 +1332,7 @@ var TreeIllustrator = function(window, document, $, ko) {
             } else {
                 console.error("useChosenTipsAlignment(): Unknown tree layout '"+ newValue +"'!"); 
             }
-            refreshViz();
+            stylist.refreshViz();
         }
 
     };
@@ -1396,11 +1402,11 @@ var TreeIllustrator = function(window, document, $, ko) {
         precision = precision || 2;  
         return ko.computed({
             read: function() {
-                var physicalValue = pixelsToPhysicalUnits(obj[ fieldName ](), internal_ppi);
+                var physicalValue = stylist.pixelsToPhysicalUnits(obj[ fieldName ](), stylist.internal_ppi);
                 return Number(Math.round(physicalValue + "e+" + precision) + "e-" + precision);
             },
             write: function(value) {
-                obj[ fieldName ]( physicalUnitsToPixels(value, internal_ppi));
+                obj[ fieldName ]( stylist.physicalUnitsToPixels(value, stylist.internal_ppi));
             },
             owner: obj,
             deferEvaluation: true
@@ -1453,7 +1459,7 @@ var TreeIllustrator = function(window, document, $, ko) {
         Ornament: Ornament,
         StyleOverrides: StyleOverrides
     };
-}(window, document, $, ko);
+}(window, document, $, ko, stylist);
 
 for (var name in TreeIllustrator) {
     exports[ name ] = TreeIllustrator[ name ];
