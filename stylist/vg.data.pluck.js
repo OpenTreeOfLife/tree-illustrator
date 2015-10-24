@@ -19,17 +19,10 @@ var vg  = require('vega'),
 function Pluck(graph) {
   Transform.prototype.init.call(this, graph);
   Transform.addParameters(this, {
-      cachePath: {type: 'field'},  // TODO: 'field' or 'value' here?
-      key: {type: 'value'},  // TODO?
-      flush: {type: 'value', default: false}
+      field: {type: 'field'}
   });
-  /* TODO: which (if any) of these is appropriate to return?
-  this.router(true);
-  return this.router(true).produces(true);
+  // TODO: confirm that this is appropriate here
   return this.mutates(true);
-  debugger;
-  return this.router(true);
-  */
 }
 
 var prototype = (Pluck.prototype = Object.create(Transform.prototype));
@@ -38,11 +31,15 @@ prototype.constructor = Pluck;
 prototype.transform = function(input) {
   log.debug(input, ['plucking']);
 
-  /* TODO
-  if (input.add.length || input.mod.length || input.rem.length) {
-    input.sort = dl.comparator(this.param('by').field);
+  var g = this._graph,
+      field = this.param('field');
+  
+  var output = field.accessor(input);
+  if (output) {
+    return output;
   }
-  */
+
+  console.warn('pluck transform: unable to resolve this field ('+ field.field +')! returning input');
   return input;
 };
 
@@ -55,24 +52,13 @@ Pluck.schema = {
   "type": "object",
   "properties": {
     "type": {"enum": ["pluck"]},
-    /* TODO: review params
-    "cachePath": {
-      "description": "A field pointing to the cache object",
-      "oneOf": [{"type": "string"}, {"$ref": "#/refs/signal"}]  // TODO: signal?
-    },
-    "key": {
-      "description": "A unique key for this data in the stash",
-      "oneOf": [{"type": "string"}, {"$ref": "#/refs/signal"}]  // TODO: signal?
-    },
-    "flush": {
-      "description": " If true, will replace any existing stashed data.", // TODO: confirm
-      "oneOf": [{"type": "boolean"}, {"$ref": "#/refs/signal"}],
-      "default": false
+    "field": {
+      "description": "Which field of the data you want to select.",
+      "oneOf": [{"type": "field"}, {"$ref": "#/refs/signal"}]  // TODO: signal?
     }
-    */
   },
-  "additionalProperties": false,  // TODO: confirm this
-  "required": ["type"]  // TODO: review params
+  "additionalProperties": false,
+  "required": ["type", "field"]
 };
 
 /*
