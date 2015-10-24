@@ -67,7 +67,7 @@ prototype.transform = function(input) {
 
   if (!cache || (typeof cache !== 'object')) {
     // if an invalid cache path is submitted, treat this as a no-op
-    console.warn('stash transform: no cache found in eval('+ cachePathc +')! skipping this data');
+    console.warn('stash transform: no cache found in eval('+ cachePath +')! skipping this data');
     return input;
   }
 
