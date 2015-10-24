@@ -20,13 +20,14 @@
  */
 var vg  = require('vega'),
     log  = require('vega-logging'),
+    dl = require('datalib'),
     Transform = require('vega/src/transforms/Transform');
 
 function Stash(graph) {
   Transform.prototype.init.call(this, graph);
   Transform.addParameters(this, {
-      cachePath: {type: 'field'},  // TODO: 'field' or 'value' here?
-      key: {type: 'value'},  // TODO?
+      cachePath: {type: 'value'},
+      key: {type: 'value'},
       flush: {type: 'value', default: false}
   });
   /* TODO: which (if any) of these is appropriate to return?
@@ -43,12 +44,66 @@ prototype.constructor = Stash;
 
 prototype.transform = function(input) {
   log.debug(input, ['stashing']);
+/*
+  console.log("INCOMING data to stash transform:");
+  console.log(input);
+  
+  console.log("  cachePath:");
+  console.log(this.param('cachePath'));
+  console.log(this.param('cachePath').field);
 
-  /* TODO
-  if (input.add.length || input.mod.length || input.rem.length) {
-    input.sort = dl.comparator(this.param('by').field);
+  console.log("  key:");
+  console.log(this.param('key'));
+
+  console.log("  flush:");
+  console.log(this.param('flush'));
+*/
+
+  var g = this._graph,
+      cachePath = this.param('cachePath'),
+      cache = eval(cachePath),
+      key = this.param('key'),
+      flush = this.param('flush');
+
+  if (!cache || (typeof cache !== 'object')) {
+    // if an invalid cache path is submitted, treat this as a no-op
+    console.warn('stash transform: no cache found in eval('+ cachePathc +')! skipping this data');
+    return input;
   }
-  */
+
+  /* Stash the complete, current data. Note that we actually store a *copy* of
+   * the data, since Vega always clones data in a spec (see comment above).
+   */
+  if (flush || !(key in cache)) {
+    // be sure to cache the "raw" data as returned from source
+    // NOTE that g.dataValues() is a hash with n ids!
+    // for now, let's stash the whole thing
+    cache[ key ] = dl.duplicate(g.dataValues());
+    // N.B. dl.duplicate cleans up any weird methods and circular references
+/*
+    for (var valueName in g.dataValues()) {
+      var valueData = g.dataValues()[valueName];
+          cache[ key ] = dl.duplicate(valueData);
+      //if ('_data' in valueData) {
+      //    cache[ key ] = dl.duplicate(valueData._data);
+      //} else {
+      //}
+    }
+*/
+  }
+
+/* OR should we stash data piecemeal, based on state??
+  // move new (and possibly changed) data to the cache
+  function set(x) {
+    //move one datum (tuple?) into the cache
+    console.log("setting '"+ x +"'...");
+    //Tuple.set(x, field, expr(x, null, signals));
+  }
+  input.add.forEach(set);
+  if (this.reevaluate(input)) {
+    input.mod.forEach(set);
+  }
+*/
   return input;
 };
 
@@ -68,10 +123,10 @@ Stash.schema = {
     },
     "key": {
       "description": "A unique key for this data in the stash",
-      "oneOf": [{"type": "string"}, {"$ref": "#/refs/signal"}]  // TODO: signal?
+      "oneOf": [{"type": "string"}, {"$ref": "#/refs/signal"}]
     },
     "flush": {
-      "description": " If true, will replace any existing stashed data.", // TODO: confirm
+      "description": "If true, will replace any existing stashed data.",
       "oneOf": [{"type": "boolean"}, {"$ref": "#/refs/signal"}],
       "default": false
     }
@@ -79,81 +134,3 @@ Stash.schema = {
   "additionalProperties": false,  // TODO: confirm this
   "required": ["type", "key", "cachePath"]
 };
-
-
-
-/*
-vg.transforms.stash = function(test) {
-  //var data = vg.accessor("data");      // incoming data to be (possibly) cached
-  var data;
-
-  / * N.B. Vega always duplicates the incoming spec:
-   *   https://github.com/trifacta/vega/blob/e8013b855ef8331d1a07b9ef266cc8fc2738e436/src/parse/spec.js#L7
-   * ... so we can't accept the object itself as the incoming 'cache' argument,
-   * or we'll just end up stashing to a clone. Instead, we expect 'cachePath' with
-   * a dot-delimited path, like so:
-   *
-   *    treeData.transform.push({
-   *        "type": "stash", 
-   *        "cachePath": 'TreeIllustrator.cache',
-   *        "key": treeSourceCacheKey,
-   *        "flush": false
-   *    });
-   *
-   * (This example should point to an object at window.TreeIllustrator.cache)
-   * /
-  var cache;     // the cache itself (an associative array)
-
-  // Expected arguments (and defaults for each)
-  var key = '',         // an idempotent key for this data
-      flush = false;    // if true, force new data into the cache
-
-  function stash(data) {
-console.log("INCOMING data to stash transform:");
-console.log(data);
-/ *
-* /
-    
-    if (typeof cache === 'undefined') {
-        console.error('No cache has been set for the vg.transforms.stash transform!');
-        return data;
-    }
-    / * Note that we always store a *copy* of the data, since Vega always clones
-     * data in a spec (see comment above).
-     * /
-    if (flush || !(key in cache)) {
-        // be sure to cache the "raw" data as returned from source
-        if ('data' in data) {
-            cache[ key ] = vg.duplicate(data.data);
-        } else {
-            cache[ key ] = vg.duplicate(data);
-        }
-        // N.B. vg.duplicate cleans up any weird methods and circular references
-    }
-
-    console.log("OUTGOING data from stash transform:");
-    console.log(data);
-/ *
-* /
-    return data;
-  }
-
-  // Expose methods to accept variables from Vega spec
-  stash.cachePath = function(f) {
-    // we pass a string here, to use a persistent cache and not Vega's copy
-    var getCache = vg.accessor(f);
-    cache = getCache(window);
-    return stash;
-  };
-  stash.key = function(s) {
-    key = String(s);
-    return stash;
-  };
-  stash.flush = function(b) {
-    flush = Boolean(b);
-    return stash;
-  };
-
-  return stash;
-};
-*/
