@@ -11,6 +11,7 @@
  * d3-ready tree (see https://github.com/OpenTreeOfLife/tree-illustrator/wiki/Building-on-D3-and-Vega#data-importers)
  */
 var vg  = require('vega'),
+    //d3  = require('d3'),
     log  = require('vega-logging'),
     Transform = require('vega/src/transforms/Transform');
 
@@ -20,26 +21,123 @@ function Nexson(graph) {
       // TODO: review params!
       //size: {type: 'value', default: [1.0, 1.0]}
   });
-  /* TODO: which (if any) of these is appropriate to return?
-  this.router(true);
-  return this.router(true).produces(true);
-  return this.mutates(true);
-  debugger;
-  return this.router(true);
-  */
+  return this.produces(true)
+             .mutates(true);
 }
 
 var prototype = (Nexson.prototype = Object.create(Transform.prototype));
 prototype.constructor = Nexson;
 
 prototype.transform = function(input) {
-  log.debug(input, ['nexson conversion']);
+  log.debug(input, ['converting to nexson']);
 
-  /* TODO
-  if (input.add.length || input.mod.length || input.rem.length) {
-    input.sort = dl.comparator(this.param('by').field);
+  function convert(fullNexson) {
+    // convert a new (or changed?) tree to Tree Illustrator's preferred format
+    console.log("converting '"+ fullNexson +"'...");
+
+    var layout = d3.layout.cluster()  // or tree (seems most basic)
+                   .children(getNexsonChildren),  // below
+        nexml = fullNexson.data.nexml,
+        params = [ 'size' ],  // ["round", "sticky", "ratio", "padding"],
+        output = {
+          //"x": "x",
+          //"y": "y",
+          //"dx": "width",
+          //"dy": "height"
+        };
+    var rootNode = getRootNode();  // defined below
+    if (!rootNode) {
+      console.warn("No root node found!");
+      console.warn("  treeID: "+ treeID);
+      console.warn("  treesCollectionPosition: "+ treesCollectionPosition);
+      console.warn("  treePosition: "+ treePosition);
+      return false;
+    }
+
+    data = {};
+
+    data.phyloNodes = layout
+      //.size(vg.data.size(size, group))
+      //.value(value)
+        .nodes(rootNode);
+
+    // add all possible labels to each node
+    var tree = getSpecifiedTree();
+    $.each(data.phyloNodes, function(i, node) {
+      /* N.B. It's best to provide at least an empty string for all
+       * properties, to avoid showing 'undefined' labels in some browsers.
+       */
+      node.explicitLabel = '';
+      node.originalLabel = '';
+      node.ottTaxonName = '';
+      node.ottId = '';
+      if ('label' in node) {
+        console.log(">> node "+ i +" has 'label'");
+        node.explicitLabel = node['label'];
+      }
+      if ('@label' in node) {
+        console.log(">> node "+ i +" has '@label'");
+        node.explicitLabel = node['@label'];
+      }
+      if ('@otu' in node) {
+        var itsOTU = getOTUByID( node['@otu'] );
+        // attach OTU with possible label(s) here
+        if (itsOTU) {
+          // nudge the relevant properties into a generic form
+          if ('^ot:originalLabel' in itsOTU) {
+            node.originalLabel = itsOTU['^ot:originalLabel'];
+          }
+          if ('^ot:ottTaxonName' in itsOTU) {
+            node.ottTaxonName = itsOTU['^ot:ottTaxonName'];
+          }
+          if ('^ot:ottId' in itsOTU) {
+            node.ottId = itsOTU['^ot:ottId'];
+          }
+          if ('@label' in itsOTU) {
+            // This is uncommon, but appears in our converted Newick.
+            // Yield to an explicit label on the node itself!
+            console.log(">> stealing otu label '"+ itsOTU['@label'] +"' for this node");
+            if ($.trim(node.explicitLabel) === '') {
+              node.explicitLabel = itsOTU['@label'];
+            }
+          }
+        }
+      }
+    });
+
+    data.phyloEdges = layout.links(data.phyloNodes);
+/* translate incoming keys to their output names?
+    var keys = vg.keys(output),
+        len = keys.length;
+
+    data.forEach(function(d) {
+      var key, val;
+      for (var i=0; i<len; ++i) {
+        key = keys[i];
+        if (key !== output[key]) {
+          val = d[key];
+          delete d[key];
+          d[output[key]] = val;
+        }
+      }
+      //d.children = getChildren(d);
+    });
+*/
+
+
+/*
+    console.log("OUTGOING data from nexson transform:");
+    console.log(data);
+*/
+    return data;
+debugger;
+
   }
-  */
+  input.add.forEach(convert);
+  if (this.reevaluate(input)) {
+    input.mod.forEach(convert);
+  }
+  // return the (modified) ChangeSet
   return input;
 };
 
@@ -53,27 +151,33 @@ Nexson.schema = {
   "type": "object",
   "properties": {
     "type": {"enum": ["nexson"]},
-    /* TODO: review params!
-    "cachePath": {
-      "description": "A field pointing to the cache object",
+    "treeID": {
+      "description": "An explicit tree ID (should be definitive)",
       "oneOf": [{"type": "string"}, {"$ref": "#/refs/signal"}]  // TODO: signal?
     },
-    "key": {
-      "description": "A unique key for this data in the stash",
-      "oneOf": [{"type": "string"}, {"$ref": "#/refs/signal"}]  // TODO: signal?
+    "treesCollectionPosition": {
+      "description": "Look in the nth 'trees' element (collection of 'tree')",
+      "oneOf": [{"type": "integer"}, {"$ref": "#/refs/signal"}],  // TODO: signal?
+      "default": 0
     },
-    "flush": {
-      "description": " If true, will replace any existing stashed data.", // TODO: confirm
-      "oneOf": [{"type": "boolean"}, {"$ref": "#/refs/signal"}],
-      "default": false
+    "treePosition": {
+      "description": "Convert the nth 'tree' found in this collection", // TODO: confirm
+      "oneOf": [{"type": "integer"}, {"$ref": "#/refs/signal"}],
+      "default": 0
     }
-    */
   },
   "additionalProperties": false,  // TODO: confirm this
   "required": ["type"]  // TODO: add required params
 };
 
-/*
+
+
+
+
+
+
+if (false) {
+
 vg.transforms.nexson = function() {
   var layout = d3.layout.cluster()  // or tree (seems most basic)
                  //.children(function(d) { return d.values; }),
@@ -98,10 +202,10 @@ vg.transforms.nexson = function() {
       treePosition = 0;
 
   function nexson(data, db, group) {
-/ *
+/*
 console.log("INCOMING data to nexson transform:");
 console.log(data);
-* /
+*/
     fullNexson = data['data'];  // stash the complete NEXson!
     nexml = fullNexson.data.nexml;
     var rootNode = getRootNode();  // defined below
@@ -123,9 +227,9 @@ console.log(data);
     // add all possible labels to each node
     var tree = getSpecifiedTree();
     $.each(data.phyloNodes, function(i, node) {
-        / * N.B. It's best to provide at least an empty string for all
+        /* N.B. It's best to provide at least an empty string for all
          * properties, to avoid showing 'undefined' labels in some browsers.
-         * /
+         */
         node.explicitLabel = '';
         node.originalLabel = '';
         node.ottTaxonName = '';
@@ -165,7 +269,7 @@ console.log(data);
     });
     
     data.phyloEdges = layout.links(data.phyloNodes);
-/ * translate incoming keys to their output names?
+/* translate incoming keys to their output names?
     var keys = vg.keys(output),
         len = keys.length;
 
@@ -181,13 +285,13 @@ console.log(data);
       }
       //d.children = getChildren(d);
     });
-* /
+*/
 
     
-/ *
+/*
     console.log("OUTGOING data from nexson transform:");
     console.log(data);
-* /
+*/
     return data;
   }
 
@@ -228,11 +332,11 @@ console.log(data);
     return nexson;
   };
 
-    / * 
+    /*
      * NEXson-specific logic, encapsulated for easy access to nexml, etc.
-     * 
+     *
      * Adapted from https://github.com/OpenTreeOfLife/opentree/blob/79aa1f4f72940c0f5708fd2ced56190d8c34ad9a/curator/static/js/study-editor.js
-     * /
+     */
     var fastLookups = {
         'NODES_BY_ID': null,
         'OTUS_BY_ID': null,
@@ -481,4 +585,5 @@ console.log(data);
 
   return nexson;
 };
-*/
+
+}
