@@ -34,12 +34,17 @@ prototype.transform = function(input) {
   var g = this._graph,
       field = this.param('field');
   
-  var output = field.accessor(input);
-  if (output) {
-    return output;
+  for (var i = 0; i < input.add.length; i++) {
+    // actually replace each item with the new stucture
+    input.add[i] = field.accessor(input.add[i]);
   }
-
-  console.warn('pluck transform: unable to resolve this field ('+ field.field +')! returning input');
+  if (this.reevaluate(input)) {
+    for (var i = 0; i < input.mod.length; i++) {
+      // actually replace each item with the new stucture
+      input.mod[i] = field.accessor(input.mod[i]);
+    }
+  }
+  // return the modified ChangeSet
   return input;
 };
 
