@@ -281,8 +281,6 @@ prototype.transform = function(input) {
 
   function convert(fullNexson) {
     // convert a new (or changed?) tree to Tree Illustrator's preferred format
-    console.log("converting '"+ fullNexson +"'...");
-
     nexml = fullNexson.data.nexml;
 
     var layout = d3.layout.cluster()  // or tree (seems most basic)
