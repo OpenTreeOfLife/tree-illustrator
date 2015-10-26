@@ -12,43 +12,6 @@ var $ = require('jquery'),
     nexsonTransform = require('./vg.data.nexson.js');
     phylogramTransform = require('./vg.data.phylogram.js');
 
-// Expose some members to outside code (eg, Knockout bindings, onClick
-// attributes...)
-var api = [
-    'TreeIllustrator',
-    'inchesToCentimeters',
-    'centimetersToInches',
-    'inchesToPoints',
-    'pointsToInches',
-    'centimetersToPoints',
-    'pointsToCentimeters',
-    'pixelsToInches',
-    'inchesToPixels',
-    'pixelsToCentimeters',
-    'centimetersToPixels',
-    'pixelsToPhysicalUnits',
-    'physicalUnitsToPixels',
-    'pointsToCentimeters',
-    'getPrintAreaLandmarks',
-    'toggleFixedRulers',
-    'refreshViz',
-    'doNothing',
-    'browser_ppi',
-    'internal_ppi',
-    'display_ppi',
-    'availableTrees',
-    'zoomViewport',
-    'printIllustration',
-    'resizeViewportToShowAll',
-    'availableStyleGuides',
-    'showStyleGuidePicker',
-    'ill'
-];
-$.each(api, function(i, methodName) {
-    // populate the default 'module.exports' object
-    exports[ methodName ] = eval( methodName );
-});
-
 //exports.stylist = this;  // is there any way to do this?
 global.TreeIllustrator = TreeIllustrator;
 
@@ -1292,3 +1255,40 @@ function applyChosenStyleGuide(clicked) {
     // close the modal chooser
     $sgBlock.closest('.modal-styleguide-chooser').find('.modal-header .close').click();
 }
+
+// Expose some members to outside code (eg, Knockout bindings, onClick
+// attributes...)
+var api = [
+    'TreeIllustrator',
+    'inchesToCentimeters',
+    'centimetersToInches',
+    'inchesToPoints',
+    'pointsToInches',
+    'centimetersToPoints',
+    'pointsToCentimeters',
+    'pixelsToInches',
+    'inchesToPixels',
+    'pixelsToCentimeters',
+    'centimetersToPixels',
+    'pixelsToPhysicalUnits',
+    'physicalUnitsToPixels',
+    'pointsToCentimeters',
+    'getPrintAreaLandmarks',
+    'toggleFixedRulers',
+    'refreshViz',
+    'doNothing',
+    'browser_ppi',
+    'internal_ppi',
+    'display_ppi',
+    'availableTrees',
+    'zoomViewport',
+    'printIllustration',
+    'resizeViewportToShowAll',
+    'availableStyleGuides',
+    'showStyleGuidePicker',
+    'ill'
+];
+$.each(api, function(i, methodName) {
+    // populate the default 'module.exports' object
+    exports[ methodName ] = eval( methodName );
+});
