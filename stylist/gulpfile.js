@@ -19,7 +19,7 @@ gulp.task('js', function () {
   var b = browserify({
     entries: './stylist.js',
     //entries: './vg.data.stash.js',
-    debug: true
+    debug: true  // enables sourcemaps
   });
 
   return b.bundle()
