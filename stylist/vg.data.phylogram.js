@@ -134,11 +134,10 @@ prototype.buildPhylogram = function(data) {
     // map to X or Y coordinates depending on orientation
     var width = this.param('width');
     var height = this.param('height');
-
-    var radius = 0.5;
-    var radialArc = [0, 360];  // angles of arc for a circular layout
-    var radialSweep = 'CLOCKWISE';  // 'CLOCKWISE' or 'COUNTERCLOCKWISE'
-    var branchStyle = '';
+    var radius = this.param('radius');  // for radial layout
+    var radialArc = this.param('radialArc');  // angles of arc (radial layout only)
+    var radialSweep = this.param('radialSweep');  // 'CLOCKWISE' or 'COUNTERCLOCKWISE'
+    var branchStyle = this.param('branchStyle');
         // 'rightAngleDiagonal', 'radialRightAngleDiagonal', or a standard
         // D3 diagonal; by default, this will be based on the chosen layout
     var branchLengths = this.param('branchLengths');
