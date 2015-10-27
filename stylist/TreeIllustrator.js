@@ -216,10 +216,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
     var getNewIllustratedTreeModel = function(illustration, options) {
         if (!options) options = {};
         var newID = illustration.getNextAvailableID('tree'); 
-        var landmarks = (typeof getPrintAreaLandmarks === 'function') ?
-            getPrintAreaLandmarks() :
-            // here's a bogus object as a pacifier
-            {width: 100, height: 100, centerX: 50, centerY: 50};
+        var landmarks = stylist.getPrintAreaLandmarks();
         var obj = {
             'id': newID,
             'metadata': {
