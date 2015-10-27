@@ -1217,7 +1217,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     $nexsonUrlPanel.hide();
                     $fileUploadPanel.hide();
                     // find the matching URL and set it instead
-                    var selectedTrees = $.grep(availableTrees, function(o) {return o.name === chosenSource;});
+                    var selectedTrees = $.grep(stylist.availableTrees, function(o) {return o.name === chosenSource;});
                     var treeInfo = null;
                     if (selectedTrees.length > 0) {
                         treeInfo = selectedTrees[0];

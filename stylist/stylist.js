@@ -313,12 +313,12 @@ function showStyleGuidePicker() {
                         $matchInfo.addClass('assigned');
                         if (isPreviousVersionOfAssignedStyleGuide) {
                             $matchInfo.addClass('previous-version');
-                            $thumb.after('<a class="btn btn-small" href="#" onclick="applyChosenStyleGuide(this); return false;">Update</a>');
+                            $thumb.after('<a class="btn btn-small" href="#" onclick="stylist.applyChosenStyleGuide(this); return false;">Update</a>');
                         } else {
                             $thumb.after('<a class="btn btn-small disabled" href="#" onclick="alert(\'This style guide is already applied to the current illustration.\'); return false;">Assigned</a>');
                         }
                     } else if (match.constraints) {
-                        $thumb.after('<a class="btn btn-small" href="#" onclick="applyChosenStyleGuide(this); return false;">Apply</a>');
+                        $thumb.after('<a class="btn btn-small" href="#" onclick="stylist.applyChosenStyleGuide(this); return false;">Apply</a>');
                     } else {
                         $thumb.after('<a class="btn btn-small disabled" href="#" onclick="alert(\'Sorry, this is just an empty example.\'); return false;">Example</a>');
                     }
@@ -1287,6 +1287,7 @@ var api = [
     'resizeViewportToShowAll',
     'availableStyleGuides',
     'showStyleGuidePicker',
+    'applyChosenStyleGuide',
     'ill'
 ];
 $.each(api, function(i, methodName) {
