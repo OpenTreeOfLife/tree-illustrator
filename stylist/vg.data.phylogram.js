@@ -59,7 +59,7 @@
   
   buildRadial(nodes, links, options)
     Creates a radial dendrogram.
-    Options: same as build, but without diagonal, skipTicks, and 
+    Options: same as build, but without diagonal, skipTicks, and
       skipBranchLengthScaling
   
   buildCladogram(nodes, links, options)
@@ -73,35 +73,113 @@
   radialRightAngleDiagonal()
     d3.phylogram.rightAngleDiagonal for radial layouts.
 */
+var vg  = require('vega'),
+    log  = require('vega-logging'),
+    Transform = require('vega/src/transforms/Transform');
 
-vg.data.phylogram = function() {
-    // caller-defined properties
-    var layout = 'cartesian';  // 'cartesian' | 'radial' | 'cladogram' | ???
+function Phylogram(graph) {
+  Transform.prototype.init.call(this, graph);
+  Transform.addParameters(this, {
+    layout: {type: 'value', default: 'cartesian'},
+    width: {type: 'value', default: 1.0},
+    height: {type: 'value', default: 1.0},
+    // some are only used in radial layout, ignored in others
+    radius: {type: 'value', default: 0.5},
+    radialArc: {type: 'array<value>', default: [0, 360]},
+    radialSweep: {type: 'value', default: 'CLOCKWISE'},  // 'CLOCKWISE' | 'COUNTERCLOCKWISE'
+    // others are used only in non-radial layouts
+    tipsAlignment: {type: 'value', default: 'RIGHT'},
+    branchStyle: {type: 'value', default: ''}, // usu. determined by layout
+    branchLengths: {type: 'value', default: ''},
+    nodeLabelSource: {type: 'value', default: 'MAPPED'}, // 'ORIGINAL' | 'MAPPED'
+    showFallbackLabels: {type: 'value', default: true}
+    // some are reckoned internally (not available to the caller)
+    //descentAxis: {type: 'value', default: 'x'}, // 'x' | 'y'
+    //orientation: {type: 'value', default: -90},
+  });
+  return this.produces(true)
+             .mutates(true);
+}
+
+var prototype = (Phylogram.prototype = Object.create(Transform.prototype));
+prototype.constructor = Phylogram;
+
+prototype.transform = function(input) {
+  log.debug(input, ['making a phylogram']);
+  console.log('making a phylogram!');
+
+  for (var i = 0; i < input.add.length; i++) {
+    this.buildPhylogram(input.add[i]);
+  }
+  if (this.reevaluate(input)) {
+    for (var i = 0; i < input.mod.length; i++) {
+      this.buildPhylogram(input.mod[i]);
+    }
+  }
+  /* N.B. Typical notation doesn't work here ('this' is not defined in the called func)
+  input.add.forEach();
+  if (this.reevaluate(input)) {
+    input.mod.forEach(this.buildPhylogram);
+  }
+  */
+
+  return input;
+};
+
+prototype.buildPhylogram = function(data) {
+    // read in params
+    var layout = this.param('layout');  // 'cartesian' | 'radial' | 'cladogram' | ???
 
     // NOTE that width and height refer to the final display, so these might
     // map to X or Y coordinates depending on orientation
-    var width = 1.0;
-    var height = 1.0;
-
-    var radius = 0.5;
-    var radialArc = [0, 360];  // angles of arc for a circular layout
-    var radialSweep = 'CLOCKWISE';  // 'CLOCKWISE' or 'COUNTERCLOCKWISE'
-    var branchStyle = ''; 
+    var width = this.param('width');
+    var height = this.param('height');
+    var radius = this.param('radius');  // for radial layout
+    var radialArc = this.param('radialArc');  // angles of arc (radial layout only)
+    var radialSweep = this.param('radialSweep');  // 'CLOCKWISE' or 'COUNTERCLOCKWISE'
+    var branchStyle = this.param('branchStyle');
         // 'rightAngleDiagonal', 'radialRightAngleDiagonal', or a standard
         // D3 diagonal; by default, this will be based on the chosen layout
-    var branchLengths = '';
-    var tipsAlignment = 'right';
+    var branchLengths = this.param('branchLengths');
+    var tipsAlignment = this.param('tipsAlignment');
         // disregard for radial layouts?
-    var orientation = -90; 
+    var orientation; // this.param('orientation');
         // degrees of rotation from default (0, -90, 90, 180)
         // NOTE that this is not set directly (from vega spec) but from within
-    var descentAxis = 'x'; // x|y
+    var descentAxis; // this.param('descentAxis');
         // needed to render paths correctly
         // TODO: add more from options below
-    var nodeLabelSource = 'MAPPED';  // 'ORIGINAL' or 'MAPPED'
+    var nodeLabelSource = this.param('nodeLabelSource');  // 'ORIGINAL' or 'MAPPED'
         // choose preferred source for labels; fall back as needed and use marker classes
         // to distinguish these in display
-    var showFallbackLabels = true;  // boolean
+    var showFallbackLabels = this.param('showFallbackLabels');  // boolean
+
+    /* apply some internal constraints (formerly in param setters) */
+
+    if (layout === 'radial') {
+      // N.B. radial layout needs fixed (-90) orientation
+      orientation = -90;
+      descentAxis = 'x';
+    } else {
+      switch(tipsAlignment) {
+        case 'TOP':
+          orientation = 180;
+          descentAxis = 'y';
+          break;
+        case 'RIGHT':
+          orientation = -90;
+          descentAxis = 'x';
+          break;
+        case 'BOTTOM':
+          orientation = 0;
+          descentAxis = 'y';
+          break;
+        case 'LEFT':
+          orientation = 90;
+          descentAxis = 'x';
+          break;
+      }
+    }
 
     function phylogram(data) {
       // Expecting incoming data in the 'phylotree' format described here:
@@ -219,116 +297,6 @@ vg.data.phylogram = function() {
       return data;
     }
       
-    // Setters (called from Vega spec)
-    
-    phylogram.layout = function(s) {
-      layout = s;
-      if (s === 'radial') {
-          // N.B. radial layout needs fixed (-90) orientation
-          orientation = -90;
-          descentAxis = 'x';
-      }
-      return phylogram;
-    };
-      
-    phylogram.branchStyle = function(s) {
-      branchStyle = s;
-      return phylogram;
-    };
-      
-    phylogram.width = function(i) {
-      width = Number(i);
-      return phylogram;
-    };
-      
-    phylogram.radialArc = function(a) {
-      // expects an array of start and end angle; if we get an integer, convert it
-      if (vg.isArray(a)) {
-        radialArc = a;
-      } else {
-        radialArc = [0, a];
-      } 
-      return phylogram;
-    };
-      
-    phylogram.radialSweep = function(s) {
-      switch(s) {
-        case 'COUNTERCLOCKWISE':
-        case 'CLOCKWISE':
-          radialSweep = s;
-          break;
-        default:
-          radialSweep = 'CLOCKWISE';
-      } 
-      return phylogram;
-    };
-      
-    phylogram.height = function(i) {
-      height = Number(i);
-      return phylogram;
-    };
-      
-    phylogram.radius = function(i) {
-      radius = Number(i);
-      return phylogram;
-    };
-      
-    phylogram.tipsAlignment = function(s) {
-      // This places the tips on the specified edge, and sets the 
-      // orientation (rotation angle)
-      // N.B. Ignore this when using a radial layout!
-      var expectedValues = ['top','right','bottom','left'];
-      s = $.trim(s).toLowerCase();
-      if ($.inArray(s, expectedValues) === -1) {
-        s = 'right';
-      }
-      tipsAlignment = s;
-      // N.B. radial layout needs fixed (-90) orientation and descentAxis! Respect this.
-      if (layout !== 'radial') {
-          switch(tipsAlignment) {
-            case 'top':
-              orientation = 180;
-              descentAxis = 'y';
-              break;
-            case 'right':
-              orientation = -90;
-              descentAxis = 'x';
-              break;
-            case 'bottom':
-              orientation = 0;
-              descentAxis = 'y';
-              break;
-            case 'left':
-              orientation = 90;
-              descentAxis = 'x';
-              break;
-          }
-      }
-      return phylogram;
-    };
-      
-    phylogram.branchLengths = function(s) {
-      branchLengths = s;
-      return phylogram;
-    };
-
-    phylogram.nodeLabelSource = function(s) {
-      switch(s) {
-        case 'ORIGINAL':
-        case 'MAPPED':
-          nodeLabelSource = s;
-          break;
-        default:
-          nodeLabelSource = 'MAPPED';
-      } 
-      return phylogram;
-    }
-
-    phylogram.showFallbackLabels = function(b) {
-        showFallbackLabels = Boolean(b);
-        return phylogram;
-    }
-
     var displacePoint = function(point, delta) {
         // where 'delta' is an object with x and y properties
         point.x += delta.x;
@@ -402,19 +370,19 @@ vg.data.phylogram = function() {
             sin = Math.sin,
             angle = degreesToRadians(angle || orientation), // convert to radians
             // default midpoint is origin (0,0)
-            xm = (pivot && 'x' in pivot) ? pivot.x : 0,   
-            ym = (pivot && 'y' in pivot) ? pivot.y : 0,   
+            xm = (pivot && 'x' in pivot) ? pivot.x : 0,
+            ym = (pivot && 'y' in pivot) ? pivot.y : 0,
             x = point.x,    // capture old x and y for this point
             y = point.y;
 
         // subtract midpoints, rotate from origin, then restore them
-        point.x = (x - xm) * cos(angle) - (y - ym) * sin(angle) + xm; 
-        point.y = (x - xm) * sin(angle) + (y - ym) * cos(angle) + ym; 
+        point.x = (x - xm) * cos(angle) - (y - ym) * sin(angle) + xm;
+        point.y = (x - xm) * sin(angle) + (y - ym) * cos(angle) + ym;
         if ('cartesian_x' in point) {
             cx = point.cartesian_x,    // capture old coords
             cy = point.cartesian_y;
-            point.cartesian_x = (cx - xm) * cos(angle) - (cy - ym) * sin(angle) + xm; 
-            point.cartesian_y = (cx - xm) * sin(angle) + (cy - ym) * cos(angle) + ym; 
+            point.cartesian_x = (cx - xm) * cos(angle) - (cy - ym) * sin(angle) + xm;
+            point.cartesian_y = (cx - xm) * sin(angle) + (cy - ym) * cos(angle) + ym;
         }
         return point;
     }
@@ -435,13 +403,13 @@ vg.data.phylogram = function() {
     var wholeAngle = 2 * Math.PI,
         quarterAngle = wholeAngle / 4;
     
-    var coordQuad = coord[0] >= 0 ? 
-            (coord[1] >= 0 ? 1 : 2) : 
+    var coordQuad = coord[0] >= 0 ?
+            (coord[1] >= 0 ? 1 : 2) :
             (coord[1] >= 0 ? 4 : 3),
         coordBaseAngle = Math.abs(Math.asin(coord[1] / radius));
     
     // Since this is just based on the angle of the right triangle formed
-    // by the coordinate and the origin, each quad will have different 
+    // by the coordinate and the origin, each quad will have different
     // offsets
     switch (coordQuad) {
       case 1:
@@ -501,7 +469,7 @@ vg.data.phylogram = function() {
     function diagonal(d) {
       var midpointX = (d.source.x + d.target.x) / 2,
           midpointY = (d.source.y + d.target.y) / 2,
-          pathData = (descentAxis === 'x') ? 
+          pathData = (descentAxis === 'x') ?
                     [d.source, {x: d.source.x, y: d.target.y}, d.target] :
                     [d.source, {x: d.target.x, y: d.source.y}, d.target];
       pathData = pathData.map(projection);
@@ -571,7 +539,7 @@ vg.data.phylogram = function() {
         var labelAlignment = 'left';
         // TODO: adjustable nudge separates label text from drawn node
         var nudgeRadius = 4; // px?
-        // TODO: adjustable nudge (should vary with text size) shifts angle 
+        // TODO: adjustable nudge (should vary with text size) shifts angle
         // from the label's baseline to the middle of its x-height
         var nudgeTheta = degreesToRadians(0.6);
 
@@ -626,14 +594,14 @@ vg.data.phylogram = function() {
     function diagonal(d) {
       var midpointX = (d.source.cartesian_x + d.target.cartesian_x) / 2,
           midpointY = (d.source.cartesian_y + d.target.cartesian_y) / 2,
-          pathData = (descentAxis === 'x') ? 
+          pathData = (descentAxis === 'x') ?
                     [
-                        {x: d.source.cartesian_x, y: d.source.cartesian_y}, 
-                        {x: d.source.cartesian_x, y: d.target.cartesian_y}, 
+                        {x: d.source.cartesian_x, y: d.source.cartesian_y},
+                        {x: d.source.cartesian_x, y: d.target.cartesian_y},
                         {x: d.target.cartesian_x, y: d.target.cartesian_y}
                     ] :
                     [
-                        {x: d.source.cartesian_x, y: d.source.cartesian_y}, 
+                        {x: d.source.cartesian_x, y: d.source.cartesian_y},
                         {x: d.target.cartesian_x, y: d.source.cartesian_y},
                         {x: d.target.cartesian_x, y: d.target.cartesian_y}
                     ];
@@ -709,31 +677,31 @@ vg.data.phylogram = function() {
         var depthStep;
 
         var leafPositions = [ ];
-        var startingLeafX, leafXstep, 
+        var startingLeafX, leafXstep,
             startingLeafY, leafYstep;
         switch(tipsAlignment) {
-            case 'top':
+            case 'TOP':
                 startingLeafX = -(width / 2.0);
                 leafXstep = width / (nLeaves-1);
                 startingLeafY = -height;
                 leafYstep = 0;
                 depthStep = -leafXstep;
                 break;
-            case 'right':
+            case 'RIGHT':
                 startingLeafX = width;
                 leafXstep = 0;
                 startingLeafY = -(height / 2.0);
                 leafYstep = height / (nLeaves-1);
                 depthStep = leafYstep;
                 break;
-            case 'bottom':
+            case 'BOTTOM':
                 startingLeafX = -(width / 2.0);
                 leafXstep = width / (nLeaves-1);
                 startingLeafY = height;
                 leafYstep = 0;
                 depthStep = leafXstep;
                 break;
-            case 'left':
+            case 'LEFT':
                 startingLeafX = -width;
                 leafXstep = 0;
                 startingLeafY = -(height / 2.0);
@@ -742,11 +710,11 @@ vg.data.phylogram = function() {
                 break;
         }
 
-        leafNodes.map(function(n, i) { 
+        leafNodes.map(function(n, i) {
             leafPositions.push({
-                'x': startingLeafX + (leafXstep * i), 
+                'x': startingLeafX + (leafXstep * i),
                 'y': startingLeafY + (leafYstep * i)
-            });    
+            });
         });
 
         var rootNode = data.phyloNodes[0];  // I believe this is always true
@@ -757,8 +725,8 @@ vg.data.phylogram = function() {
 
         // Scale the resulting layout to match the desired width (or height)
         switch(tipsAlignment) {
-            case 'top':
-            case 'bottom':
+            case 'TOP':
+            case 'BOTTOM':
                 // width is already good; height should be squeezed (or stretched)
                 var squeeze = height / (fullExtents.maxY - fullExtents.minY);
                 var fitToHeight = function(point) {
@@ -767,8 +735,8 @@ vg.data.phylogram = function() {
                 }
                 data.phyloNodes.map(fitToHeight);
                 break;
-            case 'right':
-            case 'left':
+            case 'RIGHT':
+            case 'LEFT':
                 // height is already good; width should be squeezed (or stretched)
                 var squeeze = width / (fullExtents.maxX - fullExtents.minX);
                 var fitToWidth = function(point) {
@@ -818,7 +786,7 @@ vg.data.phylogram = function() {
          * longer edges between this node and its children.
          */
         switch(tipsAlignment) {
-            case 'top':
+            case 'TOP':
                 node.y = Math.max(
                     extents.maxY - depthStep,  // one step closer to root
                     extents.minY - ((extents.descendantLeafCount - 1) * depthStep)
@@ -826,7 +794,7 @@ vg.data.phylogram = function() {
                 // x should be midpoint of all descendants' x
                 node.x = (extents.maxX + extents.minX) / 2.0;
                 break;
-            case 'bottom':
+            case 'BOTTOM':
                 node.y = Math.min(
                     extents.minY - depthStep,  // one step closer to root
                     extents.maxY - ((extents.descendantLeafCount - 1) * depthStep)
@@ -834,7 +802,7 @@ vg.data.phylogram = function() {
                 // x should be midpoint of all descendants' x
                 node.x = (extents.maxX + extents.minX) / 2.0;
                 break;
-            case 'right':
+            case 'RIGHT':
                 node.x = Math.min(
                     extents.minX - depthStep,  // one step closer to root
                     extents.maxX - ((extents.descendantLeafCount - 1) * depthStep)
@@ -842,7 +810,7 @@ vg.data.phylogram = function() {
                 // y should be midpoint of all descendants' y
                 node.y = (extents.maxY + extents.minY) / 2.0;
                 break;
-            case 'left':
+            case 'LEFT':
                 node.x = Math.max(
                     extents.maxX - depthStep,  // one step closer to root
                     extents.minX - ((extents.descendantLeafCount - 1) * depthStep)
@@ -861,7 +829,7 @@ vg.data.phylogram = function() {
         return extents;
     }
 
-    return phylogram;
+    return phylogram(data);
 }
 
 
@@ -1081,7 +1049,7 @@ vg.data.phylogram = function() {
     // any dynamic readjustments of non-CSS attributes
     ///styleTreeNodes(vis);
     
-    /* node labeling 
+    /* node labeling
     // TODO: why is this SUPER-SLOW with large trees? like MINUTES to run...
     // Is there a faster/cruder way to clear the decks?
     vis.selectAll('g.node text').remove();
@@ -1119,7 +1087,7 @@ vg.data.phylogram = function() {
               return (d.labelType === 'mapped label' ? 'inherit' : 'italic');
           })
           .text(function(d) {
-              // return (d.name + ' ('+d.length+')'); 
+              // return (d.name + ' ('+d.length+')');
               var nodeLabel = '';
               if (d.labelType === 'node id') {
                   nodeLabel = '';  // hide these
@@ -1134,7 +1102,7 @@ vg.data.phylogram = function() {
                       nodeLabel = nodeLabel +" ["+ supplementalLabel +"]";
                   }
               }
-              return nodeLabel; 
+              return nodeLabel;
           });
 
       vis.selectAll('g.root.node text')
@@ -1147,7 +1115,7 @@ vg.data.phylogram = function() {
         .attr("text-anchor", "start");
     }
     
-    */ 
+    */
 
     return {tree: tree, vis: vis}
   }
@@ -1205,3 +1173,86 @@ vg.data.phylogram = function() {
     
     return {tree: tree, vis: vis}
   }
+
+module.exports = Phylogram;
+
+Phylogram.schema = {
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Phylogram transform",
+  "description": "Projects hierarchical data (presumably a tree) into one of several layouts "+
+                 "and passes the results for downstream rendering.",
+  "type": "object",
+  "properties": {
+    "type": {"enum": ["phylogram"]},
+    "layout": {
+      "description": "Should be 'radial', 'cladogram', or 'cartesian'.",
+      "oneOf": [{"type": "string"}, {"$ref": "#/refs/signal"}],
+      "default": 'cartesian'
+    },
+    "width": {
+      "description": "Width of overall phylogram, in chosen physical units", // TODO: CONFIRM
+      "oneOf": [{"type": "number"}, {"$ref": "#/refs/signal"}],
+      "default": 1.0
+    },
+    "height": {
+      "description": "Height of overall phylogram, in chosen physical units", // TODO: CONFIRM
+      "oneOf": [{"type": "number"}, {"$ref": "#/refs/signal"}],
+      "default": 1.0
+    },
+    "radius": {
+      "description": "Radius (from center to edge) of a radial layout, in arbitrary units.",
+      "oneOf": [{"type": "number"}, {"$ref": "#/refs/signal"}],
+      "default": 0.5
+    },
+    "radialArc": {
+      "description": "Angles of arc [start, end] for a circular layout.",
+      "oneOf": [
+          {
+            "type": "array",
+            "items": {"type": "number"},
+            "minItems": 2,
+            "maxItems": 2
+          },
+          {"$ref": "#/refs/signal"}
+      ],
+      "default": [0, 360]
+    },
+    "radialSweep": {
+      "description": "Direction of arc, CLOCKWISE or COUNTERCLOCKWISE.",
+      "oneOf": [{"type": "string"}, {"$ref": "#/refs/signal"}],
+      "enum": ["CLOCKWISE", "COUNTERCLOCKWISE"],
+      "default": 'CLOCKWISE'
+    },
+    "tipsAlignment": {
+      "description": "Which edge will show the labeled tips.",
+      "oneOf": [{"type": "string"}, {"$ref": "#/refs/signal"}],
+      "enum": ["TOP", "RIGHT", "BOTTOM", "LEFT"],
+      "default": 'right'
+    },
+    "branchStyle": {
+      "description": "Override the layout's style (rarely used).",
+      "oneOf": [{"type": "string"}, {"$ref": "#/refs/signal"}],
+      "enum": ["rightAngleDiagonal", "radialRightAngleDiagonal",
+               "straightLineDiagonal", "diagonal", "radial"],
+      "default": ''
+    },
+    "branchLengths": {
+      "description": "Map a data field to branch lengths (NOT YET IMPLEMENTED).",
+      "oneOf": [{"type": "string"}, {"$ref": "#/refs/signal"}],  // is this type "field"?
+      "default": ''
+    },
+    "nodeLabelSource": {
+      "description": "Look for tip labels in a data field.",
+      "oneOf": [{"type": "XXXXXXXXXXX"}, {"$ref": "#/refs/signal"}],
+      "enum": ["XXXXXXXXXXX", "XXXXXXXXXXX"],
+      "default": ''
+    },
+    "showFallbackLabels": {
+      "description": "If primary label is not found, show alternatives.",
+      "oneOf": [{"type": "boolean"}, {"$ref": "#/refs/signal"}],
+      "default": true
+    },
+  },
+  "additionalProperties": false,  // TODO: confirm this
+  "required": ["type"]  // TODO: review params!
+};

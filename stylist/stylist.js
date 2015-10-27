@@ -4,6 +4,23 @@
  * closely with a web UI that's bound and enabled using KnockoutJS.
  */
 
+var $ = require('jquery'),
+    vg = require('vega'),
+    TreeIllustrator = require('./TreeIllustrator.js'),
+    stashTransform = require('./vg.data.stash.js');
+    pluckTransform = require('./vg.data.pluck.js');
+    nexsonTransform = require('./vg.data.nexson.js');
+    phylogramTransform = require('./vg.data.phylogram.js');
+
+//exports.stylist = this;  // is there any way to do this?
+global.TreeIllustrator = TreeIllustrator;
+
+// register custom transforms with the installed vega
+vg.transforms['stash'] = stashTransform;
+vg.transforms['pluck'] = pluckTransform;
+vg.transforms['nexson'] = nexsonTransform;
+vg.transforms['phylogram'] = phylogramTransform;
+
 // patch missing JS console on some (very) old browsers
 if (typeof console == 'undefined') console = {
     log: function(msg) {},
@@ -296,12 +313,12 @@ function showStyleGuidePicker() {
                         $matchInfo.addClass('assigned');
                         if (isPreviousVersionOfAssignedStyleGuide) {
                             $matchInfo.addClass('previous-version');
-                            $thumb.after('<a class="btn btn-small" href="#" onclick="applyChosenStyleGuide(this); return false;">Update</a>');
+                            $thumb.after('<a class="btn btn-small" href="#" onclick="stylist.applyChosenStyleGuide(this); return false;">Update</a>');
                         } else {
                             $thumb.after('<a class="btn btn-small disabled" href="#" onclick="alert(\'This style guide is already applied to the current illustration.\'); return false;">Assigned</a>');
                         }
                     } else if (match.constraints) {
-                        $thumb.after('<a class="btn btn-small" href="#" onclick="applyChosenStyleGuide(this); return false;">Apply</a>');
+                        $thumb.after('<a class="btn btn-small" href="#" onclick="stylist.applyChosenStyleGuide(this); return false;">Apply</a>');
                     } else {
                         $thumb.after('<a class="btn btn-small disabled" href="#" onclick="alert(\'Sorry, this is just an empty example.\'); return false;">Example</a>');
                     }
@@ -374,7 +391,8 @@ function refreshViz(options) {
     ill.updateVegaSpec();  // TODO: trigger updates on a more sensible basis
 
     vg.parse.spec(ill.vegaSpec, function(chart) {
-      var view = chart({el:"#viz-outer-frame", renderer:"svg"})  // , data:cachedData? })  <== MUST BE INLINE, NOT URL!
+      var view = chart({el:"#viz-outer-frame", renderer:"svg"});
+      // , data:cachedData? })  <== MUST BE INLINE, NOT URL!
 /*
         .on("mouseover", function(event, item) {
           // invoke hover properties on cousin one hop forward in scenegraph
@@ -393,7 +411,7 @@ function refreshViz(options) {
           });
         })
 */
-        .update();
+        view.update();
 
         if (options.SHOW_ALL) {
             resizeViewportToShowAll();
@@ -415,8 +433,13 @@ $(document).ready(function() {
     // Use an Illustration object as our primary view model for KnockoutJS
     // (by convention, it's usually named 'viewModel')
     ill = new TreeIllustrator.Illustration();
+    // export the new illustration
+    //global.ill = ill; // to a global?
+    exports.ill = ill; 
+
     // add a single placeholder tree
     ill.addIllustratedTree();
+
 
     var editorArea = $('#editor')[0];
     ko.applyBindings(ill, editorArea);
@@ -1183,21 +1206,29 @@ function doNothing() {
 
 function getPrintAreaLandmarks() {
     // gather interesting coordinates in internal pixels
+    if (ill) {
+        return {
+            width: physicalUnitsToPixels(ill.style.printSize.width(), internal_ppi),
+            height: physicalUnitsToPixels(ill.style.printSize.height(), internal_ppi),
+            leftX: 0,
+            centerX: physicalUnitsToPixels(ill.style.printSize.width() / 2.0, internal_ppi),
+            rightX: physicalUnitsToPixels(ill.style.printSize.width(), internal_ppi),
+            topY: 0,
+            centerY: physicalUnitsToPixels(ill.style.printSize.height() / 2.0, internal_ppi),
+            bottomY: physicalUnitsToPixels(ill.style.printSize.height(), internal_ppi)
+        };
+    }
+    // return placeholder values
     return {
-        width: physicalUnitsToPixels(ill.style.printSize.width(), internal_ppi),
-        height: physicalUnitsToPixels(ill.style.printSize.height(), internal_ppi),
-        leftX: 0,
-        centerX: physicalUnitsToPixels(ill.style.printSize.width() / 2.0, internal_ppi),
-        rightX: physicalUnitsToPixels(ill.style.printSize.width(), internal_ppi),
-        topY: 0,
-        centerY: physicalUnitsToPixels(ill.style.printSize.height() / 2.0, internal_ppi),
-        bottomY: physicalUnitsToPixels(ill.style.printSize.height(), internal_ppi)
+        width:   1.0,
+        height:  1.0,
+        leftX:   0.0,
+        centerX: 0.5,
+        rightX:  1.0,
+        topY:    0.0,
+        centerY: 0.5,
+        bottomY: 1.0
     };
-}
-
-function jiggle( range ) {
-    // Return a number +- zero, within this range
-    return Math.round(Math.random() * range * 2) - range; 
 }
 
 function applyChosenStyleGuide(clicked) {
@@ -1225,3 +1256,41 @@ function applyChosenStyleGuide(clicked) {
     // close the modal chooser
     $sgBlock.closest('.modal-styleguide-chooser').find('.modal-header .close').click();
 }
+
+// Expose some members to outside code (eg, Knockout bindings, onClick
+// attributes...)
+var api = [
+    'TreeIllustrator',
+    'inchesToCentimeters',
+    'centimetersToInches',
+    'inchesToPoints',
+    'pointsToInches',
+    'centimetersToPoints',
+    'pointsToCentimeters',
+    'pixelsToInches',
+    'inchesToPixels',
+    'pixelsToCentimeters',
+    'centimetersToPixels',
+    'pixelsToPhysicalUnits',
+    'physicalUnitsToPixels',
+    'pointsToCentimeters',
+    'getPrintAreaLandmarks',
+    'toggleFixedRulers',
+    'refreshViz',
+    'doNothing',
+    'browser_ppi',
+    'internal_ppi',
+    'display_ppi',
+    'availableTrees',
+    'zoomViewport',
+    'printIllustration',
+    'resizeViewportToShowAll',
+    'availableStyleGuides',
+    'showStyleGuidePicker',
+    'applyChosenStyleGuide',
+    'ill'
+];
+$.each(api, function(i, methodName) {
+    // populate the default 'module.exports' object
+    exports[ methodName ] = eval( methodName );
+});
