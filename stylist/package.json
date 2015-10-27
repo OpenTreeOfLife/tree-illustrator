@@ -5,9 +5,9 @@
   "author": "Jim Allman <jim@ibang.com>",
   "contributors": [],
   "scripts": {
-    "watch": "watchify stylist.js  --verbose  --debug  --standalone=stylist  --outfile=stylist-bundle.js",
-    "TODO-build": "browserify src/stylist.js  --verbose  --standalone=stylist  |  uglifyjs -mc warnings=false  >  dist/bundle.js",
-    "build": "browserify stylist.js  --verbose  --standalone=stylist  --outfile=stylist-bundle.js"
+    "watch": "watchify src/stylist.js  --verbose  --debug  --standalone=stylist  --outfile=dist/stylist-bundle.js",
+    "TODO-build": "browserify src/stylist.js  --verbose  --standalone=stylist  |  uglifyjs -mc warnings=false  >  dist/stylist-bundle.js",
+    "build": "browserify src/stylist.js  --verbose  --standalone=stylist  --outfile=dist/stylist-bundle.js"
   },
   "main": "./stylist.js",
   "repository": {
@@ -29,15 +29,9 @@
   "devDependencies": {
     "browserify-shim": "^3.8.9",
     "browserify-versionify": "^1.0.4",
-    "gulp": "^3.9.0",
-    "gulp-sourcemaps": "^1.6.0",
-    "gulp-uglify": "^1.4.2",
-    "gulp-util": "^3.0.7",
-    "jstransform": "^11.0.2",
-    "sshpk": "^1.4.7",
+    "jstransform": "^11.0.3",
     "through": "^2.3.8",
-    "vinyl-buffer": "^1.0.0",
-    "vinyl-source-stream": "^1.1.0"
+    "watchify": "^3.5.0"
   },
   "engineStrict": false,
   "engines": {
@@ -49,10 +43,12 @@
   "publishConfig": {},
   "license": "BSD-2-Clause",
   "browserify": {
-    "transform": [ "browserify-shim" ]
+    "transform": [
+      "browserify-shim"
+    ]
   },
   "browser": {
-    "jquery": "./jquery-1.8.3.js"
+    "jquery": "./src/jquery-1.8.3.js"
   },
   "browserify-shim": {
     "jquery": "$"

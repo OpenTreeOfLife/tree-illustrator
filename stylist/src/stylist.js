@@ -14,6 +14,7 @@ var $ = require('jquery'),
 
 // expose TreeIllustrator to JS in the main UI 
 global.TreeIllustrator = TreeIllustrator;
+global.$ = $;
 
 // register custom transforms with the installed vega
 vg.transforms['stash'] = stashTransform;
