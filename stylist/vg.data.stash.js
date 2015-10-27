@@ -30,13 +30,9 @@ function Stash(graph) {
       key: {type: 'value'},
       flush: {type: 'value', default: false}
   });
-  /* TODO: which (if any) of these is appropriate to return?
-  this.router(true);
-  return this.router(true).produces(true);
-  return this.mutates(true);
-  debugger;
-  return this.router(true);
-  */
+
+  return this;
+  // TODO: add calls to mutates(), router()?
 }
 
 var prototype = (Stash.prototype = Object.create(Transform.prototype));
