@@ -14,6 +14,7 @@
  */
 var vg  = require('vega'),
     log  = require('vega-logging'),
+    assert = require('assert'),
     Transform = require('vega/src/transforms/Transform');
 
 function Pluck(graph) {
@@ -22,7 +23,8 @@ function Pluck(graph) {
       field: {type: 'field'}
   });
   // TODO: confirm that this is appropriate here
-  return this.mutates(true);
+  return this.produces(true)
+             .mutates(true);
 }
 
 var prototype = (Pluck.prototype = Object.create(Transform.prototype));
@@ -33,16 +35,29 @@ prototype.transform = function(input) {
 
   var g = this._graph,
       field = this.param('field');
-  
-  for (var i = 0; i < input.add.length; i++) {
-    // actually replace each item with the new stucture
-    input.add[i] = field.accessor(input.add[i]);
-  }
-  if (this.reevaluate(input)) {
-    for (var i = 0; i < input.mod.length; i++) {
-      // actually replace each item with the new stucture
-      input.mod[i] = field.accessor(input.mod[i]);
+
+  // For now, this transform ASSUMES just one incoming tuple, which will be
+  // completely replaced by the plucked values.
+  assert(input.add.length < 2, 
+         "The pluck transform can only replace a single added datum.");
+  var pluckedValues = field.accessor(input.add[0]); // returns plucked array
+  // add _id properties? not clear if this is needed
+  var nextAvailableID = 1000000;
+  var assignUniqueID = function(obj) {
+    if (!('_id' in obj)) {
+      obj._id = ('_'+ ++nextAvailableID);
     }
+  }
+  pluckedValues.forEach(assignUniqueID);
+  input.add = pluckedValues;    // replace the incoming tuple
+
+  if (this.reevaluate(input)) {
+    // Actually, we can also replace just one modified tuple, if found
+    assert(input.mod.length < 2, 
+           "The pluck transform can only replace a single modified datum.");
+    pluckedValues = field.accessor(input.mod[0]);
+    pluckedValues.forEach(assignUniqueID);
+    input.mod = pluckedValues;
   }
   // return the modified ChangeSet
   return input;
