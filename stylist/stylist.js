@@ -391,7 +391,8 @@ function refreshViz(options) {
     ill.updateVegaSpec();  // TODO: trigger updates on a more sensible basis
 
     vg.parse.spec(ill.vegaSpec, function(chart) {
-      var view = chart({el:"#viz-outer-frame", renderer:"svg"})  // , data:cachedData? })  <== MUST BE INLINE, NOT URL!
+      var view = chart({el:"#viz-outer-frame", renderer:"svg"});
+      // , data:cachedData? })  <== MUST BE INLINE, NOT URL!
 /*
         .on("mouseover", function(event, item) {
           // invoke hover properties on cousin one hop forward in scenegraph
@@ -410,7 +411,7 @@ function refreshViz(options) {
           });
         })
 */
-        .update();
+        view.update();
 
         if (options.SHOW_ALL) {
             resizeViewportToShowAll();
