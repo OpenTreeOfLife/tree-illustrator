@@ -5,7 +5,9 @@
   "author": "Jim Allman <jim@ibang.com>",
   "contributors": [],
   "scripts": {
-    "prepublish": "echo Now we would do prepub stuff!"
+    "watch": "watchify stylist.js  --verbose  --debug  --standalone=stylist  --outfile=stylist-bundle.js",
+    "TODO-build": "browserify src/stylist.js  --verbose  --standalone=stylist  |  uglifyjs -mc warnings=false  >  dist/bundle.js",
+    "build": "browserify stylist.js  --verbose  --standalone=stylist  --outfile=stylist-bundle.js"
   },
   "main": "./stylist.js",
   "repository": {
