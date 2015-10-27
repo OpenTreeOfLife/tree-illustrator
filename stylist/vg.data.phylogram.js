@@ -143,10 +143,10 @@ prototype.buildPhylogram = function(data) {
     var branchLengths = this.param('branchLengths');
     var tipsAlignment = this.param('tipsAlignment');
         // disregard for radial layouts?
-    var orientation = this.param('orientation');
+    var orientation; // this.param('orientation');
         // degrees of rotation from default (0, -90, 90, 180)
         // NOTE that this is not set directly (from vega spec) but from within
-    var descentAxis = this.param('descentAxis');
+    var descentAxis; // this.param('descentAxis');
         // needed to render paths correctly
         // TODO: add more from options below
     var nodeLabelSource = this.param('nodeLabelSource');  // 'ORIGINAL' or 'MAPPED'
@@ -162,7 +162,7 @@ prototype.buildPhylogram = function(data) {
       descentAxis = 'x';
     } else {
       switch(tipsAlignment) {
-        case 'top':
+        case 'TOP':
           orientation = 180;
           descentAxis = 'y';
           break;
@@ -170,11 +170,11 @@ prototype.buildPhylogram = function(data) {
           orientation = -90;
           descentAxis = 'x';
           break;
-        case 'bottom':
+        case 'BOTTOM':
           orientation = 0;
           descentAxis = 'y';
           break;
-        case 'left':
+        case 'LEFT':
           orientation = 90;
           descentAxis = 'x';
           break;
