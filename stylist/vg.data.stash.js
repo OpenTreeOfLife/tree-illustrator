@@ -41,20 +41,6 @@ prototype.constructor = Stash;
 
 prototype.transform = function(input) {
   log.debug(input, ['stashing']);
-/*
-  console.log("INCOMING data to stash transform:");
-  console.log(input);
-  
-  console.log("  cachePath:");
-  console.log(this.param('cachePath'));
-  console.log(this.param('cachePath').field);
-
-  console.log("  key:");
-  console.log(this.param('key'));
-
-  console.log("  flush:");
-  console.log(this.param('flush'));
-*/
 
   var cachePath = this.param('cachePath'),
       cache = eval(cachePath),

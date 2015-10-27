@@ -106,7 +106,6 @@ prototype.constructor = Phylogram;
 
 prototype.transform = function(input) {
   log.debug(input, ['making a phylogram']);
-  console.log('making a phylogram!');
 
   for (var i = 0; i < input.add.length; i++) {
     this.buildPhylogram(input.add[i]);
