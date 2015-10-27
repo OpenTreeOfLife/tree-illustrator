@@ -20,6 +20,7 @@
  */
 var vg  = require('vega'),
     log  = require('vega-logging'),
+    assert = require('assert'),
     dl = require('datalib'),
     Transform = require('vega/src/transforms/Transform');
 
@@ -55,8 +56,7 @@ prototype.transform = function(input) {
   console.log(this.param('flush'));
 */
 
-  var g = this._graph,
-      cachePath = this.param('cachePath'),
+  var cachePath = this.param('cachePath'),
       cache = eval(cachePath),
       key = this.param('key'),
       flush = this.param('flush');
@@ -67,28 +67,23 @@ prototype.transform = function(input) {
     return input;
   }
 
-  /* Stash the complete, current data. Note that we actually store a *copy* of
+  // For now, this transform ASSUMES just one incoming tuple, which will be
+  // completely replaced by the plucked values.
+  assert((input.add.length < 2 &&
+          input.mod.length === 0 &&
+          input.rem.length === 0),
+         "The stash transform only stores a single added datum.");
+
+  /* Stash a single incoming datum. Note that we actually store a *copy* of
    * the data, since Vega always clones data in a spec (see comment above).
    */
   if (flush || !(key in cache)) {
     // be sure to cache the "raw" data as returned from source
-    // NOTE that g.dataValues() is a hash with n ids!
-    // for now, let's stash the whole thing
-    cache[ key ] = dl.duplicate(g.dataValues());
+    cache[ key ] = dl.duplicate(input.add[0]);
     // N.B. dl.duplicate cleans up any weird methods and circular references
-/*
-    for (var valueName in g.dataValues()) {
-      var valueData = g.dataValues()[valueName];
-          cache[ key ] = dl.duplicate(valueData);
-      //if ('_data' in valueData) {
-      //    cache[ key ] = dl.duplicate(valueData._data);
-      //} else {
-      //}
-    }
-*/
   }
 
-/* OR should we stash data piecemeal, based on state??
+/* OR should we stash all data piecemeal, based on state??
   // move new (and possibly changed) data to the cache
   function set(x) {
     //move one datum (tuple?) into the cache
