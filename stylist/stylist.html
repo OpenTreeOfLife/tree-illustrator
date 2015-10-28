@@ -11,6 +11,7 @@
         // inline logic here?
     </script>
     <script src="dist/stylist-bundle.js"></script>
+    <script src="jquery.fullscreen.min.js"></script>
     <script src="ipython-notebook-bridge.js"></script>
     <!-- TODO: only add this if we're embedded in a notebook? -->
 
@@ -21,7 +22,8 @@
     <link rel="stylesheet" type="text/css" media="print" href="stylist-print.css">
   </head>
   <body>
-   <div class="container-fluid">
+   <div id="full-screen-area" class="container-fluid" 
+        style="background-color: #fff;">
    <div class="row-fluid">
 
    <div class="span6"> 
@@ -58,6 +60,12 @@
     <div id="editor" class="span6" style="padding-right: 20px;">
 
         <div>
+            <button id="enter-full-screen" class="btn btn-small pull-right"
+                    style="margin-top: 8px; display: none;"
+                    onclick="stylist.enterFullScreen(); return false;">Full screen</button>
+            <button id="exit-full-screen" class="btn btn-small pull-right"
+                    style="margin-top: 8px; display: none;"
+                    onclick="stylist.exitFullScreen(); return false;">Exit full screen</button>
             <h2 style="margin: 0 0 4px;">Tree Illustrator (prototype)</h2>
         </div>
 

@@ -431,6 +431,31 @@ $(document).ready(function() {
     $('#browser-ppi-indicator').text(browser_ppi);
     $('#display-ppi-indicator').text(display_ppi);
 
+    // show or disable the full-screen widgets
+    var $fullScreenToggle = $('button#enter-full-screen');
+    if ($.fullscreen.isNativelySupported()) {
+        // ie, the current browser supports full-screen APIs
+        $fullScreenToggle.show();
+        $(document).bind('fscreenchange', function(e, state, elem) {
+            // if we currently in fullscreen mode
+            if ($.fullscreen.isFullScreen()) {
+                $('#enter-full-screen').hide();
+                $('#exit-full-screen').show();
+            } else {
+                $('#enter-full-screen').show();
+                $('#exit-full-screen').hide();
+            }
+        });
+    } else {
+        // dim and disable the full-screen toggle
+        $fullScreenToggle.css("opacity: 0.5;")
+                         .click(function() {
+                            alert("This browser does not support full-screen display.");
+                            return false;
+                         })
+                         .show();
+    }
+
     // Use an Illustration object as our primary view model for KnockoutJS
     // (by convention, it's usually named 'viewModel')
     ill = new TreeIllustrator.Illustration();
@@ -1231,6 +1256,15 @@ function getPrintAreaLandmarks() {
         bottomY: 1.0
     };
 }
+ 
+function enterFullScreen() {
+    var test = $('#full-screen-area').fullscreen();
+    return false;
+}
+function exitFullScreen() {
+    $.fullscreen.exit();
+    return false;
+}
 
 function applyChosenStyleGuide(clicked) {
     var $clicked = $(clicked);
@@ -1289,6 +1323,8 @@ var api = [
     'availableStyleGuides',
     'showStyleGuidePicker',
     'applyChosenStyleGuide',
+    'enterFullScreen',
+    'exitFullScreen',
     'ill'
 ];
 $.each(api, function(i, methodName) {
