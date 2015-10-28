@@ -5,7 +5,7 @@
 var utils = require('./ti-utils.js'),
     stylist = require('./stylist.js');
 
-global.stylist = stylist;
+//global.stylist = stylist;
 
 var TreeIllustrator = function(window, document, $, ko, stylist) {
 

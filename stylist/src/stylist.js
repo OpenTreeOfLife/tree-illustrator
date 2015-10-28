@@ -12,8 +12,9 @@ var $ = require('jquery'),
     nexsonTransform = require('./vg.data.nexson.js');
     phylogramTransform = require('./vg.data.phylogram.js');
 
-//exports.stylist = this;  // is there any way to do this?
+// expose TreeIllustrator to JS in the main UI 
 global.TreeIllustrator = TreeIllustrator;
+global.$ = $;
 
 // register custom transforms with the installed vega
 vg.transforms['stash'] = stashTransform;
