@@ -118,8 +118,14 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     }
                 },
                 open : function (event, ui) {
+                    // Cosmetic tweaks to the modal header
+                    var $titleArea = $('h4.modal-title:contains(Tree Illustrator)');
+                    var $modalHeader = $titleArea.closest('.modal-header');
+                    $modalHeader.css('padding', '8px 15px');
+                    $titleArea.prepend('<img src="//tree.opentreeoflife.org/favicon.ico"'
+                                          +' style="width:24px; height: 24px; display: inline-block; margin: -7px 0 -5px -5px;">');
+
                     // TODO: load initial data?
-                    console.log('opening modal popup...');
                     /*
                     var that = $(this);
                     // Upon ENTER, click the OK button.
@@ -133,11 +139,6 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     */
                 }
             });
-            var $titleArea = $('h4.modal-title:contains(Tree Illustrator)');
-            var $modalHeader = $titleArea.closest('.modal-header');
-            $modalHeader.css('padding', '8px 15px');
-            $titleArea.prepend('<img src="//tree.opentreeoflife.org/favicon.ico"'
-                                  +' style="width:24px; height: 24px; display: inline-block; margin: -7px 0 -5px -5px;">');
         };
 
         /* TODO: define PUBLIC variables (and privileged methods) with 'self' */
