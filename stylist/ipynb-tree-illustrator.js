@@ -79,12 +79,12 @@ var IPythonTreeIllustrator = function(window, document, $) {
                 showInModalPopup(elementID, data);
             } else {  // it's a static HTML notebok
                 // Use a new browser window or tab
-                self.showInNewWindow(elementID, data);
+                showInNewWindow(elementID, data);
             }
         } else {
             // try to embed in a specified cell
             if (target && ('append_output' in target)) {
-                self.showInNotebookCell(target);
+                showInNotebookCell(target);
             } else {
                 if (isLiveNotebook) {
                     alert("Missing notebook cell as first argument! Try 'this':"
@@ -118,7 +118,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
             // N.B. This ID is mostly for internal use; user probably calls this something else
             cell.append_display_data({
               'data': {
-                'text/html': self.getIframeMarkup()
+                'text/html': getIframeMarkup()
               } 
             })
         }
@@ -128,19 +128,26 @@ var IPythonTreeIllustrator = function(window, document, $) {
             // https://github.com/minrk/ipython_extensions/blob/70ed77bd7fd36fbead09a1df41f93cab5cfdfe92/nbextensions/gist.js
             IPython.dialog.modal({
                 title: "GitHub OAuth",
-                body: dialog,
+                body: getIframeMarkup(),
                 buttons : {
-                    "Cancel": {},
-                    "OK": {
+                    //"Cancel": {},
+                    "Close": {
                         class: "btn-primary",
                         click: function () {
+                            // TODO: update TI header cell
+                            console.log('clicked Close button (closes popup?)');
+                            /*
                             var token = $(this).find('input').val();
                             localStorage[token_name] = token;
                             gist_notebook();
+                            */
                         }
                     }
                 },
                 open : function (event, ui) {
+                    // TODO: load initial data?
+                    console.log('opening modal popup...');
+                    /*
                     var that = $(this);
                     // Upon ENTER, click the OK button.
                     that.find('input[type="text"]').keydown(function (event, ui) {
@@ -150,6 +157,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
                         }
                     });
                     that.find('input[type="text"]').focus().select();
+                    */
                 }
             });
         };
