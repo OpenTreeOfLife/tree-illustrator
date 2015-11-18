@@ -99,9 +99,9 @@ var IPythonTreeIllustrator = function(window, document, $) {
         var showInModalPopup = function(data) {
             // Use IPython's support for a single modal popup, adapted from
             // https://github.com/minrk/ipython_extensions/blob/70ed77bd7fd36fbead09a1df41f93cab5cfdfe92/nbextensions/gist.js
-            var parentModule = IPython.dialog;
-            debugger;
-            var modal = parentModule.modal({
+            //var modal = IPython.dialog.parentModule.modal({
+            var dialog = require("base/js/dialog");
+            var modal = dialog.modal({
                 title: "Tree Illustrator",
                 body: $(getIframeMarkup()),
                 buttons : {
