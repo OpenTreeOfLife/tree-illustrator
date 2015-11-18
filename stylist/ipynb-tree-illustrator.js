@@ -99,8 +99,8 @@ var IPythonTreeIllustrator = function(window, document, $) {
         var showInModalPopup = function(data) {
             // Use IPython's support for a single modal popup, adapted from
             // https://github.com/minrk/ipython_extensions/blob/70ed77bd7fd36fbead09a1df41f93cab5cfdfe92/nbextensions/gist.js
-            IPython.dialog.modal({
-                title: "<b>TEST</b> Tree Illustrator",
+            var modal = IPython.dialog.modal({
+                title: "Tree Illustrator",
                 body: $(getIframeMarkup()),
                 buttons : {
                     //"Cancel": {},
@@ -133,6 +133,9 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     */
                 }
             });
+            debugger;
+            var $titleArea = $('h4.modal-title:contains(Tree Illustrator)');
+            $titleArea.prepend('<i class="fa-leaf fa" style="padding-right: 6px;">&nbsp;</i>');
         };
 
         /* TODO: define PUBLIC variables (and privileged methods) with 'self' */
