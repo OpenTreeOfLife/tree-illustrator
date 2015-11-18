@@ -135,7 +135,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
             });
             var $titleArea = $('h4.modal-title:contains(Tree Illustrator)');
             var $modalHeader = $titleArea.closest('.modal-header');
-            $modalHeader.style('padding', '8px 15px');
+            $modalHeader.css('padding', '8px 15px');
             $titleArea.prepend('<img src="//tree.opentreeoflife.org/favicon.ico"'
                                   +' style="width:24px; height: 24px; display: inline-block; margin: -7px 0 -5px -5px;">');
         };
@@ -161,8 +161,8 @@ var IPythonTreeIllustrator = function(window, document, $) {
             }
         } else {
             // try to embed in a specified cell
-            ///if (target && ('append_output' in target)) {
-            if (target && (target instanceof OutputArea)) {
+            if (target && ('append_output' in target)) {
+            ///if (target && (target instanceof OutputArea)) {
                 showInNotebookCell(target);
             } else {
                 if (isLiveNotebook) {
