@@ -44,6 +44,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
 
     // Define some enumerated values for callers.
     var SINGLETON = 'SINGLETON';
+    var TOOLBAR_BUTTON_ID = 'ti-toolbar-button';
 
     // Keep track of all active instances (widgets), keyed by element ID
     var widgets = { };
@@ -99,7 +100,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
             // Use IPython's support for a single modal popup, adapted from
             // https://github.com/minrk/ipython_extensions/blob/70ed77bd7fd36fbead09a1df41f93cab5cfdfe92/nbextensions/gist.js
             IPython.dialog.modal({
-                title: "GitHub OAuth",
+                title: "<b>TEST</b> Tree Illustrator",
                 body: $(getIframeMarkup()),
                 buttons : {
                     //"Cancel": {},
@@ -134,12 +135,15 @@ var IPythonTreeIllustrator = function(window, document, $) {
             });
         };
 
-        /* define PUBLIC variables (and privileged methods) with 'self' */
+        /* TODO: define PUBLIC variables (and privileged methods) with 'self' */
 
-        // Initialize this instance
+
+
+        // Initialize this instance using one of the methods above
+
         if (!data || typeof(data) !== 'object') {
             // instance will load the "empty" illustration as usual?
-            console.log("No data specified for Tree Illustrator, will load placeholder");
+            console.log("No data specified for Tree Illustrator, will use placeholders.");
         }
 
         if (target === SINGLETON) {
@@ -174,6 +178,24 @@ var IPythonTreeIllustrator = function(window, document, $) {
         widgets[elementID] = self;
     }
 
+    // Do other initial setup in the noteboo
+    if (isLiveNotebook) {
+        // Add a button to the shared toolbar
+        if ($('#'+ TOOLBAR_BUTTON_ID).length === 0) {
+            IPython.toolbar.add_buttons_group([
+                {
+                    'label'   : 'Launch the Tree Illustrator',
+                    'icon'    : 'fa-leaf', // from http://fortawesome.github.io/Font-Awesome/icons/
+                            // for prefixed names, see http://cascade.io/icon-reference.html
+                    'callback': function() {
+                        var ti = new IPythonTreeIllustrator.IllustratorWidget(IPythonTreeIllustrator.SINGLETON);
+                    },
+                    'id'      : TOOLBAR_BUTTON_ID
+                },
+            ]);
+        }
+    }
+
     /* define PUBLIC methods (that don't need private data) in its prototype */
     IllustratorWidget.prototype = {
         constructor: IllustratorWidget,
@@ -197,6 +219,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
     return {
         // expose enumerations
         SINGLETON: SINGLETON,
+        TOOLBAR_BUTTON_ID: TOOLBAR_BUTTON_ID,
 
         // expose static properties and methods
         isLiveNotebook: isLiveNotebook,
