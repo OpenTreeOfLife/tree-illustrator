@@ -99,8 +99,9 @@ var IPythonTreeIllustrator = function(window, document, $) {
         var showInModalPopup = function(data) {
             // Use IPython's support for a single modal popup, adapted from
             // https://github.com/minrk/ipython_extensions/blob/70ed77bd7fd36fbead09a1df41f93cab5cfdfe92/nbextensions/gist.js
+            var parentModule = IPython.dialog;
             debugger;
-            var modal = IPython.dialog.modal({
+            var modal = parentModule.modal({
                 title: "Tree Illustrator",
                 body: $(getIframeMarkup()),
                 buttons : {
@@ -119,12 +120,14 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     }
                 },
                 open : function (event, ui) {
-                    // Cosmetic tweaks to the modal header
+                    // Cosmetic tweaks to the modal popup
                     var $titleArea = $('h4.modal-title:contains(Tree Illustrator)');
                     var $modalHeader = $titleArea.closest('.modal-header');
-                    $modalHeader.css('padding', '8px 15px');
+                    var $modalDialog = $modalHeader.closest('.modal-dialog');
                     $titleArea.prepend('<img src="//tree.opentreeoflife.org/favicon.ico"'
                                           +' style="width:24px; height: 24px; display: inline-block; margin: -7px 0 -5px -5px;">');
+                    $modalHeader.css('padding', '8px 15px'); 
+                    $modalDialog.css({'width':'90%', 'height':'90%'}); // almost fills the window
 
                     // TODO: load initial data?
                     /*
