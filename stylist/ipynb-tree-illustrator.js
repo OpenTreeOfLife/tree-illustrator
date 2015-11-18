@@ -133,9 +133,11 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     */
                 }
             });
-            debugger;
             var $titleArea = $('h4.modal-title:contains(Tree Illustrator)');
-            $titleArea.prepend('<i class="fa-leaf fa" style="padding-right: 6px;">&nbsp;</i>');
+            var $modalHeader = $titleArea.closest('.modal-header');
+            $modalHeader.style('padding', '8px 15px');
+            $titleArea.prepend('<img src="//tree.opentreeoflife.org/favicon.ico"'
+                                  +' style="width:24px; height: 24px; display: inline-block; margin: -7px 0 -5px -5px;">');
         };
 
         /* TODO: define PUBLIC variables (and privileged methods) with 'self' */
