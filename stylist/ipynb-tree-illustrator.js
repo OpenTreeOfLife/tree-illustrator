@@ -119,7 +119,6 @@ var IPythonTreeIllustrator = function(window, document, $) {
                 },
                 open : function (event, ui) {
                     // Cosmetic tweaks to the modal header
-                    debugger;
                     var $titleArea = $('h4.modal-title:contains(Tree Illustrator)');
                     var $modalHeader = $titleArea.closest('.modal-header');
                     $modalHeader.css('padding', '8px 15px');
