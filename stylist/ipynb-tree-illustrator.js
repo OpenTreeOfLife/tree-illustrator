@@ -205,7 +205,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
             ]);
             // let's give it a nicer look
             $('#'+ TOOLBAR_BUTTON_ID).html('<img src="//tree.opentreeoflife.org/favicon.ico"'
-                                              +' style="width:24px; height: 24px; display: inline-block; margin: -7px 0 -5px -5px;"> Tree Illustrator');
+                                              +' style="width:18px; height: 18px; margin: -1px -3px 0px -4px;"> Tree Illustrator');
         }
     }
 
