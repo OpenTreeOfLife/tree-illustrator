@@ -82,8 +82,10 @@ var IPythonTreeIllustrator = function(window, document, $) {
                 self.showInNewWindow(elementID, data);
             }
         } else {
-            // try to embed in the specified cell
-            if (!cell || !('append_output' in cell)) {
+            // try to embed in a specified cell
+            if (target && ('append_output' in target)) {
+                self.showInNotebookCell(target);
+            } else {
                 if (isLiveNotebook) {
                     alert("Missing notebook cell as first argument! Try 'this':"
                         + "\n  var ti = new IPythonTreeIllustrator.IllustratorWidget(this);");
@@ -92,7 +94,6 @@ var IPythonTreeIllustrator = function(window, document, $) {
                 }
                 return null;
             }
-            self.showInNotebookCell(cell);
         }
 
         /* define PRIVATE members (variables and functions ) with 'var' */
