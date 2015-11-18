@@ -100,7 +100,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
             // https://github.com/minrk/ipython_extensions/blob/70ed77bd7fd36fbead09a1df41f93cab5cfdfe92/nbextensions/gist.js
             IPython.dialog.modal({
                 title: "GitHub OAuth",
-                body: getIframeMarkup(),
+                body: $(getIframeMarkup()),
                 buttons : {
                     //"Cancel": {},
                     "Close": {
@@ -152,7 +152,8 @@ var IPythonTreeIllustrator = function(window, document, $) {
             }
         } else {
             // try to embed in a specified cell
-            if (target && ('append_output' in target)) {
+            ///if (target && ('append_output' in target)) {
+            if (target && (target instanceof OutputArea)) {
                 showInNotebookCell(target);
             } else {
                 if (isLiveNotebook) {
