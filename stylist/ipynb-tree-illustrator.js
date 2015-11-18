@@ -66,35 +66,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
 
         // Safely refer to this instance below
         var self = this;
-
-        if (!data || typeof(data) !== 'object') {
-            // instance will load the "empty" illustration as usual?
-            console.log("No data specified for Tree Illustrator, will load placeholder");
-        }
-
-        if (target === SINGLETON) {
-            if (isLiveNotebook) {
-                // Use the modal popup support in IPython
-                var elementID = getNextAvailableWidgetID();
-                showInModalPopup(elementID, data);
-            } else {  // it's a static HTML notebok
-                // Use a new browser window or tab
-                showInNewWindow(elementID, data);
-            }
-        } else {
-            // try to embed in a specified cell
-            if (target && ('append_output' in target)) {
-                showInNotebookCell(target);
-            } else {
-                if (isLiveNotebook) {
-                    alert("Missing notebook cell as first argument! Try 'this':"
-                        + "\n  var ti = new IPythonTreeIllustrator.IllustratorWidget(this);");
-                } else {
-                    alert("REMINDER: Tree Illustrator can't be embedded in a cell in the static HTML notebook!");
-                }
-                return null;
-            }
-        }
+        var elementID = getNextAvailableWidgetID();
 
         /* define PRIVATE members (variables and functions ) with 'var' */
 
@@ -114,7 +86,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
 
         var showInNotebookCell = function(cell) {
             // create my IFRAME element in the output of the current notebook cell
-            var elementID = getNextAvailableWidgetID();
+            
             // N.B. This ID is mostly for internal use; user probably calls this something else
             cell.append_display_data({
               'data': {
@@ -123,7 +95,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
             })
         }
 
-        var showInModalPopup = function(elementID, data) {
+        var showInModalPopup = function(data) {
             // Use IPython's support for a single modal popup, adapted from
             // https://github.com/minrk/ipython_extensions/blob/70ed77bd7fd36fbead09a1df41f93cab5cfdfe92/nbextensions/gist.js
             IPython.dialog.modal({
@@ -163,6 +135,35 @@ var IPythonTreeIllustrator = function(window, document, $) {
         };
 
         /* define PUBLIC variables (and privileged methods) with 'self' */
+
+        // Initialize this instance
+        if (!data || typeof(data) !== 'object') {
+            // instance will load the "empty" illustration as usual?
+            console.log("No data specified for Tree Illustrator, will load placeholder");
+        }
+
+        if (target === SINGLETON) {
+            if (isLiveNotebook) {
+                // Use the modal popup support in IPython
+                showInModalPopup(data);
+            } else {  // it's a static HTML notebok
+                // Use a new browser window or tab
+                showInNewWindow(data);
+            }
+        } else {
+            // try to embed in a specified cell
+            if (target && ('append_output' in target)) {
+                showInNotebookCell(target);
+            } else {
+                if (isLiveNotebook) {
+                    alert("Missing notebook cell as first argument! Try 'this':"
+                        + "\n  var ti = new IPythonTreeIllustrator.IllustratorWidget(this);");
+                } else {
+                    alert("REMINDER: Tree Illustrator can't be embedded in a cell in the static HTML notebook!");
+                }
+                return null;
+            }
+        }
 
         var elementSelector = ('#'+ elementID);
         self.ti_element = $(elementSelector)[0];
