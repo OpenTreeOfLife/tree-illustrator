@@ -38,6 +38,10 @@
 
 var IPythonTreeIllustrator = function(window, document, $) {
 
+    // Try to determine the URL of this script, so we can load adjacent files
+    var currentScriptURL = $('script').last().attr('src');
+    console.log('>>> Loading Tree Illustrator code from this URL: '+ currentScriptURL);
+
     // Are we running in a "live" notebook, or static HTML?
     var isLiveNotebook = $('body.notebook_app').length > 0;
     var isStaticNotebook = !(isLiveNotebook);
@@ -211,6 +215,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
         }
         console.log("IPythonTreeIllustrator.initNotebookUI(): starting...");
         
+
         // Add a button to the shared toolbar
         if ($('#'+ TOOLBAR_BUTTON_ID).length === 0) {
             console.log("IPythonTreeIllustrator.initNotebookUI(): adding toolbar button");
@@ -238,7 +243,9 @@ var IPythonTreeIllustrator = function(window, document, $) {
                 updateHomeCell();
             } else {
                 // Load our template HTML into the new "home" cell
-                $homeCellOutputArea.load('./ipynb-ti-home-cell.html', function( response, status, xhr ) {
+                var tiHomeCellURL = currentScriptURL.split('/').pop().append('ipynb-ti-home-cell.html').join('/');
+                console.log(">>> Loading home-cell UI from this URL:"+ tiHomeCellURL);
+                $homeCellOutputArea.load(tiHomeCellURL, function( response, status, xhr ) {
                     if ( status == "error" ) {
                         $homeCellOutputArea.append('<pre><div class="ansired"></div></pre>'); // mimic IPython notebook errors
                         var msg = "There was an error loading the Tree Illustrator UI:\n\n";
