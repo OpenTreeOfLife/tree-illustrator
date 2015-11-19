@@ -36,7 +36,7 @@
  * [2] http://caniuse.com/#search=postMessage
  */
 
-var IPythonTreeIllustrator = function(window, document, $) {
+var IPythonTreeIllustrator = function(window, document, $, element) {
 
     // Are we running in a "live" notebook, or static HTML?
     var isLiveNotebook = $('body.notebook_app').length > 0;
@@ -241,4 +241,4 @@ var IPythonTreeIllustrator = function(window, document, $) {
         // expose available classes
         IllustratorWidget: IllustratorWidget
     };
-}(window, document, $);
+}(window, document, $, element);
