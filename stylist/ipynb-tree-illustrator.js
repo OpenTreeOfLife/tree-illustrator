@@ -187,7 +187,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
     }
 
     // Do other initial setup in the noteboo
-    var initNotebookUI( $homeCellOutputArea ) {
+    var initNotebookUI = function( $homeCellOutputArea ) {
         if (isStaticNotebook) {
             // There's no toolbar or available cell reference; nothing we can do here
             console.warn("IPythonTreeIllustrator.initNotebookUI(): disabled in a static notebook!");
