@@ -186,6 +186,22 @@ var IPythonTreeIllustrator = function(window, document, $) {
         widgets[elementID] = self;
     }
 
+    // Freeze/thaw JSON data to/from a TEXTAREA
+    var thawStateFromJSON = function() {
+        console.warn("Now I'd thaw TI state from JSON!");
+    }
+    var freezeStateToJSON = function() {
+        console.warn("Now I'd freeze TI state to JSON!");
+    }
+
+    var updateHomeCell = function() {
+        // Refresh (or initialize) the home-cell display based on current state JSON
+        var $homeCell = $('#ti-home-cell');
+        console.log("Updating the Tree Illustrator home cell...");
+        // TODO: Update the list of illustrations
+        // TODO: Update the prefs UI
+    }
+
     // Do other initial setup in the noteboo
     var initNotebookUI = function( $homeCellOutputArea ) {
         if (isStaticNotebook) {
@@ -216,8 +232,22 @@ var IPythonTreeIllustrator = function(window, document, $) {
 
         // Add a "home" cell and persistent state (JSON in a TEXTAREA), if not found
         if ($homeCellOutputArea instanceof jQuery && $homeCellOutputArea.length) {
-            // TODO: test for existing state and home cell
-            $homeCellOutputArea.html('<h1>VICTORY</h1>');
+            // Test for existing home cell (incl. JSON state)
+            var homeCellAlreadyExists = $('#ti-home-cell, #ti-state-data').length > 1;
+            if (homeCellAlreadyExists) {
+                updateHomeCell();
+            } else {
+                // Load our template HTML into the new "home" cell
+                $homeCellOutputArea.load('./ipynb-ti-home-cell.html', function( response, status, xhr ) {
+                    if ( status == "error" ) {
+                        var msg = "Sorry but there was an error loading the Tree Illustrator UI: ";
+                        $homeCellOutputArea.text( msg + xhr.status + " " + xhr.statusText );
+                        return;
+                    }
+                    alert("Home cell loaded!");
+                    updateHomeCell();
+                });
+            }
         } else {
             // No jQuery provided, or it's empty
             console.warn("IPythonTreeIllustrator.initNotebookUI(): No home cell defined!");
