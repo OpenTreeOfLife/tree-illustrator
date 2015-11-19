@@ -36,7 +36,7 @@
  * [2] http://caniuse.com/#search=postMessage
  */
 
-var IPythonTreeIllustrator = function(window, document, $, element) {
+var IPythonTreeIllustrator = function(window, document, $) {
 
     // Are we running in a "live" notebook, or static HTML?
     var isLiveNotebook = $('body.notebook_app').length > 0;
@@ -187,9 +187,17 @@ var IPythonTreeIllustrator = function(window, document, $, element) {
     }
 
     // Do other initial setup in the noteboo
-    if (isLiveNotebook) {
+    var initNotebookUI( $homeCellOutputArea ) {
+        if (isStaticNotebook) {
+            // There's no toolbar or available cell reference; nothing we can do here
+            console.warn("IPythonTreeIllustrator.initNotebookUI(): disabled in a static notebook!");
+            return;
+        }
+        console.log("IPythonTreeIllustrator.initNotebookUI(): starting...");
+        
         // Add a button to the shared toolbar
         if ($('#'+ TOOLBAR_BUTTON_ID).length === 0) {
+            console.log("IPythonTreeIllustrator.initNotebookUI(): adding toolbar button");
             IPython.toolbar.add_buttons_group([
                 {
                     'label'   : 'Launch the Tree Illustrator',
@@ -205,6 +213,16 @@ var IPythonTreeIllustrator = function(window, document, $, element) {
             $('#'+ TOOLBAR_BUTTON_ID).html('<img src="//tree.opentreeoflife.org/favicon.ico"'
                                               +' style="width:18px; height: 18px; margin: -1px -3px 0px -4px;"> Tree Illustrator');
         }
+
+        // Add a "home" cell and persistent state (JSON in a TEXTAREA), if not found
+        if ($homeCellOutputArea instanceof jQuery && $homeCellOutputArea.length) {
+            // TODO: test for existing state and home cell
+            $homeCellOutputArea.html('<h1>VICTORY</h1>');
+        } else {
+            // No jQuery provided, or it's empty
+            console.warn("IPythonTreeIllustrator.initNotebookUI(): No home cell defined!");
+        }
+        console.log("IPythonTreeIllustrator.initNotebookUI(): done!");
     }
 
     /* define PUBLIC methods (that don't need private data) in its prototype */
@@ -226,8 +244,6 @@ var IPythonTreeIllustrator = function(window, document, $, element) {
 
     }
 
-    debugger;
-
     /* expose class constructors (and static methods) for instantiation */
     return {
         // expose enumerations
@@ -235,10 +251,11 @@ var IPythonTreeIllustrator = function(window, document, $, element) {
         TOOLBAR_BUTTON_ID: TOOLBAR_BUTTON_ID,
 
         // expose static properties and methods
+        initNotebookUI: initNotebookUI,
         isLiveNotebook: isLiveNotebook,
         isStaticNotebook: isStaticNotebook,
 
         // expose available classes
         IllustratorWidget: IllustratorWidget
     };
-}(window, document, $, element);
+}(window, document, $);
