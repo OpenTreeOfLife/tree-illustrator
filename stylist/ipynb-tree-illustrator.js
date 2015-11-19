@@ -147,16 +147,12 @@ var IPythonTreeIllustrator = function(window, document, $) {
 
         /* TODO: define PUBLIC variables (and privileged methods) with 'self' */
 
-
-
         // Initialize this instance using one of the methods above
 
         if (!data || typeof(data) !== 'object') {
             // instance will load the "empty" illustration as usual?
             console.log("No data specified for Tree Illustrator, will use placeholders.");
         }
-
-        debugger;
 
         if (target === SINGLETON) {
             if (isLiveNotebook) {
@@ -229,6 +225,8 @@ var IPythonTreeIllustrator = function(window, document, $) {
         }
 
     }
+
+    debugger;
 
     /* expose class constructors (and static methods) for instantiation */
     return {
