@@ -240,8 +240,9 @@ var IPythonTreeIllustrator = function(window, document, $) {
                 // Load our template HTML into the new "home" cell
                 $homeCellOutputArea.load('./ipynb-ti-home-cell.html', function( response, status, xhr ) {
                     if ( status == "error" ) {
-                        var msg = "Sorry but there was an error loading the Tree Illustrator UI: ";
-                        $homeCellOutputArea.text( msg + xhr.status + " " + xhr.statusText );
+                        $homeCellOutputArea.append('<pre class="ansired"></pre>'); // mimic IPython notebook errors
+                        var msg = "There was an error loading the Tree Illustrator UI:\n\n";
+                        $homeCellOutputArea.find('pre').text( msg + xhr.status + " " + xhr.statusText );
                         return;
                     }
                     alert("Home cell loaded!");
