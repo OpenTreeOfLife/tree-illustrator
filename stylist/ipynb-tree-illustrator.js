@@ -156,6 +156,8 @@ var IPythonTreeIllustrator = function(window, document, $) {
             console.log("No data specified for Tree Illustrator, will use placeholders.");
         }
 
+        debugger;
+
         if (target === SINGLETON) {
             if (isLiveNotebook) {
                 // Use the modal popup support in IPython
