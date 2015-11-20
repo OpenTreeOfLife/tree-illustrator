@@ -206,7 +206,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
         // TODO: Update the prefs UI
     }
 
-    var buildScriptRelativeURL( path ) {
+    var buildScriptRelativeURL = function( path ) {
         var parentParts = currentScriptURL.split('/').slice(0, -1);
         var newURLParts = parentParts.push( path );
         return newURLParts.join('/');
