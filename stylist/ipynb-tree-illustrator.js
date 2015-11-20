@@ -195,15 +195,18 @@ var IPythonTreeIllustrator = function(window, document, $) {
     // Freeze/thaw JSON data to/from a TEXTAREA
     var thawStateFromJSON = function() {
         var $stateHolder = $('#'+ TI_STATE_ID);
-        state = $stateHolder.length ? 
-            JSON.parse( $stateHolder.text() ) : 
-            // default (initial) state for a new Tree Illustrator
-            {
+        if ($stateHolder.length) {
+            // Load the existing state JSON
+            state = JSON.parse( $stateHolder.text() ); 
+        } else {
+            // Use default (initial) state for a new Tree Illustrator
+            state = {
                 "prefs": {}, 
                 "illustrations": {}, 
                 "svgOutput": {}, 
                 "convertedTrees": {}
             };
+        }
     }
     var freezeStateToJSON = function() {
         if (isStaticNotebook) {
@@ -289,6 +292,8 @@ var IPythonTreeIllustrator = function(window, document, $) {
                         $homeCellOutputArea.find('pre .ansired').text( msg + xhr.status + " " + xhr.statusText );
                         return;
                     }
+                    // Freeze any prior (or default) state to stored JSON
+                    freezeStateToJSON();
                     alert("Home cell loaded!");
                     updateHomeCell();
                 });
