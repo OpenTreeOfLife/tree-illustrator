@@ -206,6 +206,12 @@ var IPythonTreeIllustrator = function(window, document, $) {
         // TODO: Update the prefs UI
     }
 
+    var buildScriptRelativeURL( path ) {
+        var parentParts = currentScriptURL.split('/').slice(0, -1);
+        var newURLParts = parentParts.push( path );
+        return newURLParts.join('/');
+    }
+
     // Do other initial setup in the noteboo
     var initNotebookUI = function( $homeCellOutputArea ) {
         if (isStaticNotebook) {
@@ -248,7 +254,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     $homeCellOutputArea.find('pre .ansired').text( "No URL found for this script!" );
                     return;
                 }
-                var tiHomeCellURL = currentScriptURL.split('/').slice(0, -1).push('ipynb-ti-home-cell.html').join('/');
+                var tiHomeCellURL = buildScriptRelativeURL('ipynb-ti-home-cell.html');
                 console.log(">>> Loading home-cell UI from this URL:"+ tiHomeCellURL);
                 $homeCellOutputArea.load(tiHomeCellURL, function( response, status, xhr ) {
                     if ( status == "error" ) {
