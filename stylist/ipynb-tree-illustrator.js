@@ -201,6 +201,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
         } else {
             // Use default (initial) state for a new Tree Illustrator
             state = {
+                "lastUpdate": new Date().toString(),
                 "prefs": {}, 
                 "illustrations": {}, 
                 "svgOutput": {}, 
