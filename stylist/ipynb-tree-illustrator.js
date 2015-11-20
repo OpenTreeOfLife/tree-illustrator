@@ -194,6 +194,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
 
     // Freeze/thaw JSON data to/from a TEXTAREA
     var thawStateFromJSON = function() {
+        debugger;
         var $stateHolder = $('#'+ TI_STATE_ID);
         if ($stateHolder.length) {
             // Load the existing state JSON
