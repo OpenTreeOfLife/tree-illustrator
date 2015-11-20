@@ -39,7 +39,7 @@
 var IPythonTreeIllustrator = function(window, document, $) {
 
     // Try to determine the URL of this script, so we can load adjacent files
-    var currentScriptURL = $('script').last().attr('src');
+    var currentScriptURL = $('script[src*="ipynb-tree-illustrator.js"]').last().attr('src');
     console.log('>>> Loading Tree Illustrator code from this URL: '+ currentScriptURL);
 
     // Are we running in a "live" notebook, or static HTML?
@@ -243,7 +243,12 @@ var IPythonTreeIllustrator = function(window, document, $) {
                 updateHomeCell();
             } else {
                 // Load our template HTML into the new "home" cell
-                var tiHomeCellURL = currentScriptURL.split('/').pop().push('ipynb-ti-home-cell.html').join('/');
+                if (!currentScriptURL) {
+                    $homeCellOutputArea.append('<pre><div class="ansired"></div></pre>'); // mimic IPython notebook errors
+                    $homeCellOutputArea.find('pre .ansired').text( "No URL found for this script!" );
+                    return;
+                }
+                var tiHomeCellURL = currentScriptURL.split('/').slice(0, -1).push('ipynb-ti-home-cell.html').join('/');
                 console.log(">>> Loading home-cell UI from this URL:"+ tiHomeCellURL);
                 $homeCellOutputArea.load(tiHomeCellURL, function( response, status, xhr ) {
                     if ( status == "error" ) {
