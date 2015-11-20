@@ -243,7 +243,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
                 updateHomeCell();
             } else {
                 // Load our template HTML into the new "home" cell
-                var tiHomeCellURL = currentScriptURL.split('/').pop().append('ipynb-ti-home-cell.html').join('/');
+                var tiHomeCellURL = currentScriptURL.split('/').pop().push('ipynb-ti-home-cell.html').join('/');
                 console.log(">>> Loading home-cell UI from this URL:"+ tiHomeCellURL);
                 $homeCellOutputArea.load(tiHomeCellURL, function( response, status, xhr ) {
                     if ( status == "error" ) {
