@@ -47,8 +47,10 @@ var IPythonTreeIllustrator = function(window, document, $) {
     var isStaticNotebook = !(isLiveNotebook);
 
     // Define some enumerated values for callers.
-    var SINGLETON = 'SINGLETON';
-    var TOOLBAR_BUTTON_ID = 'ti-toolbar-button';
+    var SINGLETON = 'SINGLETON',
+        TOOLBAR_BUTTON_ID = 'ti-toolbar-button',
+        TI_HOME_CELL_ID = 'ti-home-cell',
+        TI_STATE_ID = 'ti-state-data';
 
     // Keep track of all active instances (widgets), keyed by element ID
     var widgets = { };
@@ -192,15 +194,37 @@ var IPythonTreeIllustrator = function(window, document, $) {
 
     // Freeze/thaw JSON data to/from a TEXTAREA
     var thawStateFromJSON = function() {
-        console.warn("Now I'd thaw TI state from JSON!");
+        var $stateHolder = $('#'+ TI_STATE_ID);
+        state = $stateHolder.length ? 
+            JSON.parse( $stateHolder.text() ) : 
+            // default (initial) state for a new Tree Illustrator
+            {
+                "prefs": {}, 
+                "illustrations": {}, 
+                "svgOutput": {}, 
+                "convertedTrees": {}
+            };
     }
     var freezeStateToJSON = function() {
-        console.warn("Now I'd freeze TI state to JSON!");
+        if (isStaticNotebook) {
+            // We can only save changes in a live notebook!
+            console.warn("IPythonTreeIllustrator.freezeStateToJSON(): disabled in a static notebook!");
+            return;
+        }
+        var $stateHolder = $('#'+ TI_STATE_ID);
+        if ($stateHolder.length === 0) {
+            var msg = "State (JSON) holder not found! Unable to save state for Tree Illustrator!";
+            console.warn(msg);
+            alert(msg);
+            return;
+        }
+        $stateHolder.text( JSON.stringify(state));
+        IPython.notebook.save_notebook();
     }
 
     var updateHomeCell = function() {
         // Refresh (or initialize) the home-cell display based on current state JSON
-        var $homeCell = $('#ti-home-cell');
+        var $homeCell = $('#'+ TI_HOME_CELL_ID);
         console.log("Updating the Tree Illustrator home cell...");
         // TODO: Update the list of illustrations
         // TODO: Update the prefs UI
@@ -214,6 +238,9 @@ var IPythonTreeIllustrator = function(window, document, $) {
 
     // Do other initial setup in the noteboo
     var initNotebookUI = function( $homeCellOutputArea ) {
+        // Attempt to load any prior state, or default if none found
+        thawStateFromJSON();
+
         if (isStaticNotebook) {
             // There's no toolbar or available cell reference; nothing we can do here
             console.warn("IPythonTreeIllustrator.initNotebookUI(): disabled in a static notebook!");
@@ -221,7 +248,6 @@ var IPythonTreeIllustrator = function(window, document, $) {
         }
         console.log("IPythonTreeIllustrator.initNotebookUI(): starting...");
         
-
         // Add a button to the shared toolbar
         if ($('#'+ TOOLBAR_BUTTON_ID).length === 0) {
             console.log("IPythonTreeIllustrator.initNotebookUI(): adding toolbar button");
@@ -244,7 +270,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
         // Add a "home" cell and persistent state (JSON in a TEXTAREA), if not found
         if ($homeCellOutputArea instanceof jQuery && $homeCellOutputArea.length) {
             // Test for existing home cell (incl. JSON state)
-            var homeCellAlreadyExists = $('#ti-home-cell, #ti-state-data').length > 1;
+            var homeCellAlreadyExists = $('#'+ TI_HOME_CELL_ID +', #'+ TI_STATE_ID).length > 1;
             if (homeCellAlreadyExists) {
                 updateHomeCell();
             } else {
@@ -298,6 +324,8 @@ var IPythonTreeIllustrator = function(window, document, $) {
         // expose enumerations
         SINGLETON: SINGLETON,
         TOOLBAR_BUTTON_ID: TOOLBAR_BUTTON_ID,
+        TI_HOME_CELL_ID: TI_HOME_CELL_ID,
+        TI_STATE_ID: TI_STATE_ID,
 
         // expose static properties and methods
         initNotebookUI: initNotebookUI,
