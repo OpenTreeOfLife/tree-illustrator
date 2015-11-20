@@ -207,9 +207,9 @@ var IPythonTreeIllustrator = function(window, document, $) {
     }
 
     var buildScriptRelativeURL = function( path ) {
-        var parentParts = currentScriptURL.split('/').slice(0, -1);
-        var newURLParts = parentParts.push( path );
-        return newURLParts.join('/');
+        var pathParts = currentScriptURL.split('/').slice(0, -1);
+        pathParts.push( path );
+        return pathParts.join('/');
     }
 
     // Do other initial setup in the noteboo
