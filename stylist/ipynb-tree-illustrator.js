@@ -254,7 +254,6 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     alert("Now I'd open this illustration!");
                  });
             $illustrationEntry.find('.delete')
-                var prompt = 
                 .click(function() {
                     if (prompt("Are you sure you want to delete this illustration? This cannot be undone!"
                               +" Enter 'YES' below to confirm.") === 'YES') {
