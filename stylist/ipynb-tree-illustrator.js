@@ -365,7 +365,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
         SINGLETON: SINGLETON,
         TOOLBAR_BUTTON_ID: TOOLBAR_BUTTON_ID,
         TI_HOME_CELL_ID: TI_HOME_CELL_ID,
-        TI_STATE_ID: TI_STATE_ID,
+        //TI_STATE_ID: TI_STATE_ID,
 
         // expose static properties and methods
         initNotebookUI: initNotebookUI,
