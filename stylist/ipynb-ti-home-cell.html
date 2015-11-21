@@ -1,5 +1,37 @@
-<div id="ti-home-cell" style="border: 1px dashed silver; font-weight: bold;">
-    This is the super-cool home cell for Tree Illustrator in a Jupyter notebook!
+<!-- TODO: Add a custom stylesheet here? -->
+<style  type="text/css">
+    #ti-home-cell {
+        border: 1px dashed silver;
+    }
+    #ti-home-cell img.ti-badge {
+        width:32px; 
+        height: 32px; 
+        float: left; 
+        padding: 0 6px 4px 0;
+    }
+    #ti-home-cell .illustration-list {
+        border: 1px dashed yellow;
+    }
+    #ti-home-cell .illustration-list li {
+        border: 1px dashed green;
+    }
+    #ti-home-cell .illustration-list .illustration-name {
+        border: 1px dashed orange;
+    }
+    #ti-home-cell .delete {
+        color: red;
+        font-weight: bold;
+    }
+</style>
+<div id="ti-home-cell">
+    <img class="ti-badge"
+         src="//tree.opentreeoflife.org/favicon.ico" />
+    <p>
+        The Tree Illustrator can help visualize phylogenetic trees from the data in this notebook.
+        <span class="nonempty-list-prompt" style="display: none;">Click any name in the illustration
+            below to make changes, print it or dump its SVG output.</span>
+        To create a new illustration, click the Tree Illustrator button in the notebook toolbar.
+    </p>
+    <ul class="illustration-list">
+    </ul>
 </div>
-<!-- This TEXTAREA holds persistent state data for the Tree Illustrator in this notebook. -->
-<pre id="ti-state-data" style="border: 2px dashed red; color: red;"></pre>

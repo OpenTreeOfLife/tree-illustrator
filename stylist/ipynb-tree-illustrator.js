@@ -49,8 +49,51 @@ var IPythonTreeIllustrator = function(window, document, $) {
     // Define some enumerated values for callers.
     var SINGLETON = 'SINGLETON',
         TOOLBAR_BUTTON_ID = 'ti-toolbar-button',
-        TI_HOME_CELL_ID = 'ti-home-cell',
-        TI_STATE_ID = 'ti-state-data';
+        //TI_STATE_ID = 'ti-state-data',
+        TI_HOME_CELL_ID = 'ti-home-cell';
+
+    // Keep track of prefs and illustrations (in notebook metadata) 
+    var state;
+
+    // Generate the initial "state" object for a new Tree Illustrator widget
+    var getInitialState = function() {
+        return {
+            "lastUpdate": new Date().toString(),
+            "prefs": {}, 
+            "illustrations": []
+            // an ordered list of objects, each with name, author(?), spec, convertedTrees, svgOutput
+        };
+    }
+
+    /* Freeze/thaw JSON data to/from a TEXTAREA or PRE element?
+     * For now, we're going to use notebook metadata for this.
+    var thawStateFromJSON = function() {
+        var $stateHolder = $('#'+ TI_STATE_ID);
+        if ($stateHolder.length) {
+            // Load the existing state JSON
+            state = JSON.parse( $stateHolder.text() ); 
+        } else {
+            // Use default (initial) state for a new Tree Illustrator
+            state = defaultState;
+        }
+    }
+    var freezeStateToJSON = function() {
+        if (isStaticNotebook) {
+            // We can only save changes in a live notebook!
+            console.warn("IPythonTreeIllustrator.freezeStateToJSON(): disabled in a static notebook!");
+            return;
+        }
+        var $stateHolder = $('#'+ TI_STATE_ID);
+        if ($stateHolder.length === 0) {
+            var msg = "State (JSON) holder not found! Unable to save state for Tree Illustrator!";
+            console.warn(msg);
+            alert(msg);
+            return;
+        }
+        $stateHolder.text( JSON.stringify(state));
+        IPython.notebook.save_notebook();
+    }
+    */
 
     // Keep track of all active instances (widgets), keyed by element ID
     var widgets = { };
@@ -192,47 +235,34 @@ var IPythonTreeIllustrator = function(window, document, $) {
         widgets[elementID] = self;
     }
 
-    // Freeze/thaw JSON data to/from a TEXTAREA
-    var thawStateFromJSON = function() {
-        debugger;
-        var $stateHolder = $('#'+ TI_STATE_ID);
-        if ($stateHolder.length) {
-            // Load the existing state JSON
-            state = JSON.parse( $stateHolder.text() ); 
-        } else {
-            // Use default (initial) state for a new Tree Illustrator
-            state = {
-                "lastUpdate": new Date().toString(),
-                "prefs": {}, 
-                "illustrations": {}, 
-                "svgOutput": {}, 
-                "convertedTrees": {}
-            };
-        }
-    }
-    var freezeStateToJSON = function() {
-        if (isStaticNotebook) {
-            // We can only save changes in a live notebook!
-            console.warn("IPythonTreeIllustrator.freezeStateToJSON(): disabled in a static notebook!");
-            return;
-        }
-        var $stateHolder = $('#'+ TI_STATE_ID);
-        if ($stateHolder.length === 0) {
-            var msg = "State (JSON) holder not found! Unable to save state for Tree Illustrator!";
-            console.warn(msg);
-            alert(msg);
-            return;
-        }
-        $stateHolder.text( JSON.stringify(state));
-        IPython.notebook.save_notebook();
-    }
-
     var updateHomeCell = function() {
         // Refresh (or initialize) the home-cell display based on current state JSON
         var $homeCell = $('#'+ TI_HOME_CELL_ID);
         console.log("Updating the Tree Illustrator home cell...");
-        // TODO: Update the list of illustrations
-        // TODO: Update the prefs UI
+        // TODO: Update the prefs UI widgets
+        // Update the list of illustrations
+        var $illustrationsList = $homeCell.find('ul.illustration-list');
+        $illustrationsList.empty();
+        $.each(state.illustrations, function(ill) {
+            // TODO: Add controls to re-order illustrations?
+            var $illustrationEntry = $('<li><a class="illustration-name"></a> <i class="delete">X</i></li>');
+            $illustrationsList.append( $illustrationEntry );
+            $illustrationEntry.find('a.illustration-name')
+                .html(ill.name || "Untitled illustration")
+                .click(function() { 
+                    // TODO: launch with this illustration! 
+                    alert("Now I'd open this illustration!");
+                 });
+            $illustrationEntry.find('.delete')
+                var prompt = 
+                .click(function() {
+                    if (prompt("Are you sure you want to delete this illustration? This cannot be undone!"
+                              +" Enter 'YES' below to confirm.") === 'YES') {
+                        // TODO: clobber this illustration from the list
+                        alert("Now I'd delete this illustration and resave the notebook!");
+                    }
+                });
+        });
     }
 
     var buildScriptRelativeURL = function( path ) {
@@ -243,8 +273,12 @@ var IPythonTreeIllustrator = function(window, document, $) {
 
     // Do other initial setup in the noteboo
     var initNotebookUI = function( $homeCellOutputArea ) {
-        // Attempt to load any prior state, or default if none found
-        thawStateFromJSON();
+        // Load any prior state, or initialize it if not found
+        //thawStateFromJSON();
+        if (!IPython.notebook.metadata.tree_illustrator) {
+            IPython.notebook.metadata.tree_illustrator = getInitialState();
+        }
+        state = IPython.notebook.metadata.tree_illustrator;
 
         if (isStaticNotebook) {
             // There's no toolbar or available cell reference; nothing we can do here
@@ -272,10 +306,10 @@ var IPythonTreeIllustrator = function(window, document, $) {
                                               +' style="width:18px; height: 18px; margin: -1px -3px 0px -4px;"> Tree Illustrator');
         }
 
-        // Add a "home" cell and persistent state (JSON in a TEXTAREA), if not found
+        // Add a "home" cell to manage illustrations, if not found
         if ($homeCellOutputArea instanceof jQuery && $homeCellOutputArea.length) {
             // Test for existing home cell (incl. JSON state)
-            var homeCellAlreadyExists = $('#'+ TI_HOME_CELL_ID +', #'+ TI_STATE_ID).length > 1;
+            var homeCellAlreadyExists = $('#'+ TI_HOME_CELL_ID).length > 0;
             if (homeCellAlreadyExists) {
                 updateHomeCell();
             } else {
@@ -295,7 +329,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
                         return;
                     }
                     // Freeze any prior (or default) state to stored JSON
-                    freezeStateToJSON();
+                    //freezeStateToJSON();
                     alert("Home cell loaded!");
                     updateHomeCell();
                 });
