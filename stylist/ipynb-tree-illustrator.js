@@ -246,8 +246,8 @@ var IPythonTreeIllustrator = function(window, document, $) {
                  .unbind('click')
                  .click(function() {
                      // show (or hide) the input area for this cell
-                     debugger;
                      var $toggle = $(this);
+                     var $inputArea = $toggle.closest('.cell').find('.input');
                      if ($inputArea.is(':hidden')) {
                         $inputArea.show();
                         $toggle.text( $toggle.text().replace('Show','Hide') );
