@@ -242,10 +242,10 @@ var IPythonTreeIllustrator = function(window, document, $) {
         // Update and enable the toggle
         var $inputArea = $homeCell.find('.input');
         var $toggle = $homeCell.find('a.input-toggle');
-        if ($inputArea.is(':hidden')) {
-           $toggle.text( "Show the code that added this Tree Illustrator" );
-        } else {
+        if ($inputArea.is(':visible')) {
            $toggle.text( "Hide the code that added this Tree Illustrator" );
+        } else {
+           $toggle.text( "Show the code that added this Tree Illustrator" );
         }
         $toggle.unbind('click')
                .click(function() {
