@@ -6,9 +6,11 @@
     #ti-home-cell a.input-toggle {
         color: #aaa;
         font-size: 0.75em;
-        display: block;
-        float: right;
         text-decoration: none;
+        float: right;
+        z-index: 1;
+        position: relative;
+        top: -0.5em;
     }
     #ti-home-cell img.ti-badge {
         width:32px; 
@@ -31,7 +33,7 @@
     }
 </style>
 <div id="ti-home-cell">
-    <a class="input-toggle">Show the code that added this Tree Illustrator</a>
+    <a class="input-toggle" href="#" onclick="return false;">Show the code that added this Tree Illustrator</a>
     <img class="ti-badge"
          src="//tree.opentreeoflife.org/favicon.ico" />
     <p style="margin-top: 0;">
