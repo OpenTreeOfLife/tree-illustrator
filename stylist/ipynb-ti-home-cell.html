@@ -3,6 +3,13 @@
     #ti-home-cell {
         border: 1px dashed silver;
     }
+    #ti-home-cell a.input-toggle {
+        color: #aaa;
+        font-size: 0.75em;
+        display: block;
+        float: right;
+        text-decoration: none;
+    }
     #ti-home-cell img.ti-badge {
         width:32px; 
         height: 32px; 
@@ -24,10 +31,11 @@
     }
 </style>
 <div id="ti-home-cell">
+    <a class="input-toggle">Show the code that added this Tree Illustrator</a>
     <img class="ti-badge"
          src="//tree.opentreeoflife.org/favicon.ico" />
-    <p>
-        The Tree Illustrator can help visualize phylogenetic trees from the data in this notebook.
+    <p style="margin-top: 0;">
+        The Tree Illustrator lets you visualize phylogenetic trees from the data in this notebook.
         <span class="nonempty-list-prompt" style="display: none;">Click any name in the illustration
             below to make changes, print it or dump its SVG output.</span>
         To create a new illustration, click the Tree Illustrator button in the notebook toolbar.
