@@ -238,24 +238,28 @@ var IPythonTreeIllustrator = function(window, document, $) {
     var updateHomeCell = function() {
         // Refresh (or initialize) the home-cell display based on current state JSON
         var $homeCell = $('#'+ TI_HOME_CELL_ID);
-        var $inputArea = $homeCell.find('.input');
         console.log("Updating the Tree Illustrator home cell...");
-        // Hide the input area and enable the toggle
-        $inputArea.hide();
-        $homeCell.find('a.input-toggle')
-                 .unbind('click')
-                 .click(function() {
-                     // show (or hide) the input area for this cell
-                     var $toggle = $(this);
-                     var $inputArea = $toggle.closest('.cell').find('.input');
-                     if ($inputArea.is(':hidden')) {
-                        $inputArea.show();
-                        $toggle.text( $toggle.text().replace('Show','Hide') );
-                     } else {
-                        $inputArea.hide();
-                        $toggle.text( $toggle.text().replace('Hide','Show') );
-                     }
-                 });
+        // Update and enable the toggle
+        var $inputArea = $homeCell.find('.input');
+        var $toggle = $homeCell.find('a.input-toggle');
+        if ($inputArea.is(':hidden')) {
+           $toggle.text( "Show the code that added this Tree Illustrator" );
+        } else {
+           $toggle.text( "Hide the code that added this Tree Illustrator" );
+        }
+        $toggle.unbind('click')
+               .click(function() {
+                   // show (or hide) the input area for this cell
+                   var $toggle = $(this);
+                   var $inputArea = $toggle.closest('.cell').find('.input');
+                   if ($inputArea.is(':hidden')) {
+                      $inputArea.show();
+                      $toggle.text( $toggle.text().replace('Show','Hide') );
+                   } else {
+                      $inputArea.hide();
+                      $toggle.text( $toggle.text().replace('Hide','Show') );
+                   }
+               });
         // TODO: Update the prefs UI widgets
         // Update the list of illustrations
         var $illustrationsList = $homeCell.find('ul.illustration-list');
@@ -346,7 +350,8 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     }
                     // Freeze any prior (or default) state to stored JSON
                     //freezeStateToJSON();
-                    alert("Home cell loaded!");
+                    // hide input code by default
+                    $('#'+ TI_HOME_CELL_ID).closest('.cell').find('.input').hide();
                     updateHomeCell();
                 });
             }
