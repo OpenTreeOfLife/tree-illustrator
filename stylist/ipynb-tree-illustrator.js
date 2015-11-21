@@ -249,10 +249,10 @@ var IPythonTreeIllustrator = function(window, document, $) {
                      var $toggle = $(this);
                      if ($inputArea.is(':hidden')) {
                         $inputArea.show();
-                        $toggle.text( $toggle.text().replace('Show','Hide');
+                        $toggle.text( $toggle.text().replace('Show','Hide') );
                      } else {
                         $inputArea.hide();
-                        $toggle.text( $toggle.text().replace('Hide','Show');
+                        $toggle.text( $toggle.text().replace('Hide','Show') );
                      }
                  });
         // TODO: Update the prefs UI widgets
