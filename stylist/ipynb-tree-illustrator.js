@@ -178,6 +178,14 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     $modalHeader.css('padding', '8px 15px'); 
                     $modalDialog.css({'width':'90%', 'height':'90%'}); // almost fills the window
 
+                    // update internal references to 
+                    var elementSelector = ('#'+ elementID);
+                    self.ti_element = $(elementSelector)[0];
+                    self.ti_window = self.ti_element.contentWindow;
+                    // BONUS HACK to test persistent window reference for a singleton
+                    tiWindow = self.ti_window;
+                    console.warn("UPDATING persistent 'tiWindow' to the new TI widget's ti_window");
+
                     // TODO: load initial data?
                     /*
                     var that = $(this);
@@ -226,14 +234,6 @@ var IPythonTreeIllustrator = function(window, document, $) {
                 return null;
             }
         }
-
-        var elementSelector = ('#'+ elementID);
-        self.ti_element = $(elementSelector)[0];
-        self.ti_window = self.ti_element.contentWindow;
-
-        // HACK to test persistent window reference for a singleton
-        tiWindow = self.ti_window;
-        console.warn("UPDATING persistent 'tiWindow' to the new TI widget's ti_window");
 
         // add this instance to the registry above
         widgets[elementID] = self;
