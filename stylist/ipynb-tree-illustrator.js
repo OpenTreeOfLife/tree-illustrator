@@ -182,9 +182,15 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     var elementSelector = ('#'+ elementID);
                     self.ti_element = $(elementSelector)[0];
                     self.ti_window = self.ti_element.contentWindow;
-                    ti_window.onunload = function() {
-                        debugger;
+                    $(ti_window).unload(function() {
+                        console.log("Un-registering TI widget '"+ elementID +"'!");
+                        console.log("BEFORE:");
+                        console.log(widgets);
                         delete widgets[elementID];
+                        console.log("AFTER:");
+                        console.log(widgets);
+                    });
+                    .onunload = function() {
                     }
                     // BONUS HACK to test persistent window reference for a singleton
                     tiWindow = self.ti_window;
