@@ -616,7 +616,7 @@ function getIllustrationList(callback) {
      * stuff).
      */
     var response = {};
-    if (!state || !('illustrations' not in state)) {
+    if (!state || !('illustrations' in state)) {
         response.error = "No illustration list found!";
         console.error(response.error);
     } else {
