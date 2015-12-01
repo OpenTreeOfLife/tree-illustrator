@@ -182,7 +182,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     var elementSelector = ('#'+ elementID);
                     self.ti_element = $(elementSelector)[0];
                     self.ti_window = self.ti_element.contentWindow;
-                    $(self.ti_window).unload(function() {
+                    $(self.ti_element).unload(function() {
                         console.log("Un-registering TI widget '"+ elementID +"'!");
                         console.log("BEFORE:");
                         console.log(widgets);
@@ -190,7 +190,8 @@ var IPythonTreeIllustrator = function(window, document, $) {
                         console.log("AFTER:");
                         console.log(widgets);
                     });
-                    // BONUS HACK to test persistent window reference for a singleton
+
+                    // HACK to test persistent window reference for a singleton
                     tiWindow = self.ti_window;
                     console.warn("UPDATING persistent 'tiWindow' to the new TI widget's ti_window");
 
