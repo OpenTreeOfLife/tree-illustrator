@@ -1292,10 +1292,36 @@ function applyChosenStyleGuide(clicked) {
     $sgBlock.closest('.modal-styleguide-chooser').find('.modal-header .close').click();
 }
 
+// manage illustrations (using an adapter with API methods, already loaded)
+function showIllustrationList() {
+    console.log("showIllustrationList() STARTING...");
+    getIllustrationList(function(response) {
+        // show the returned list (or report any error)
+        debugger;
+    });
+}
+function loadIllustration(id) {
+    console.log("loadIllustration() STARTING...");
+    loadIllustration(function(response) {
+        // load the returned illustration (or report any error)
+        debugger;
+    });
+}
+function saveCurrentIllustration() {
+    console.log("saveCurrentIllustration() STARTING...");
+    saveIllustration(function(response) {
+        // (re)load the saved illustration (or report any error)
+        debugger;
+    });
+}
+
 // Expose some members to outside code (eg, Knockout bindings, onClick
 // attributes...)
 var api = [
     'TreeIllustrator',
+    'showIllustrationList',
+    'loadIllustration',
+    'saveCurrentIllustration',
     'inchesToCentimeters',
     'centimetersToInches',
     'inchesToPoints',

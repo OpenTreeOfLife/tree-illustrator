@@ -230,7 +230,11 @@ var IPythonTreeIllustrator = function(window, document, $) {
         var elementSelector = ('#'+ elementID);
         self.ti_element = $(elementSelector)[0];
         self.ti_window = self.ti_element.contentWindow;
-        
+
+        // HACK to test persistent window reference for a singleton
+        tiWindow = self.ti_window;
+        console.warn("UPDATING persistent 'tiWindow' to the new TI widget's ti_window");
+
         // add this instance to the registry above
         widgets[elementID] = self;
     }
@@ -264,7 +268,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
         // Update the list of illustrations
         var $illustrationsList = $homeCell.find('ul.illustration-list');
         $illustrationsList.empty();
-        $.each(state.illustrations, function(ill) {
+        $.each(state.illustrations, function(pos, ill) {
             // TODO: Add controls to re-order illustrations?
             var $illustrationEntry = $('<li><a class="illustration-name"></a> <i class="delete">X</i></li>');
             $illustrationsList.append( $illustrationEntry );
@@ -380,6 +384,268 @@ var IPythonTreeIllustrator = function(window, document, $) {
         }
 
     }
+
+
+
+/* Message handling across windows/domains (via postMessage)  */
+
+// check incoming messages against the expected source domain 
+var tiDomain = 'http://rawgit.com';
+// check incoming messages against the known list of windows (incl. IFRAMEs)?
+//var ti5window = $('#tree-illustrator-5')[0].contentWindow;
+// For now, assume a singleton Tree Illustrator (just one window)
+var tiWindow = null;
+
+// add a listener for messages from the Tree Illustrator instance (its window)
+window.addEventListener("message", receiveMessage, false);
+// TODO: make sure we're not duplicating this? or allow one listener per instance?
+
+function receiveMessage(msg) {
+    // the dispatched message has origin, data, source [sending window]
+    if (msg.origin !== tiDomain) {
+        alert("Attempted inter-window message from an unexpected domain: ["+ msg.origin +"], expected: ["+ tiDomain +"]");
+        return;
+    }
+    if (msg.source !== tiWindow) {
+        alert("Attempted inter-window message from an unexpected window: ["+ msg.source +"], expected: ["+ tiWindow +"]");
+        return;
+    }
+    */
+    
+    // call an appropriate local function (or complain)
+    console.log(msg);
+    switch(msg.data['method']) {
+        case 'getIllustrationList':
+            // call local function and send response to calling window
+            getIllustrationList(function() {
+                tiWindow.postMessage({
+                    method: 'getIllustrationList_response'
+                }, 
+            }); 
+            break;
+
+        case 'listAllNotebookVars':
+            // call local function and send response to calling window
+            listAllNotebookVars(function() {
+                tiWindow.postMessage({
+                    method: 'listAllNotebookVars_response'
+                }, 
+            }); 
+            break;
+
+        case 'getNotebookVar':
+            // call local function and send response to calling window
+            getNotebookVar( msg.data.varName, function( response ) {
+                // response is an object with 'data' or 'error' property
+                tiWindow.postMessage({
+                    method: 'getTreeSourceData_response',
+                    response: response
+                }, 
+            });
+
+        default:
+            alert("Unexpected method ["+ msg.data.method +"] in this message!");
+            return;
+    }
+    debugger;
+}
+
+// define methods for TreeIllustrator instances
+
+function injectTree( data, treeIndex, options ) {
+    // pass newick, other formats? bounce to peyotl for conversion, as needed?
+    // specify nth tree to REPLACE an existing tree?
+    tiWindow.postMessage(
+        {
+            treeData: data,
+            treeIndex: treeIndex,
+            options: options        
+        },
+        tiDomain  // TODO: restrict to the domain extracted from 'src' URL above?
+    );
+    // TODO: consider a more general message 'addOrReplaceElement' with friendly JS wrappers
+}
+
+function listAllNotebookVars() {
+    /* Return a list of variables (the name and type for each) currently
+     * defined in the kernel, so TI * can offer these as sources for its trees,
+     * supplemental data, etc. 
+     * TODO: Add methods for non-python kernels!
+     */
+    var kernelCode = "", 
+        failureMsg = "Unable to retrieve kernel vars!";
+    switch(IPython.notebook.metadata.kernelspec.language) {
+        case 'python':
+            kernelCode = "_ignore_names = ['In', 'Out', 'exit', 'get_ipython', 'quit'];"
+                       + "[[_x, type(eval(_x)).__name__] for _x in dir()"
+                           + "if (_x not in _ignore_names) and (_x.startswith('_') == False)]";
+            break;
+
+        default:
+            console.error("I don't know how to read variables from a '"+
+                IPython.notebook.metadata.kernelspec.language +"' kernel!");
+            return [ ];
+    }
+    /* For a more thorough test of the kernel language and version, use 
+       `IPython.notebook.metadata.language_info`
+    */
+
+    // Fetch a complete list of (non-default) vars from the kernel
+    var kernelCallback = function(out) {
+        switch (out.msg_type) {
+            case 'execute_result':
+                // result should be in property 'text/plain'
+                console.log( out.content.data ); // see esp. ["text/plain"] 
+                alert( out.content.data['text/plain'] );
+                // TODO: respond to upstream callback(s)?
+                break;
+
+            case 'stream':
+                // result should be the main 'data' property
+                console.log( out.content.data );
+                alert( out.content.data );
+                break;
+
+            case 'error':
+            case 'pyerr':
+            default:
+                var msg = failureMsg +"\n\n"+ 
+                          out.content.ename +"\n"+ 
+                          out.content.evalue;
+                console.error(msg);
+                alert(msg);
+                // TODO: respond to upstream callback(s)?
+                return;
+        }
+    };
+    IPython.notebook.kernel.execute(
+        kernelCode,
+        {
+            "iopub": {
+                "output": kernelCallback
+            }
+        }, 
+        {
+            "silent": false, 
+            "store_history": false
+        }
+    );
+}
+
+function getNotebookVar( varName, callback ) {
+    /* Return the best (JS-friendly) representation of the named variable from
+     * the server-side kernel.
+     * TODO: Add methods for non-python kernels!
+     * 
+     * 'callback' is a function that expects a response object with 'data' or 'error'
+     */
+    var kernelCode = "", 
+        failureMsg = "Unable to retrieve variable '"+ varName +"' from this kernel!";
+    switch(IPython.notebook.metadata.kernelspec.language) {
+        case 'python':
+            kernelCode = varName;
+            break;
+
+        default:
+            console.error("I don't know how to read variables from a '"+
+                IPython.notebook.metadata.kernelspec.language +"' kernel!");
+            return null;
+    }
+    /* For a more thorough test of the kernel language and version, use 
+       `IPython.notebook.metadata.language_info`
+    */
+
+    // Fetch a complete list of (non-default) vars from the kernel
+    var kernelCallback = function(out) {
+        var response = {};
+        //console.log( out.content.data ); // see esp. ["text/plain"] 
+        switch (out.msg_type) {
+            case 'execute_result':
+                // result should be in property 'text/plain'
+                response.data = out.content.data['text/plain'];
+                break;
+
+            case 'stream':
+                // result should be the main 'data' property
+                response.data = out.content.data;
+                break;
+
+            case 'error':
+            case 'pyerr':
+            default:
+                var msg = failureMsg +"\n\n"+ 
+                          out.content.ename +"\n"+ 
+                          out.content.evalue;
+                console.error(msg);
+                response.error = msg;
+                // TODO: respond to upstream callback(s)?
+        }
+        callback( response );
+    };
+    IPython.notebook.kernel.execute(
+        kernelCode,
+        {
+            "iopub": {
+                "output": kernelCallback
+            }
+        }, 
+        {
+            "silent": false, 
+            "store_history": false
+        }
+    );
+}
+
+function getIllustrationList(callback) {
+    /* Return a list of all illustrations (display name and unique ID for each)
+     * currently stored in this notebook's metadata.
+     * TODO: Return illustration data as well?
+     * 
+     * 'callback' is a function that expects a response object with 'data' or 'error'
+     *
+     * Typical response data should be a 'dictionary' whose keys are unique ids;
+     * each entry is another object with the display name (and possibly other useful
+     * stuff).
+     */
+    var response = {};
+    if (!state || !('illustrations' not in state)) {
+        response.error = "No illustration list found!";
+        console.error(response.error);
+    } else {
+        // filter the list and return just what we need here
+        response.data = {};
+        $.each(state.illustrations, function(pos, ill) {
+            var uniqueID = 'TODO-ID-'+pos;
+            var displayName = 'TODO-DISPLAY-NAME-'+pos;
+            response.data[uniqueID] = displayName;
+        });
+    }
+    callback( response );
+}
+
+function saveIllustration(id) {
+    // save everything? or just the main, monolithic JSON?
+}
+
+function loadIllustration(id) {
+    // based on URL? or assume it's a local variable
+}
+
+/*
+function useStyleGuide( data ) {
+    // specify its name/label; complain if not found!
+}
+
+function dumpSVG() {
+    ** possibly options for 
+     * - put SVG into (or append to?) output of this cell
+     * - render it as literal SVG (plus available source?)
+     * - save it to a "local" file for persistence & display
+     * - show it in a new window/frame (current behavior)
+     **
+}
+*/
+
 
     /* expose class constructors (and static methods) for instantiation */
     return {
