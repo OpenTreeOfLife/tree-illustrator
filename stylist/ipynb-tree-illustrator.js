@@ -417,18 +417,24 @@ function receiveMessage(msg) {
         case 'getIllustrationList':
             // call local function and send response to calling window
             getIllustrationList(function() {
-                tiWindow.postMessage({
-                    method: 'getIllustrationList_response'
-                }, 
+                tiWindow.postMessage(
+                    {
+                        method: 'getIllustrationList_response'
+                    },
+                    tiDomain
+                );
             }); 
             break;
 
         case 'listAllNotebookVars':
             // call local function and send response to calling window
             listAllNotebookVars(function() {
-                tiWindow.postMessage({
-                    method: 'listAllNotebookVars_response'
-                }, 
+                tiWindow.postMessage(
+                    {
+                        method: 'listAllNotebookVars_response'
+                    },
+                    tiDomain
+                );
             }); 
             break;
 
@@ -436,10 +442,13 @@ function receiveMessage(msg) {
             // call local function and send response to calling window
             getNotebookVar( msg.data.varName, function( response ) {
                 // response is an object with 'data' or 'error' property
-                tiWindow.postMessage({
-                    method: 'getTreeSourceData_response',
-                    response: response
-                }, 
+                tiWindow.postMessage(
+                    {
+                        method: 'getTreeSourceData_response',
+                        response: response
+                    },
+                    tiDomain
+                );
             });
 
         default:
