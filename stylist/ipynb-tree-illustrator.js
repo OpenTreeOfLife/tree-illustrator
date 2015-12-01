@@ -200,17 +200,13 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     // unloading (removing) its IFRAME should un-register this widget
                     // N.B. this uses our special 'destroyed' event, defined above
                     $(self.ti_element).bind('destroyed', function() {
-                        console.log("Un-registering TI widget '"+ elementID +"'!");
-                        console.log("BEFORE:");
-                        console.log(widgets);
+                        //console.log("Un-registering TI widget '"+ elementID +"'!");
                         delete widgets[elementID];
-                        console.log("AFTER:");
-                        console.log(widgets);
                     });
 
                     // HACK to test persistent window reference for a singleton
                     tiWindow = self.ti_window;
-                    console.warn("UPDATING persistent 'tiWindow' to the new TI widget's ti_window");
+                    console.log("UPDATING single 'tiWindow' to this TI widget");
 
                     // TODO: load initial data?
                     /*
