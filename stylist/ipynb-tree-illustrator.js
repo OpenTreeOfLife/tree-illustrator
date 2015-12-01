@@ -410,7 +410,6 @@ function receiveMessage(msg) {
         alert("Attempted inter-window message from an unexpected window: ["+ msg.source +"], expected: ["+ tiWindow +"]");
         return;
     }
-    */
     
     // call an appropriate local function (or complain)
     console.log(msg);
