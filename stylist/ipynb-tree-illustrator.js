@@ -190,8 +190,6 @@ var IPythonTreeIllustrator = function(window, document, $) {
                         console.log("AFTER:");
                         console.log(widgets);
                     });
-                    .onunload = function() {
-                    }
                     // BONUS HACK to test persistent window reference for a singleton
                     tiWindow = self.ti_window;
                     console.warn("UPDATING persistent 'tiWindow' to the new TI widget's ti_window");
