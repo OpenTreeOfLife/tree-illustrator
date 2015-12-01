@@ -182,7 +182,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     var elementSelector = ('#'+ elementID);
                     self.ti_element = $(elementSelector)[0];
                     self.ti_window = self.ti_element.contentWindow;
-                    $(ti_window).unload(function() {
+                    $(self.ti_window).unload(function() {
                         console.log("Un-registering TI widget '"+ elementID +"'!");
                         console.log("BEFORE:");
                         console.log(widgets);
