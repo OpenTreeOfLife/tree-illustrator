@@ -55,6 +55,20 @@ var IPythonTreeIllustrator = function(window, document, $) {
     // Keep track of prefs and illustrations (in notebook metadata) 
     var state;
 
+    /* Add a special jQuery event for when an element is removed from the DOM
+     * (e.g., when a popup with a TI widget is closed).
+     * See http://stackoverflow.com/a/10172676
+     */
+    (function($){
+      $.event.special.destroyed = {
+        remove: function(o) {
+          if (o.handler) {
+            o.handler()
+          }
+        }
+      }
+    })(jQuery);
+
     // Generate the initial "state" object for a new Tree Illustrator widget
     var getInitialState = function() {
         return {
@@ -182,14 +196,6 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     var elementSelector = ('#'+ elementID);
                     self.ti_element = $(elementSelector)[0];
                     self.ti_window = self.ti_element.contentWindow;
-                    $(self.ti_element).unload(function() {
-                        console.log("Un-registering TI widget '"+ elementID +"'!");
-                        console.log("BEFORE:");
-                        console.log(widgets);
-                        delete widgets[elementID];
-                        console.log("AFTER:");
-                        console.log(widgets);
-                    });
 
                     // HACK to test persistent window reference for a singleton
                     tiWindow = self.ti_window;
@@ -246,6 +252,16 @@ var IPythonTreeIllustrator = function(window, document, $) {
 
         // add this instance to the registry above
         widgets[elementID] = self;
+        // unloading (removing) its IFRAME should un-register this widget
+        // N.B. this uses our special 'destroyed' event, defined above
+        $(self.ti_element).bind('destroyed', function() {
+            console.log("Un-registering TI widget '"+ elementID +"'!");
+            console.log("BEFORE:");
+            console.log(widgets);
+            delete widgets[elementID];
+            console.log("AFTER:");
+            console.log(widgets);
+        });
     }
 
     var updateHomeCell = function() {
