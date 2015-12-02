@@ -416,8 +416,17 @@ var IPythonTreeIllustrator = function(window, document, $) {
 var tiDomain = 'http://rawgit.com';
 // check incoming messages against the known list of windows (incl. IFRAMEs)?
 //var ti5window = $('#tree-illustrator-5')[0].contentWindow;
+
 // For now, assume a singleton Tree Illustrator (just one window)
 var tiWindow = null;
+
+// Again, assuming a singleton, keep track of the current slotPosition
+// (numbered storage location). This should be set to
+//  - an integer, after loading an illustration from storage
+//  - 'NEW' if we're starting with a new or 'empty' illustration
+//  - an integer, after saving the current illustration (to reflect 
+//    Save, Save As, or Duplicate)
+var currentSlotPosition = 'NEW';
 
 // add a listener for messages from the Tree Illustrator instance (its window)
 window.addEventListener("message", receiveMessage, false);
@@ -443,6 +452,36 @@ function receiveMessage(msg) {
                 tiWindow.postMessage(
                     {
                         method: 'getIllustrationList_response',
+                        response: response
+                    },
+                    tiDomain
+                );
+            }); 
+            break;
+
+        case 'loadIllustration':
+            // call local function and send response to calling window
+            loadIllustration( msg.data.uniqueID, function( response ) {
+                // response is an object with 'data' or 'error' property
+                tiWindow.postMessage(
+                    {
+                        method: 'loadIllustration_response',
+                        response: response
+                    },
+                    tiDomain
+                );
+            }); 
+            break;
+
+        case 'saveIllustration':
+            // call local function and send response to calling window
+            var targetSlotPosition = ('uniqueID' in msg.data) ? msg.data.uniqueID : currentSlotPosition;
+                                     
+            saveIllustration(targetSlotPosition, msg.data.illustration, function( response ) {
+                // response is an object with 'data' or 'error' property
+                tiWindow.postMessage(
+                    {
+                        method: 'saveIllustration_response',
                         response: response
                     },
                     tiDomain
@@ -636,9 +675,8 @@ function getIllustrationList(callback) {
      * 
      * 'callback' is a function that expects a response object with 'data' or 'error'
      *
-     * Typical response data should be a 'dictionary' whose keys are unique ids;
-     * each entry is another object with the display name (and possibly other useful
-     * stuff).
+     * Typical response data should be an array of objects; each object has a
+     * name (unique, just for usability) and description text.
      */
     var response = {};
     if (!state || !('illustrations' in state)) {
@@ -646,22 +684,76 @@ function getIllustrationList(callback) {
         console.error(response.error);
     } else {
         // filter the list and return just what we need here
-        response.data = {};
+        response.data = [];
         $.each(state.illustrations, function(pos, ill) {
-            var uniqueID = 'TODO-ID-'+pos;
-            var displayName = 'TODO-DISPLAY-NAME-'+pos;
-            response.data[uniqueID] = displayName;
+            response.data.append({
+                'name': ill.metadata.name,
+                'description': ill.metadata.description
+                // TODO: Add SVG "preview" for each?
+            });
         });
     }
+    if (callback) {
+        callback( response );
+    } else {
+        // this an also be called directly
+        return response;
+    }
+}
+
+function saveIllustration(slotPosition, illustrationData, callback) {
+    /* Save illustration data (JS object) to this notebook's metadata, in the
+     * nth ordered slot. If slotPosition is 'NEW' (or any non-existent slot
+     * position), append a new slot to hold this illustration.
+     * TODO: Save everything (latest SVG, etc?), or just the main, monolithic JSON?
+     * 
+     * 'callback' is a function that expects a response object with 'data' or 'error'
+     *
+     * Typical response data should be an updated illustration list (as above).
+     */
+    var response = {};
+    if (!state || !('illustrations' in state)) {
+        response.error = "No illustration list found!";
+        console.error(response.error);
+    } else {
+        // Try to save to the nth slot (append if slot not found)
+        var existingSlotContents = state.illustrations[slotPosition];
+        if (typeof(existingSlotContents) === 'undefined') {
+            currentSlotPosition = state.illustrations.length;  // will match the new slot
+            state.illustrations.push(illustrationData);
+        } else {
+            state.illustrations[slotPosition] = illustrationData;
+            currentSlotPosition = slotPosition; 
+        }
+
+        // If there were no errors, return an updated illustration list (as above)
+        response.data = getIllustrationList();
+    }
     callback( response );
+    // update the notebook's visible list
+    updateHomeCell();
 }
 
-function saveIllustration(id) {
-    // save everything? or just the main, monolithic JSON?
-}
-
-function loadIllustration(id) {
-    // based on URL? or assume it's a local variable
+function loadIllustration(slotPosition, callback) {
+    /* Load the illustration data in the nth slot (in notebook's metadata).
+     * 
+     * 'callback' is a function that expects a response object with 'data' or 'error'
+     */
+    var response = {};
+    if (!state || !('illustrations' in state)) {
+        response.error = "No illustration list found!";
+        console.error(response.error);
+    } else {
+        // attempt to load from the nth slot
+        var ill = state.illustrations[slotPosition];
+        if (typeof(ill) === 'undefined') {
+            response.error = "No illustration found in slot "+ slotPosition +"!";
+        } else {
+            response.data = ill;
+            currentSlotPosition = slotPosition; 
+        }
+    }
+    callback( response );
 }
 
 /*

@@ -127,20 +127,25 @@ function loadIllustration(id, callback) {
     '*');  // TODO: restrict to this particular notebook's domain?
 }
 
-function saveIllustration(id, callback) {
+function saveIllustration(forcePosition, callback) {
     // TODO: support save, save-as, copy?
     saveIllustration_callback = callback;
 
-    // flatten to simple JS, using active KO mapping options
-    //var clonableIllustration = ko.mapping.toJS(stylist.ill);
-    
-    notebookWindow.postMessage({
+    // flatten the current illustration to simple JS using our 
+    // Knockout mapping options
+    var clonableIllustration = ko.mapping.toJS(stylist.ill);
+
+    var msgInfo = {
         method: 'saveIllustration',
-        uniqueID: id,
-        illustration: stylist.ill
-        //illustration: clonableIllustration
-    }, 
-    '*');  // TODO: restrict to this particular notebook's domain?
+        illustration: clonableIllustration
+    };
+    // To re-save in the same slot, omit the uniqueID
+    if (typeof(forcePosition) !== 'undefined') {
+        msgInfo.uniqueID = forcePosition;
+    }
+    
+    notebookWindow.postMessage(msgInfo, '*');  
+    // TODO: restrict to this particular notebook's domain?
 }
 
 // Get user-friendly list of available source data for trees, etc.
