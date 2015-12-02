@@ -430,7 +430,7 @@ function receiveMessage(msg) {
         return;
     }
     if (msg.source !== tiWindow) {
-        alert("Attempted inter-window message from an unexpected window: ["+ msg.source +"], expected: ["+ tiWindow +"]");
+        alert("Attempted inter-window message from an unexpected window!");
         return;
     }
     
