@@ -294,20 +294,22 @@ var IPythonTreeIllustrator = function(window, document, $) {
         $illustrationsList.empty();
         $.each(state.illustrations, function(pos, ill) {
             // TODO: Add controls to re-order illustrations?
-            var $illustrationEntry = $('<li><a class="illustration-name"></a> <i class="delete">X</i></li>');
+            var $illustrationEntry = $('<li><a class="illustration-name"></a> <span class="illustration-description"></span> <i class="delete">X</i></li>');
             $illustrationsList.append( $illustrationEntry );
             $illustrationEntry.find('a.illustration-name')
-                .html(ill.name || "Untitled illustration")
+                .html(ill.metadata.name || "Untitled illustration")
                 .click(function() { 
                     // TODO: launch with this illustration! 
                     alert("Now I'd open this illustration!");
                  });
+            $illustrationEntry.find('span.illustration-description')
+                .html(ill.metata.description);
             $illustrationEntry.find('.delete')
                 .click(function() {
                     if (prompt("Are you sure you want to delete this illustration? This cannot be undone!"
                               +" Enter 'YES' below to confirm.") === 'YES') {
-                        // TODO: clobber this illustration from the list
-                        alert("Now I'd delete this illustration and resave the notebook!");
+                        // clobber this illustration from the list
+                        state.illustrations.splice(pos, 1);
                     }
                 });
         });
