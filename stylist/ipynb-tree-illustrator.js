@@ -298,6 +298,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
             $illustrationsList.append( $illustrationEntry );
             $illustrationEntry.find('a.illustration-name')
                 .html(ill.metadata.name || "Untitled illustration")
+                .attr('title', 'Slot '+ pos)
                 .click(function() { 
                     // TODO: launch with this illustration! 
                     alert("Now I'd open this illustration!");
@@ -310,6 +311,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
                               +" Enter 'YES' below to confirm.") === 'YES') {
                         // clobber this illustration from the list
                         state.illustrations.splice(pos, 1);
+                        updateHomeCell();
                     }
                 });
         });
