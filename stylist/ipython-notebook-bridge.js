@@ -13,6 +13,9 @@
  * [2] http://caniuse.com/#search=postMessage
  */
 
+// notebook window is opener (for separate tab/window) or parent (for IFRAME)
+var notebookWindow = window.opener || window.parent;
+
 // TODO: set expected calling domain when instance is created?
 
 function receiveMessage(msg) {
@@ -21,10 +24,10 @@ function receiveMessage(msg) {
      *   msg.data is its payload
      *   msg.source is the window that sent the message (the notebook viewer)
      */
-    if (msg.source !== window.opener) {
-        console.warn("Expected this message from my window.opener!\n"
+    if (msg.source !== notebookWindow) {
+        console.warn("Expected this message from my notebookWindow (opener or parent)!\n"
                     +"  msg.source="+ msg.source +"\n"
-                    +"  window.opener="+ window.opener
+                    +"  notebookWindow="+ notebookWindow
         );
         debugger;
         //return;
@@ -100,7 +103,6 @@ window.addEventListener("message", receiveMessage, false);
  * implementations in other contexts (e.g., within a dedicated website or the
  * Tools tab of the OpenTree curation app).
  */
-var notebookWindow = window.opener;
 
 // Manage illustrations from the current docstore (in this case, the notebook metadata)
 
