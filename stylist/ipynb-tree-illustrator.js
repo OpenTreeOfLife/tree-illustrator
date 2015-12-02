@@ -136,8 +136,9 @@ var IPythonTreeIllustrator = function(window, document, $) {
 
         var getIframeMarkup = function() {
             // TODO: add version/SHA argument here?
+            var stylistMainURL = buildScriptRelativeURL('stylist.html');
             return '<iframe id="'+ elementID +'" width="100%" height="500" \
-                            src="http://rawgit.com/OpenTreeOfLife/tree-illustrator/master/stylist/stylist.html" \
+                            src="'+ stylistMainURL +'" \
                             frameborder="0" allowfullscreen="allowfullscreen"> \
                     </iframe>';
         }
