@@ -419,6 +419,8 @@ var tiDomain = 'http://rawgit.com';
 //var ti5window = $('#tree-illustrator-5')[0].contentWindow;
 
 // For now, assume a singleton Tree Illustrator (just one window)
+console.log("BEFORE INITIALIZING single 'tiWindow' to null:");
+console.log(tiWindow);
 var tiWindow = null;
 
 // Again, assuming a singleton, keep track of the current slotPosition
