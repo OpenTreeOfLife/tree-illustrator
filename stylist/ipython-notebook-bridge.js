@@ -131,10 +131,14 @@ function saveIllustration(id, callback) {
     // TODO: support save, save-as, copy?
     saveIllustration_callback = callback;
 
+    // flatten to simple JS, using active KO mapping options
+    //var clonableIllustration = ko.mapping.toJS(stylist.ill);
+    
     notebookWindow.postMessage({
         method: 'saveIllustration',
         uniqueID: id,
         illustration: stylist.ill
+        //illustration: clonableIllustration
     }, 
     '*');  // TODO: restrict to this particular notebook's domain?
 }

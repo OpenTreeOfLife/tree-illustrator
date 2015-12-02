@@ -1309,7 +1309,14 @@ function loadIllustration(id) {
 }
 function saveCurrentIllustration() {
     console.log("saveCurrentIllustration() STARTING...");
-    saveIllustration(function(response) {
+    var saveToID = 'FOO';
+    // TODO: How should this ID be determined?
+    //  - unique/serialized slug, ala tree collections?
+    //  - if provided as incoming arg, use to Save As
+    //  - add an explicit arg for SAVE, SAVE_AS, DUPLICATE
+    //  - should these details be delegated to the storage adapter?
+    //  - OR should we rely entirely on (and possibly modify) its internal metadata?
+    saveIllustration(saveToID, function(response) {
         // (re)load the saved illustration (or report any error)
         debugger;
     });
