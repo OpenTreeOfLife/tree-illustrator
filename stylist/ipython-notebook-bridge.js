@@ -91,6 +91,7 @@ function getTargetCell(msg) {
     //  v a direct reference? NO, these are not shared across windows
 }
 
+console.warn("ADDING event listener (bridge JS) to this window: "+ window.location.href);
 window.addEventListener("message", receiveMessage, false);
 
 
