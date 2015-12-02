@@ -724,14 +724,21 @@ function saveIllustration(slotPosition, illustrationData, callback) {
         console.error(response.error);
     } else {
         // Try to save to the nth slot (append if slot not found)
+        console.log("saveIllustration() to slot "+ slotPosition +" <"+ typeof(slotPosition) +">");
         var existingSlotContents = state.illustrations[slotPosition];
+        console.log("BEFORE:");
+        console.log(state.illustrations);
         if (typeof(existingSlotContents) === 'undefined') {
             currentSlotPosition = state.illustrations.length;  // will match the new slot
+            console.log("Nothing in this slot, appending as slot "+ currentSlotPosition);
             state.illustrations.push(illustrationData);
         } else {
+            console.log("Found an existing slot, replacing the illustration at "+ currentSlotPosition);
             state.illustrations[slotPosition] = illustrationData;
             currentSlotPosition = slotPosition; 
         }
+        console.log("AFTER:");
+        console.log(state.illustrations);
 
         // If there were no errors, return an updated illustration list (as above)
         if (!('error' in response)) {
