@@ -81,9 +81,6 @@ function receiveMessage(msg) {
             alert("Unexpected method ["+ msg.data.method +"] in this message!");
             return;
     }
-
-    // send a reply to the calling window
-    msg.source.postMessage("HI MOM", msg.origin);
 }
 
 function getTargetCell(msg) {

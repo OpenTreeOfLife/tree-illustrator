@@ -478,7 +478,6 @@ function receiveMessage(msg) {
             alert("Unexpected method ["+ msg.data.method +"] in this message!");
             return;
     }
-    debugger;
 }
 
 // define methods for TreeIllustrator instances
