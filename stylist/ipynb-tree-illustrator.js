@@ -303,7 +303,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     alert("Now I'd open this illustration!");
                  });
             $illustrationEntry.find('span.illustration-description')
-                .html(ill.metata.description);
+                .html(ill.metadata.description);
             $illustrationEntry.find('.delete')
                 .click(function() {
                     if (prompt("Are you sure you want to delete this illustration? This cannot be undone!"
