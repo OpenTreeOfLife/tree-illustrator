@@ -1296,8 +1296,14 @@ function applyChosenStyleGuide(clicked) {
 function showIllustrationList() {
     console.log("showIllustrationList() STARTING...");
     getIllustrationList(function(response) {
-        // show the returned list (or report any error)
-        debugger;
+        // show the returned list (or report any error) from the upstream response
+        var upstreamResponse = response.response;
+        if ('data' in upstreamResponse) {
+            var illustrationList = upstreamResponse.data
+            // expect an array
+        } else {
+            console.error(upstreamResponse.error || "No data returned (unspecified error)!");
+        }
     });
 }
 function loadIllustration(id) {

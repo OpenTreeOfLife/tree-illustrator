@@ -691,7 +691,7 @@ function getIllustrationList(callback) {
         // filter the list and return just what we need here
         response.data = [];
         $.each(state.illustrations, function(pos, ill) {
-            response.data.append({
+            response.data.push({
                 'name': ill.metadata.name,
                 'description': ill.metadata.description
                 // TODO: Add SVG "preview" for each?
