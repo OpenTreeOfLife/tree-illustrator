@@ -1293,14 +1293,19 @@ function applyChosenStyleGuide(clicked) {
 }
 
 // manage illustrations (using an adapter with API methods, already loaded)
-function showIllustrationList() {
+var currentIllustrationList = null;
+    // keep the latest ordered array (with positions, names, descriptions)
+function loadIllustrationList(callback) {
     console.log("showIllustrationList() STARTING...");
     getIllustrationList(function(response) {
         // show the returned list (or report any error) from the upstream response
         var upstreamResponse = response.response;
         if ('data' in upstreamResponse) {
-            var illustrationList = upstreamResponse.data
-            // expect an array
+            // expect an ordered array with names and descriptions
+            currentIllustrationList = upstreamResponse.data;
+            if (callback) {
+                callback();
+            }
         } else {
             console.error(upstreamResponse.error || "No data returned (unspecified error)!");
         }
@@ -1312,6 +1317,15 @@ function loadIllustration(id) {
         // load the returned illustration (or report any error)
         debugger;
     });
+}
+function showIllustrationList() {
+    if (currentIllustrationList) {
+        // TODO: show names and descriptions in a popup?
+        debugger;
+    } else {
+        // load the initial list, then return here
+        loadIllustrationList(showIllustrationList);
+    }
 }
 function saveCurrentIllustration(saveToID) {
     console.log("saveCurrentIllustration() STARTING...");
@@ -1325,7 +1339,11 @@ function saveCurrentIllustration(saveToID) {
     // storage slot, unless 'NEW' or another integer is asserted here.
     saveIllustration(saveToID, function(response) {
         // (re)load the saved illustration (or report any error)
-        debugger;
+        if (response.error) {
+            console.error( response.error );
+        } else {
+            currentIllustrationList = response.data;
+        }
     });
 }
 
