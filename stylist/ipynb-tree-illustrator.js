@@ -435,14 +435,15 @@ function receiveMessage(msg) {
     }
     
     // call an appropriate local function (or complain)
-    console.log(msg);
     switch(msg.data['method']) {
         case 'getIllustrationList':
             // call local function and send response to calling window
-            getIllustrationList(function() {
+            getIllustrationList(function( response ) {
+                // response is an object with 'data' or 'error' property
                 tiWindow.postMessage(
                     {
-                        method: 'getIllustrationList_response'
+                        method: 'getIllustrationList_response',
+                        response: response
                     },
                     tiDomain
                 );
@@ -451,10 +452,12 @@ function receiveMessage(msg) {
 
         case 'listAllNotebookVars':
             // call local function and send response to calling window
-            listAllNotebookVars(function() {
+            listAllNotebookVars(function( response ) {
+                // response is an object with 'data' or 'error' property
                 tiWindow.postMessage(
                     {
-                        method: 'listAllNotebookVars_response'
+                        method: 'listAllNotebookVars_response',
+                        response: response
                     },
                     tiDomain
                 );

@@ -134,7 +134,7 @@ function saveIllustration(id, callback) {
     notebookWindow.postMessage({
         method: 'saveIllustration',
         uniqueID: id,
-        illustration: TreeIllustrator.ill
+        illustration: stylist.ill
     }, 
     '*');  // TODO: restrict to this particular notebook's domain?
 }
