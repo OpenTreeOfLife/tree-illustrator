@@ -732,7 +732,15 @@ function saveIllustration(slotPosition, illustrationData, callback) {
         }
 
         // If there were no errors, return an updated illustration list (as above)
-        response.data = getIllustrationList();
+        if (!('error' in response)) {
+            var illustrationListInfo = getIllustrationList();
+            if ('error' in illustrationListInfo) {
+                // return its error instead, if any
+                response.error = illustrationListInfo.data;
+            } else if ('data' in illustrationListInfo) {
+                response.data = illustrationListInfo.data;
+            }
+        }
     }
     callback( response );
     // update the notebook's visible list
