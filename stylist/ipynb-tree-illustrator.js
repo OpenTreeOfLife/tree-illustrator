@@ -207,7 +207,8 @@ var IPythonTreeIllustrator = function(window, document, $) {
 
                     // HACK to test persistent window reference for a singleton
                     tiWindow = self.ti_window;
-                    console.log("UPDATING single 'tiWindow' to this TI widget");
+                    console.log("UPDATING single 'tiWindow' to this TI widget:");
+                    console.log(tiWindow);
 
                     // TODO: load initial data?
                     /*
