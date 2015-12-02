@@ -201,7 +201,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     // unloading (removing) its IFRAME should un-register this widget
                     // N.B. this uses our special 'destroyed' event, defined above
                     $(self.ti_element).bind('destroyed', function() {
-                        //console.log("Un-registering TI widget '"+ elementID +"'!");
+                        console.log("Un-registering TI widget '"+ elementID +"'!");
                         delete widgets[elementID];
                     });
 
