@@ -437,8 +437,10 @@ var currentSlotPosition = 'NEW';
 
 // add a listener for messages from the Tree Illustrator instance (its window)
 console.warn("ADDING event listener (ipynb) to this window: "+ window.location.href);
-window.addEventListener("message", receiveMessage, false);
-// TODO: make sure we're not duplicating this? or allow one listener per instance?
+//window.addEventListener("message", receiveMessage, false);
+// Make sure we're not duplicating this by reloading this script!
+window.unbind('message.TreeIllustrator')
+      .on('message.TreeIllustrator', receiveMessage);
 
 function receiveMessage(msg) {
     // the dispatched message has origin, data, source [sending window]
