@@ -442,8 +442,9 @@ console.warn("ADDING event listener (ipynb) to this window: "+ window.location.h
 $(window).unbind('message.TreeIllustrator')
          .on('message.TreeIllustrator', receiveMessage);
 
-function receiveMessage(msg) {
+function receiveMessage(e) {
     // the dispatched message has origin, data, source [sending window]
+    debugger;
     if (msg.origin !== tiDomain) {
         alert("Attempted inter-window message from an unexpected domain: ["+ msg.origin +"], expected: ["+ tiDomain +"]");
         return;
