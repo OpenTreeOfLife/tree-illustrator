@@ -443,8 +443,8 @@ $(window).unbind('message.TreeIllustrator')
          .on('message.TreeIllustrator', receiveMessage);
 
 function receiveMessage(e) {
-    // the dispatched message has origin, data, source [sending window]
-    debugger;
+    // the dispatched message has origin, data, source (sending window)
+    var msg = e.originalEvent;
     if (msg.origin !== tiDomain) {
         alert("Attempted inter-window message from an unexpected domain: ["+ msg.origin +"], expected: ["+ tiDomain +"]");
         return;

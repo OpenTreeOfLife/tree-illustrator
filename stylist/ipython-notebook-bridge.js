@@ -18,7 +18,8 @@ var notebookWindow = window.opener || window.parent;
 
 // TODO: set expected calling domain when instance is created?
 
-function receiveMessage(msg) {
+function receiveMessage(e) {
+    var msg = e.originalEvent;
     /* REMINDER: A message has three properties of interest:
      *   msg.origin is the domain that holds the surrounding IPython notebook
      *   msg.data is its payload
