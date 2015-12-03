@@ -439,8 +439,8 @@ var currentSlotPosition = 'NEW';
 console.warn("ADDING event listener (ipynb) to this window: "+ window.location.href);
 //window.addEventListener("message", receiveMessage, false);
 // Make sure we're not duplicating this by reloading this script!
-window.unbind('message.TreeIllustrator')
-      .on('message.TreeIllustrator', receiveMessage);
+$(window).unbind('message.TreeIllustrator')
+         .on('message.TreeIllustrator', receiveMessage);
 
 function receiveMessage(msg) {
     // the dispatched message has origin, data, source [sending window]

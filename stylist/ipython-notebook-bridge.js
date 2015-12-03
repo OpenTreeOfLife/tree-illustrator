@@ -93,8 +93,8 @@ function getTargetCell(msg) {
 
 console.warn("ADDING event listener (bridge JS) to this window: "+ window.location.href);
 //window.addEventListener("message", receiveMessage, false);
-window.unbind('message.TreeIllustrator')
-      .on('message.TreeIllustrator', receiveMessage);
+$(window).unbind('message.TreeIllustrator')
+         .on('message.TreeIllustrator', receiveMessage);
 
 /* The methods below constitute a general API for the Tree Illustrator. 
  * These should support asynchronous operations via callbacks. When defining
