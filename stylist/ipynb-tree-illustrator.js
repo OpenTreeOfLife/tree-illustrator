@@ -299,7 +299,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
                                       +'  <td class="illustration-description"></td>'
                                       +'  <td>'
                                       +'     <button class="delete pull-right btn btn-mini btn-danger">'
-                                      +'        Delete <i class="icon-remove icon-white"></i>'
+                                      +'        Delete'
                                       +'    </button>'
                                       +'  </td>'
                                       +'</tr>');
