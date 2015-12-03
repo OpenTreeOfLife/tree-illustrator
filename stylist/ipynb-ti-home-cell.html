@@ -38,11 +38,17 @@
         color: red;
         font-weight: bold;
     }
-    #ti-home-cell table, 
+    #ti-home-cell table {
+        border: none;
+    }
     #ti-home-cell tr, 
     #ti-home-cell th, 
     #ti-home-cell td {
         border: none;
+        border-top: 1px solid #ddd;
+    }
+    #ti-home-cell td:first-child {
+        border-top: none;
     }
 </style>
 <div id="ti-home-cell">
