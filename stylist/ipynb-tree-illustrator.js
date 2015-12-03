@@ -757,6 +757,7 @@ function saveIllustration(slotPosition, illustrationData, callback) {
     callback( response );
     // update the notebook's visible list
     updateHomeCell();
+    IPython.notebook.save_notebook();
 }
 
 function loadIllustration(slotPosition, callback) {
