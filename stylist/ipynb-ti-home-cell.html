@@ -38,6 +38,12 @@
         color: red;
         font-weight: bold;
     }
+    #ti-home-cell table, 
+    #ti-home-cell tr, 
+    #ti-home-cell th, 
+    #ti-home-cell td {
+        border: none;
+    }
 </style>
 <div id="ti-home-cell">
     <a class="input-toggle" href="#" onclick="return false;">Show the code that added this Tree Illustrator</a>
@@ -49,6 +55,15 @@
             below to make changes, print it or dump its SVG output.</span>
         To create a new illustration, click the Tree Illustrator button in the notebook toolbar.
     </p>
-    <ul class="illustration-list">
-    </ul>
+    <table class="table table-condensed">
+      <tbody>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+          <th>&nbsp;</th>
+        </tr>
+      </tbody>
+      <tbody class="illustration-list">
+      </tbody>
+    </table>
 </div>

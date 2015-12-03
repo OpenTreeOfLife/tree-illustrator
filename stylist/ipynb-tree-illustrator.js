@@ -294,8 +294,13 @@ var IPythonTreeIllustrator = function(window, document, $) {
         $illustrationsList.empty();
         $.each(state.illustrations, function(pos, ill) {
             // TODO: Add controls to re-order illustrations?
-            var $illustrationEntry = $('<li><a class="illustration-name"></a> <span class="illustration-description"></span> <i class="delete">X</i></li>');
+            var $illustrationEntry = $('<tr>'
+                                      +'  <td><a class="illustration-name"></a></td>'
+                                      +'  <td class="illustration-description"></td>'
+                                      +'  <td><i class="delete">X</i></td>'
+                                      +'</tr>');
             $illustrationsList.append( $illustrationEntry );
+
             $illustrationEntry.find('a.illustration-name')
                 .html(ill.metadata.name || "Untitled illustration")
                 .attr('title', 'Slot '+ pos)
@@ -303,7 +308,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     // TODO: launch with this illustration! 
                     alert("Now I'd open this illustration!");
                  });
-            $illustrationEntry.find('span.illustration-description')
+            $illustrationEntry.find('.illustration-description')
                 .html(ill.metadata.description);
             $illustrationEntry.find('.delete')
                 .click(function() {
@@ -311,6 +316,14 @@ var IPythonTreeIllustrator = function(window, document, $) {
                               +" Enter 'YES' below to confirm.") === 'YES') {
                         // clobber this illustration from the list
                         state.illustrations.splice(pos, 1);
+
+                        // should this alter our current slot position?
+                        if (currentSlotPosition === pos) {
+                            currentSlotPosition = 'NEW';
+                        } else if (currentSlotPosition > pos) {
+                            currentSlotPosition -= 1;
+                        } // if (currentSlotPosition < pos) do nothing
+
                         updateHomeCell();
                     }
                 });
@@ -433,6 +446,10 @@ var tiWindow = null;
 //  - 'NEW' if we're starting with a new or 'empty' illustration
 //  - an integer, after saving the current illustration (to reflect 
 //    Save, Save As, or Duplicate)
+//  - a modified integer after deleting an illustration (or 'NEW' if we just
+//    deleted the current slot) [BUT THIS IS PROBABLY MOOT, since any action on
+//    a specific illustration will reset the slot position to an appropriate
+//    integer]
 var currentSlotPosition = 'NEW';
 
 // add a listener for messages from the Tree Illustrator instance (its window)
