@@ -290,7 +290,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
                });
         // TODO: Update the prefs UI widgets
         // Update the list of illustrations
-        var $illustrationsList = $homeCell.find('ul.illustration-list');
+        var $illustrationsList = $homeCell.find('.illustration-list');
         $illustrationsList.empty();
         $.each(state.illustrations, function(pos, ill) {
             // TODO: Add controls to re-order illustrations?
