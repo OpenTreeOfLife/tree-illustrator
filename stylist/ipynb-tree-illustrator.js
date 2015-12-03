@@ -297,7 +297,11 @@ var IPythonTreeIllustrator = function(window, document, $) {
             var $illustrationEntry = $('<tr>'
                                       +'  <td><a class="illustration-name"></a></td>'
                                       +'  <td class="illustration-description"></td>'
-                                      +'  <td><i class="delete">X</i></td>'
+                                      +'  <td>'
+                                      +'     <button class="delete pull-right btn btn-mini btn-danger">'
+                                      +'        Delete <i class="icon-remove icon-white"></i>'
+                                      +'    </button>'
+                                      +'  </td>'
                                       +'</tr>');
             $illustrationsList.append( $illustrationEntry );
 
