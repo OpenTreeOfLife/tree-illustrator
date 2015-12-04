@@ -1413,7 +1413,7 @@ function showIllustrationList() {
             $matchInfo.find('.name').html(match.name || '<em>No name found</em>')
             $matchInfo.find('.description').html(match.description || '');
             $matchInfo.click(function() {
-                stylist.fetchAndLoadIllustration( match.source || i);
+                fetchAndLoadExistingIllustration( match.source || i);
             });
             $chooser.find('.found-matches').append($matchInfo);
         });
