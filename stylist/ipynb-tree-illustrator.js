@@ -365,6 +365,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     'icon'    : 'fa-leaf', // from http://fortawesome.github.io/Font-Awesome/icons/
                             // for prefixed names, see http://cascade.io/icon-reference.html
                     'callback': function() {
+                        currentSlotPosition = 'NEW';
                         var ti = new IPythonTreeIllustrator.IllustratorWidget(IPythonTreeIllustrator.SINGLETON);
                     },
                     'id'      : TOOLBAR_BUTTON_ID
