@@ -1426,7 +1426,7 @@ function saveCurrentIllustration(saveToID) {
 var api = [
     'TreeIllustrator',
     'showIllustrationList',
-    'loadIllustration',
+    //'loadIllustration',
     'saveCurrentIllustration',
     'inchesToCentimeters',
     'centimetersToInches',
