@@ -154,13 +154,13 @@ var IPythonTreeIllustrator = function(window, document, $) {
             alert('showInNewWindow(): COMING SOON');
         }
 
-        var showInNotebookCell = function(cell) {
+        var showInNotebookCell = function(cell, args) {
             // create my IFRAME element in the output of the current notebook cell
             
             // N.B. This ID is mostly for internal use; user probably calls this something else
             cell.append_display_data({
               'data': {
-                'text/html': getIframeMarkup()
+                'text/html': getIframeMarkup(args)
               } 
             })
         }
@@ -172,7 +172,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
             var dialog = require("base/js/dialog");
             var modal = dialog.modal({
                 title: "Tree Illustrator",
-                body: $(getIframeMarkup()),
+                body: $(getIframeMarkup(args)),
                 buttons : {
                     //"Cancel": {},
                     "Close": {
