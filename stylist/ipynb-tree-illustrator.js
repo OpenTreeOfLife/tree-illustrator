@@ -125,7 +125,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
     var IllustratorWidget = function(target, data) {
         if ( !(this instanceof IllustratorWidget) ) {
             console.warn("MISSING 'new' keyword for IllustratorWidget, patching this now");
-            return new IllustratorWidget(data);
+            return new IllustratorWidget(target, data);
         }
 
         // Safely refer to this instance below
@@ -210,7 +210,21 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     console.log("UPDATING single 'tiWindow' to this TI widget:");
                     console.log(tiWindow);
 
-                    // TODO: load initial data?
+                    console.warn("Now I'd trigger loading this illustration:");
+                    console.warn(data);
+                    debugger;
+                    /* TODO: load initial data
+                      > How do we pass this to the TI window? maybe thus:
+                        -------------------%<-------------------
+                        stylist.loadIllustration(slotPosition)?
+                        -------------------%<-------------------
+                        If the app is quick enough, it might do an initial
+                        (reflexive) load of the empty illustration, which is
+                        immediately replaced by this load. Let's try it!
+                      > Do we expect `data` here, or `slotPosition` (or more
+                        general 'source' information, which might be a URL or ???)
+                     */
+
                     /*
                     var that = $(this);
                     // Upon ENTER, click the OK button.
@@ -310,7 +324,12 @@ var IPythonTreeIllustrator = function(window, document, $) {
                 .attr('title', 'Slot '+ pos)
                 .click(function() { 
                     // TODO: launch with this illustration! 
-                    alert("Now I'd open this illustration!");
+                    alert("Opening the illustration in slot "+ pos);
+                    currentSlotPosition = pos;
+                    // Let's try passing the slot instead of literal data
+                    var ti = new IPythonTreeIllustrator.IllustratorWidget(IPythonTreeIllustrator.SINGLETON, currentSlotPosition);
+                    // OR making a separate call like this:
+                    //   stylist.loadIllustration(currentSlotPosition)
                  });
             $illustrationEntry.find('.illustration-description')
                 .html(ill.metadata.description);
