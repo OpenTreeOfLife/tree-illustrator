@@ -1399,7 +1399,6 @@ function loadIllustrationList(callback) {
 function showIllustrationList() {
     if (currentIllustrationList) {
         // Show names and descriptions in a simple, general chooser
-        debugger;
         var $chooser = $('#simple-chooser');
         $chooser.find('[id="dialog-heading"]').html('Choose an existing illustration');
         $chooser.find('.found-matches').empty();
@@ -1421,7 +1420,7 @@ function showIllustrationList() {
         });
         $chooser.off('shown').on('shown', function() {
             // size scrolling list to fit in the current DOI-lookup popup window
-            var $chooser = $('#styleguide-chooser');
+            var $chooser = $('#simple-chooser');
             var resultsListHeight = $chooser.find('.modal-body').height() - $chooser.find('.before-matches').height();
             $chooser.find('.found-matches')
                 .outerHeight(resultsListHeight)
