@@ -533,12 +533,6 @@ $(document).ready(function() {
     // TODO: Add "safety net" if there are unsaved changes
     // TODO: Add JSON support for older IE?
 
-    // resizing the window should refresh/resize the viewport
-    $(window).resize(function() {
-        matchViewportToWindowSize();
-        zoomViewport('REFRESH');
-    });
-
     // Has my opener provided an initial illustration or template? If so, load it now
     var startingID = getParameterByName('startingID');
     console.log(">> startingID: "+ startingID +" <"+ typeof(startingID) +">");
@@ -562,6 +556,12 @@ $(document).ready(function() {
     }
 
     matchViewportToWindowSize();
+
+    // resizing the window should refresh/resize the viewport
+    $(window).resize(function() {
+        matchViewportToWindowSize();
+        zoomViewport('REFRESH');
+    });
 });
 
 function buildStudyFetchURL( studyID ) {
