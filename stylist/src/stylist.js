@@ -548,10 +548,10 @@ $(document).ready(function() {
     if (startingID) {
         switch (startingType) {
             case 'ILLUSTRATION':
-                loadExistingIllustration( data );
+                fetchAndLoadExistingIllustration( data );
                 break;
             case 'TEMPLATE':
-                loadIllustrationFromTemplate( template );
+                fetchAndLoadIllustrationTemplate( template );
                 break;
             default:
                 console.error("No startingType provided (expected 'ILLUSTRATION' or 'TEMPLATE')!");

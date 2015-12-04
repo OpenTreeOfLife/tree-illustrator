@@ -136,7 +136,6 @@ var IPythonTreeIllustrator = function(window, document, $) {
 
         var getIframeMarkup = function(args) {
             // TODO: add version/SHA argument here?
-            debugger;
             var stylistMainURL = buildScriptRelativeURL('stylist.html');
             if (args) {
                 // add starting values, if found
