@@ -22627,10 +22627,10 @@ $(document).ready(function() {
     if (startingID) {
         switch (startingType) {
             case 'ILLUSTRATION':
-                fetchAndLoadExistingIllustration( data );
+                fetchAndLoadExistingIllustration( startingID );
                 break;
             case 'TEMPLATE':
-                fetchAndLoadIllustrationTemplate( template );
+                fetchAndLoadIllustrationTemplate( startingID );
                 break;
             default:
                 console.error("No startingType provided (expected 'ILLUSTRATION' or 'TEMPLATE')!");
