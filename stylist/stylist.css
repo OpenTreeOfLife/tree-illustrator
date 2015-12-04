@@ -264,13 +264,16 @@ g.outer-axis text {
     padding: 6px 0;
     overflow: hidden;
 }
+#simple-chooser .match:first-child {
+    border-top: none;
+}
 #simple-chooser .match:hover {
     background-color: #ffd;
 }
-#styleguide-chooser .name {
+#simple-chooser .name {
     font-weight: bold;
 }
-#styleguide-chooser .description {
+#simple-chooser .description {
     color: #999;
 }
 
