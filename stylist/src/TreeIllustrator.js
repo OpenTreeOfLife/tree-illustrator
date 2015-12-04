@@ -613,7 +613,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     var dataParent = options.parent;
                     switch(data.metadata.type) {
                         case 'IllustratedTree':
-                            return new Tree(data);
+                            return new IllustratedTree(data);
                         case 'SupportingDataset':
                             return new SupportingDataset(data);
                         case 'Ornament':
