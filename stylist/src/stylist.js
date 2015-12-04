@@ -1385,22 +1385,49 @@ function loadIllustrationList(callback) {
     console.log("loadIllustrationList() STARTING...");
     getIllustrationList(function(response) {
         // show the returned list (or report any error) from the upstream response
-        var upstreamResponse = response.response;
-        if ('data' in upstreamResponse) {
+        if ('data' in response) {
             // expect an ordered array with names and descriptions
-            currentIllustrationList = upstreamResponse.data;
+            currentIllustrationList = response.data;
             if (callback) {
                 callback();
             }
         } else {
-            console.error(upstreamResponse.error || "No data returned (unspecified error)!");
+            console.error(response.error || "No data returned (unspecified error)!");
         }
     });
 }
 function showIllustrationList() {
     if (currentIllustrationList) {
-        // TODO: show names and descriptions in a popup?
-        debugger;
+        // Show names and descriptions in a simple, general chooser
+        var $chooser = $('#simple-chooser');
+        $chooser.find('[id="dialog-heading"]').html('Choose an existing illustration');
+        $chooser.find('.found-matches').empty();
+        $.each(currentIllustrationList, function(i, match) {
+            /* List item should include these properties
+             *  - name
+             *  - description
+             *  - source
+             * N.B. In slot-based storage, `i` is the only source information
+             */
+            var $illInfo = $('<div class="match"><div class="name"></div><div class="description"></div></div>');
+            $matchInfo.find('.name')
+                .html(match.name || '<em>No name found</em>')
+                .click(function() {
+                    stylist.fetchAndLoadIllustration( match.source || i);
+                });
+            $matchInfo.find('.description').html(match.description || '');
+            $chooser.find('.found-matches').append($matchInfo);
+        });
+        $chooser.off('shown').on('shown', function() {
+            // size scrolling list to fit in the current DOI-lookup popup window
+            var $chooser = $('#styleguide-chooser');
+            var resultsListHeight = $chooser.find('.modal-body').height() - $chooser.find('.before-matches').height();
+            $chooser.find('.found-matches')
+                .outerHeight(resultsListHeight)
+                .css('visibility','visible');
+        });
+        $chooser.find('.found-matches').css('visibility','hidden');
+        $chooser.modal('show');
     } else {
         // load the initial list, then return here
         loadIllustrationList(showIllustrationList);
