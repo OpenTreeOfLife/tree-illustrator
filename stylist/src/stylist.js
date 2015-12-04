@@ -1377,7 +1377,7 @@ function applyChosenStyleGuide(clicked) {
 var currentIllustrationList = null;
     // keep the latest ordered array (with positions, names, descriptions)
 function loadIllustrationList(callback) {
-    console.log("showIllustrationList() STARTING...");
+    console.log("loadIllustrationList() STARTING...");
     getIllustrationList(function(response) {
         // show the returned list (or report any error) from the upstream response
         var upstreamResponse = response.response;
@@ -1390,13 +1390,6 @@ function loadIllustrationList(callback) {
         } else {
             console.error(upstreamResponse.error || "No data returned (unspecified error)!");
         }
-    });
-}
-function loadIllustration(id) {
-    console.log("loadIllustration() STARTING...");
-    loadIllustration(function(response) {
-        // load the returned illustration (or report any error)
-        debugger;
     });
 }
 function showIllustrationList() {
