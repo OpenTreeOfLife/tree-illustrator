@@ -136,15 +136,16 @@ var IPythonTreeIllustrator = function(window, document, $) {
 
         var getIframeMarkup = function(args) {
             // TODO: add version/SHA argument here?
+            debugger;
             var stylistMainURL = buildScriptRelativeURL('stylist.html');
             if (args) {
                 // add starting values, if found
                 stylistMainURL += ('?'+ $.param(args));
             }
-            return '<iframe id="'+ elementID +'" width="100%" height="500" \
-                            src="'+ stylistMainURL +'" \
-                            frameborder="0" allowfullscreen="allowfullscreen"> \
-                    </iframe>';
+            return '<iframe id="'+ elementID +'" width="100%" height="500" '
+                  +'        src="'+ stylistMainURL +'" '
+                  +'        frameborder="0" allowfullscreen="allowfullscreen"> '
+                  +'</iframe>';
         }
 
         var showInNewWindow = function() {
@@ -329,7 +330,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
                 .attr('title', 'Slot '+ pos)
                 .click(function() { 
                     // TODO: launch with this illustration! 
-                    alert("Opening the illustration in slot "+ pos);
+                    console.log("Opening the illustration in slot "+ pos);
                     currentSlotPosition = pos;
                     // Let's try passing the slot instead of literal data
                     var ti = new IPythonTreeIllustrator.IllustratorWidget(
