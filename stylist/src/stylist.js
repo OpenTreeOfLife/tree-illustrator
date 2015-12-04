@@ -1409,7 +1409,7 @@ function showIllustrationList() {
              *  - source
              * N.B. In slot-based storage, `i` is the only source information
              */
-            var $illInfo = $('<div class="match"><div class="name"></div><div class="description"></div></div>');
+            var $matchInfo = $('<div class="match"><div class="name"></div><div class="description"></div></div>');
             $matchInfo.find('.name')
                 .html(match.name || '<em>No name found</em>')
                 .click(function() {
