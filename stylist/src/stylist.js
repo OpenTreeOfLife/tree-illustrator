@@ -434,7 +434,7 @@ var ill;
 function loadIllustrationData( data, newOrExisting ) {
     // Use an Illustration object as our primary view model for KnockoutJS
     // (by convention, it's usually named 'viewModel')
-    ill = new TreeIllustrator.Illustration( templateOrData );
+    ill = new TreeIllustrator.Illustration( data );
     // export the new illustration
     exports.ill = ill; 
 
