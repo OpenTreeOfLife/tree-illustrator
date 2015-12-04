@@ -453,6 +453,8 @@ function loadIllustrationData( data, newOrExisting ) {
         ko.cleanNode(el);
         ko.applyBindings(ill,el);
     });
+
+    refreshViz( {SHOW_ALL: true} );
 }
 function loadEmptyIllustration() {
     /* Load an empty illustration with a placeholder tree, with
@@ -528,6 +530,15 @@ $(document).ready(function() {
                          .show();
     }
 
+    // TODO: Add "safety net" if there are unsaved changes
+    // TODO: Add JSON support for older IE?
+
+    // resizing the window should refresh/resize the viewport
+    $(window).resize(function() {
+        matchViewportToWindowSize();
+        zoomViewport('REFRESH');
+    });
+
     // Has my opener provided an initial illustration or template? If so, load it now
     var startingID = getParameterByName('startingID');
     console.log(">> startingID: "+ startingID +" <"+ typeof(startingID) +">");
@@ -550,31 +561,7 @@ $(document).ready(function() {
         loadEmptyIllustration();
     }
 
-    // Use an Illustration object as our primary view model for KnockoutJS
-    // (by convention, it's usually named 'viewModel')
-    ill = new TreeIllustrator.Illustration();
-    // export the new illustration
-    //global.ill = ill; // to a global?
-    exports.ill = ill; 
-
-    // add a single placeholder tree
-    ill.addIllustratedTree();
-
-
-    var editorArea = $('#editor')[0];
-    ko.applyBindings(ill, editorArea);
-
-    // TODO: Add "safety net" if there are unsaved changes
-    // TODO: Add JSON support for older IE?
-
-    // resizing the window should refresh/resize the viewport
-    $(window).resize(function() {
-        matchViewportToWindowSize();
-        zoomViewport('REFRESH');
-    });
-
     matchViewportToWindowSize();
-    refreshViz( {SHOW_ALL: true} );
 });
 
 function buildStudyFetchURL( studyID ) {
