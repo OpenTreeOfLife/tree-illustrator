@@ -314,7 +314,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
         $.each(state.illustrations, function(pos, ill) {
             // TODO: Add controls to re-order illustrations?
             var $illustrationEntry = $('<tr>'
-                                      +'  <td><a class="illustration-name"></a></td>'
+                                      +'  <td><a class="illustration-name" href="#"></a></td>'
                                       +'  <td class="illustration-description"></td>'
                                       +'  <td>'
                                       +'     <button class="delete pull-right btn btn-mini btn-danger">'
@@ -339,8 +339,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
                             'startingID': currentSlotPosition,
                         }
                     );
-                    // OR making a separate call like this:
-                    //   stylist.loadIllustration(currentSlotPosition)
+                    return false;
                  });
             $illustrationEntry.find('.illustration-description')
                 .html(ill.metadata.description);
