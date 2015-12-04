@@ -1414,6 +1414,8 @@ function showIllustrationList() {
             $matchInfo.find('.description').html(match.description || '');
             $matchInfo.click(function() {
                 fetchAndLoadExistingIllustration( match.source || i);
+                // close the modal chooser
+                $(this).closest('.modal-simple-chooser').find('.modal-header .close').click();
             });
             $chooser.find('.found-matches').append($matchInfo);
         });

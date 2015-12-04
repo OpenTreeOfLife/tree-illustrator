@@ -263,6 +263,7 @@ g.outer-axis text {
     border-top: 1px solid #eee;
     padding: 6px 0;
     overflow: hidden;
+    cursor: pointer;
 }
 #simple-chooser .match:first-child {
     border-top: none;
