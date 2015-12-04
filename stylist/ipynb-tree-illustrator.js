@@ -122,10 +122,10 @@ var IPythonTreeIllustrator = function(window, document, $) {
         return ('tree-illustrator-'+ readyID);
     } 
 
-    var IllustratorWidget = function(target, data) {
+    var IllustratorWidget = function(target, args) {
         if ( !(this instanceof IllustratorWidget) ) {
             console.warn("MISSING 'new' keyword for IllustratorWidget, patching this now");
-            return new IllustratorWidget(target, data);
+            return new IllustratorWidget(target, args);
         }
 
         // Safely refer to this instance below
@@ -134,9 +134,13 @@ var IPythonTreeIllustrator = function(window, document, $) {
 
         /* define PRIVATE members (variables and functions ) with 'var' */
 
-        var getIframeMarkup = function() {
+        var getIframeMarkup = function(args) {
             // TODO: add version/SHA argument here?
             var stylistMainURL = buildScriptRelativeURL('stylist.html');
+            if (args) {
+                // add starting values, if found
+                stylistMainURL += ('?'+ $.param(args));
+            }
             return '<iframe id="'+ elementID +'" width="100%" height="500" \
                             src="'+ stylistMainURL +'" \
                             frameborder="0" allowfullscreen="allowfullscreen"> \
@@ -160,10 +164,10 @@ var IPythonTreeIllustrator = function(window, document, $) {
             })
         }
 
-        var showInModalPopup = function(data) {
+        var showInModalPopup = function(args) {
             // Use IPython's support for a single modal popup, adapted from
             // https://github.com/minrk/ipython_extensions/blob/70ed77bd7fd36fbead09a1df41f93cab5cfdfe92/nbextensions/gist.js
-            //var modal = IPython.dialog.parentModule.modal({
+
             var dialog = require("base/js/dialog");
             var modal = dialog.modal({
                 title: "Tree Illustrator",
@@ -210,9 +214,6 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     console.log("UPDATING single 'tiWindow' to this TI widget:");
                     console.log(tiWindow);
 
-                    console.warn("Now I'd trigger loading this illustration:");
-                    console.warn(data);
-                    debugger;
                     /* TODO: load initial data
                       > How do we pass this to the TI window? maybe thus:
                         -------------------%<-------------------
@@ -223,6 +224,8 @@ var IPythonTreeIllustrator = function(window, document, $) {
                         immediately replaced by this load. Let's try it!
                       > Do we expect `data` here, or `slotPosition` (or more
                         general 'source' information, which might be a URL or ???)
+                      > NO, Since the TI window doesn't exist yet, we'd better
+                        pass just an ID on the query-string instead.
                      */
 
                     /*
@@ -243,19 +246,21 @@ var IPythonTreeIllustrator = function(window, document, $) {
         /* TODO: define PUBLIC variables (and privileged methods) with 'self' */
 
         // Initialize this instance using one of the methods above
-
-        if (!data || typeof(data) !== 'object') {
+        if (!args || typeof(args) !== 'object') {
             // instance will load the "empty" illustration as usual?
-            console.log("No data specified for Tree Illustrator, will use placeholders.");
+            console.log("No args specified for Tree Illustrator, will use placeholders.");
+        } else {
+            console.warn("Sending along these args for Tree Illustrator:");
+            console.warn(args);
         }
 
         if (target === SINGLETON) {
             if (isLiveNotebook) {
                 // Use the modal popup support in IPython
-                showInModalPopup(data);
+                showInModalPopup(args);
             } else {  // it's a static HTML notebok
                 // Use a new browser window or tab
-                showInNewWindow(data);
+                showInNewWindow(args);
             }
         } else {
             // try to embed in a specified cell
@@ -327,7 +332,13 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     alert("Opening the illustration in slot "+ pos);
                     currentSlotPosition = pos;
                     // Let's try passing the slot instead of literal data
-                    var ti = new IPythonTreeIllustrator.IllustratorWidget(IPythonTreeIllustrator.SINGLETON, currentSlotPosition);
+                    var ti = new IPythonTreeIllustrator.IllustratorWidget(
+                        IPythonTreeIllustrator.SINGLETON, 
+                        {
+                            'startingType': 'ILLUSTRATION',  // TODO: IPythonTreeIllustrator.ILLUSTRATION,
+                            'startingID': currentSlotPosition,
+                        }
+                    );
                     // OR making a separate call like this:
                     //   stylist.loadIllustration(currentSlotPosition)
                  });
