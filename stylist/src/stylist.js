@@ -29,6 +29,12 @@ if (typeof console == 'undefined') console = {
     error: window.alert
 }
 
+// Test query-string variables, from http://stackoverflow.com/a/5158301
+function getParameterByName(name) {
+    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
 /* TODO: Offer all studies and trees from the Open Tree of Life repository,
  * plus other sources and tree formats.
  */
@@ -423,6 +429,72 @@ function refreshViz(options) {
 }
 
 var ill;  
+
+// Load an illustration from JS/JSON data (usu. called by convenience functions below)
+loadIllustrationData( data, newOrExisting ) {
+    // Use an Illustration object as our primary view model for KnockoutJS
+    // (by convention, it's usually named 'viewModel')
+    ill = new TreeIllustrator.Illustration( templateOrData );
+    // export the new illustration
+    exports.ill = ill; 
+
+    /* TODO: handle the newOrExisting storage info? or maybe this is
+     * handled by the storage backend...
+     */
+
+    // add a single placeholder tree
+    if (!data) {
+        ill.addIllustratedTree();
+    }
+
+    // (re)bind to editor UI with Knockout
+    var $boundElements = $('#editor'); // add other elements?
+    $.each($boundElements, function(i, el) {
+        ko.cleanNode(el);
+        ko.applyBindings(ill,el);
+    });
+}
+loadEmptyIllustration() {
+    /* Load an empty illustration with a placeholder tree, with
+     * no ID or slot assigned (i.e., treat this as a new illustration).
+     *
+     * TODO: Replace this with a simple template?
+     */
+    loadIllustrationData( null, 'NEW' );
+}
+// N.B. There should be additional convenience functions in the storage backend
+//  - fetchAndLoadExistingIllustration( docID )
+//  - fetchAndLoadIllustrationTemplate( templateID )
+
+fetchAndLoadExistingIllustration( docID ) {
+    /* Load the JS (or JSON?) data provided, and keep track of its original ID/slot.
+     */
+    loadIllustration(docID, function(response) {
+        if ('data' in response) {
+            var data = response.data;
+            loadIllustrationData( data, 'EXISTING' );
+        } else {
+            console.error(response.error || "No data returned (unspecified error)!");
+        }
+    });
+}
+fetchAndLoadIllustrationTemplate( templateID ) {
+    /* Load the JS (or JSON) data provided, but treat this as a new illustration.
+     *
+     * N.B. A template is basically an existing illustration document, with
+     * internal prompts and placeholder trees/data, but we'll treat it as new.
+     */
+    // TODO: fetch using storage backend
+    loadIllustration(docID, function(response) {
+        if ('data' in response) {
+            var template = response.data;
+            loadIllustrationData( template, 'NEW' );
+        } else {
+            console.error(response.error || "No data returned (unspecified error)!");
+        }
+    });
+}
+
 $(document).ready(function() {
     // test for the preset ppi (pixels / inch) in this browser
     browser_ppi = $('#svg-toolbox').width() / 10.0;
@@ -454,6 +526,28 @@ $(document).ready(function() {
                             return false;
                          })
                          .show();
+    }
+
+    // Has my opener provided an initial illustration or template? If so, load it now
+    var startingID = getParameterByName('startingID');
+    console.log(">> startingID: "+ startingID +" <"+ typeof(startingID) +">");
+    var startingType = getParameterByName('startingType');
+    console.log(">> startingType: "+ startingType +" <"+ typeof(startingType) +">");
+    // N.B. This should be a string, so '0' is a valid slot identifier!
+    if (startingID) {
+        switch (startingType) {
+            case 'ILLUSTRATION':
+                loadExistingIllustration( data );
+                break;
+            case 'TEMPLATE':
+                loadIllustrationFromTemplate( template );
+                break;
+            default:
+                console.error("No startingType provided (expected 'ILLUSTRATION' or 'TEMPLATE')!");
+                return;
+        }
+    } else {
+        loadEmptyIllustration();
     }
 
     // Use an Illustration object as our primary view model for KnockoutJS
