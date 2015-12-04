@@ -1410,12 +1410,11 @@ function showIllustrationList() {
              * N.B. In slot-based storage, `i` is the only source information
              */
             var $matchInfo = $('<div class="match"><div class="name"></div><div class="description"></div></div>');
-            $matchInfo.find('.name')
-                .html(match.name || '<em>No name found</em>')
-                .click(function() {
-                    stylist.fetchAndLoadIllustration( match.source || i);
-                });
+            $matchInfo.find('.name').html(match.name || '<em>No name found</em>')
             $matchInfo.find('.description').html(match.description || '');
+            $matchInfo.click(function() {
+                stylist.fetchAndLoadIllustration( match.source || i);
+            });
             $chooser.find('.found-matches').append($matchInfo);
         });
         $chooser.off('shown').on('shown', function() {
@@ -1458,7 +1457,8 @@ function saveCurrentIllustration(saveToID) {
 var api = [
     'TreeIllustrator',
     'showIllustrationList',
-    //'loadIllustration',
+    'fetchAndLoadExistingIllustration',
+    'fetchAndLoadIllustrationTemplate',
     'saveCurrentIllustration',
     'inchesToCentimeters',
     'centimetersToInches',

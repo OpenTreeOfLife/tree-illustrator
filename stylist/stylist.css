@@ -257,6 +257,23 @@ g.outer-axis text {
 .current-styleguide-values span a {
     font-weight: normal;
 }
+
+#simple-chooser .match {
+    clear: left;
+    border-top: 1px solid #eee;
+    padding: 6px 0;
+    overflow: hidden;
+}
+#simple-chooser .match:hover {
+    background-color: #ffd;
+}
+#styleguide-chooser .name {
+    font-weight: bold;
+}
+#styleguide-chooser .description {
+    color: #999;
+}
+
 #styleguide-chooser .match {
     clear: left;
     border-top: 1px solid #eee;
