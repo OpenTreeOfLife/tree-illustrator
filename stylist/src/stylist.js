@@ -559,8 +559,13 @@ $(document).ready(function() {
 
     // resizing the window should refresh/resize the viewport
     $(window).resize(function() {
-        matchViewportToWindowSize();
-        zoomViewport('REFRESH');
+        try {
+            matchViewportToWindowSize();
+            zoomViewport('REFRESH');
+        } catch(e) {
+            console.warn("Unable to complet resize:");
+            console.warn(e);
+        }
     });
 });
 
