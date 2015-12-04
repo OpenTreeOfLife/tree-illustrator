@@ -39,6 +39,11 @@ function receiveMessage(e) {
         return;
     }
 
+    if (!msg.data['response']) {
+        alert("Expected an object in msg.data.response!");
+        return;
+    }
+
     switch(msg.data['method']) {
         case 'addTree':
             var treeData = msg.data['treeData'];
@@ -62,13 +67,13 @@ function receiveMessage(e) {
         /* Handle callbacks for messages FROM this window */
 
         case 'getIllustrationList_response':
-            getIllustrationList_callback(msg.data);
+            getIllustrationList_callback(msg.data.response);
             break;
         case 'loadIllustration_response':
-            loadIllustration_callback(msg.data);
+            loadIllustration_callback(msg.data.response);
             break;
         case 'saveIllustration_response':
-            saveIllustration_callback(msg.data);
+            saveIllustration_callback(msg.data.response);
             break;
 
         case 'listAllNotebookVars_response':
