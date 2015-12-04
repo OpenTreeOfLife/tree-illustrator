@@ -611,7 +611,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     // create these as object instances
                     var data = options.data;
                     var dataParent = options.parent;
-                    switch(data.type) {
+                    switch(data.metadata.type) {
                         case 'IllustratedTree':
                             return new Tree(data);
                         case 'SupportingDataset':
@@ -620,7 +620,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                             return new Ornament(data);
                     }
                     // keep it simple by default
-                    console.warn("Unexpected element type '"+ data.type +"'! Creating a generic observable...");
+                    console.warn("Unexpected element type '"+ data.metadata.type +"'! Creating a generic observable...");
                     return ko.observable(data);
                 },
                 'key': function(data) {
