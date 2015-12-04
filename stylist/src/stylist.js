@@ -431,7 +431,7 @@ function refreshViz(options) {
 var ill;  
 
 // Load an illustration from JS/JSON data (usu. called by convenience functions below)
-loadIllustrationData( data, newOrExisting ) {
+function loadIllustrationData( data, newOrExisting ) {
     // Use an Illustration object as our primary view model for KnockoutJS
     // (by convention, it's usually named 'viewModel')
     ill = new TreeIllustrator.Illustration( templateOrData );
@@ -454,7 +454,7 @@ loadIllustrationData( data, newOrExisting ) {
         ko.applyBindings(ill,el);
     });
 }
-loadEmptyIllustration() {
+function loadEmptyIllustration() {
     /* Load an empty illustration with a placeholder tree, with
      * no ID or slot assigned (i.e., treat this as a new illustration).
      *
@@ -466,7 +466,7 @@ loadEmptyIllustration() {
 //  - fetchAndLoadExistingIllustration( docID )
 //  - fetchAndLoadIllustrationTemplate( templateID )
 
-fetchAndLoadExistingIllustration( docID ) {
+function fetchAndLoadExistingIllustration( docID ) {
     /* Load the JS (or JSON?) data provided, and keep track of its original ID/slot.
      */
     loadIllustration(docID, function(response) {
@@ -478,7 +478,7 @@ fetchAndLoadExistingIllustration( docID ) {
         }
     });
 }
-fetchAndLoadIllustrationTemplate( templateID ) {
+function fetchAndLoadIllustrationTemplate( templateID ) {
     /* Load the JS (or JSON) data provided, but treat this as a new illustration.
      *
      * N.B. A template is basically an existing illustration document, with
