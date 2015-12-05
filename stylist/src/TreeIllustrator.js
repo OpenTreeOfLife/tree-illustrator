@@ -1228,7 +1228,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     var treeInfo = null;
                     $.each(testLists, function(i, testList) {
                         // ASSUMES unique display text for all items in nested list!
-                        var selectedTrees = $.grep(testLists, function(o) {return o.name === chosenSource;});
+                        var selectedTrees = $.grep(testList, function(o) {return o.name === chosenSource;});
                         if (selectedTrees.length > 0) {
                             treeInfo = selectedTrees[0];
                         }
