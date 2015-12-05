@@ -1219,6 +1219,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     $nexsonUrlPanel.hide();
                     $fileUploadPanel.hide();
                     // find the matching URL (at any level of this nested list) and set it instead
+                    debugger;
                     var testLists = [stylist.availableTrees];
                     $.each(stylist.availableTrees, function(i, testItem) {
                         if ('children' in testItem) {
@@ -1226,9 +1227,6 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                         }
                     });
                     var selectedTrees = $.grep(testLists, function(o) {return o.name === chosenSource;});
-                    if (selectedTrees.length === 0) {
-                        selectedTrees = $.grep(stylist.availableTrees, function(o) {return o.name === chosenSource;})
-                    }
                     var treeInfo = null;
                     if (selectedTrees.length > 0) {
                         treeInfo = selectedTrees[0];
