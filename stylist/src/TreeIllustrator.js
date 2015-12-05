@@ -1219,17 +1219,19 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     $nexsonUrlPanel.hide();
                     $fileUploadPanel.hide();
                     // find the matching URL (at any level of this nested list) and set it instead
-                    debugger;
                     var testLists = [stylist.availableTrees];
                     $.each(stylist.availableTrees, function(i, testItem) {
                         if ('children' in testItem) {
                             testLists.push(testItem.children);
                         }
                     });
-                    var selectedTrees = $.grep(testLists, function(o) {return o.name === chosenSource;});
                     var treeInfo = null;
-                    if (selectedTrees.length > 0) {
-                        treeInfo = selectedTrees[0];
+                    $.each(testLists, function(i, testList) {
+                        // ASSUMES unique display text for all items in nested list!
+                        var selectedTrees = $.grep(testLists, function(o) {return o.name === chosenSource;});
+                        if (selectedTrees.length > 0) {
+                            treeInfo = selectedTrees[0];
+                        }
                     }
                     if (!treeInfo) {
                         console.warn("No tree found under '"+ chosenSource +"'!");
