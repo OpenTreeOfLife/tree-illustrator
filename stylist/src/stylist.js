@@ -82,8 +82,8 @@ var availableTrees = [
         children: [
             /* read these from the specified kernel */
             {
-                name: "<i>No interesting variables found! Please run the appropriate Python cells and try again.</i>",
-                disabled: true  // mark as info-only (not clickable)
+                name: "No variables found! Run some Python cells and try again.",
+                disabled: true  // info-only (not clickable)
             }
         ]
     },
@@ -92,8 +92,8 @@ var availableTrees = [
         children: [
             /* read these from the specified kernel */
             {
-                name: "<i>No interesting variables found! Please run the appropriate R cells and try again.</i>",
-                disabled: true  // mark as info-only (not clickable)
+                name: "No variables found! Run some R cells and try again.",
+                disabled: true  // info-only (not clickable)
             }
         ]
     },
