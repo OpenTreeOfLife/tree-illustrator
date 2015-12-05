@@ -486,11 +486,11 @@
                                            event: {change: useChosenTreeDataSource.bind($data)}">
                           <!-- ko if: $data.children && $data.children.length -->
                             <optgroup data-bind="foreach: $data.children">
-                                <option data-bind="attr: {value: name, label: name, id: id() +'-datasource-chooser'}"></option>
+                                <option data-bind="attr: {value: name, label: name, id: $data.id() +'-datasource-chooser'}"></option>
                             </optgroup>
                           <!-- /ko -->
                           <!-- ko if: !$data.children || !($data.children.length) -->
-                                <option data-bind="attr: {value: name, label: name, id: id() +'-datasource-chooser'}"></option>
+                                <option data-bind="attr: {value: $data.name, label: $data.name, id: $data.id() +'-datasource-chooser'}"></option>
                           <!-- /ko -->
                         </select>
                     </div>
