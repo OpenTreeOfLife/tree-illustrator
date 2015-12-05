@@ -1225,7 +1225,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                         treeInfo = selectedTrees[0];
                     }
                     if (!treeInfo) {
-                        console.warn("No tree found under '"+ treeName +"'!");
+                        console.warn("No tree found under '"+ chosenSource +"'!");
                         return;
                     }
                     self.metadata.source.type(dataSourceTypes.URL);
