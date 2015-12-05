@@ -1218,8 +1218,17 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     $opentreeIDsPanel.hide();
                     $nexsonUrlPanel.hide();
                     $fileUploadPanel.hide();
-                    // find the matching URL and set it instead
-                    var selectedTrees = $.grep(stylist.availableTrees, function(o) {return o.name === chosenSource;});
+                    // find the matching URL (at any level of this nested list) and set it instead
+                    var testLists = [stylist.availableTrees];
+                    $.each(stylist.availableTrees, function(i, testItem) {
+                        if ('children' in testItem) {
+                            testLists.push(testItem.children);
+                        }
+                    });
+                    var selectedTrees = $.grep(testLists, function(o) {return o.name === chosenSource;});
+                    if (selectedTrees.length === 0) {
+                        selectedTrees = $.grep(stylist.availableTrees, function(o) {return o.name === chosenSource;})
+                    }
                     var treeInfo = null;
                     if (selectedTrees.length > 0) {
                         treeInfo = selectedTrees[0];
