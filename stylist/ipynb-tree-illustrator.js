@@ -136,10 +136,11 @@ var IPythonTreeIllustrator = function(window, document, $) {
 
         var getIframeMarkup = function(args) {
             // TODO: add version/SHA argument here?
-            var stylistMainURL = buildScriptRelativeURL('stylist.html');
+            // N.B. that we specify the host application here!
+            var stylistMainURL = buildScriptRelativeURL('stylist.html?hostApplication=JUPYTER_NOTEBOOK');
             if (args) {
                 // add starting values, if found
-                stylistMainURL += ('?'+ $.param(args));
+                stylistMainURL += ('&'+ $.param(args));
             }
             return '<iframe id="'+ elementID +'" width="100%" height="500" '
                   +'        src="'+ stylistMainURL +'" '

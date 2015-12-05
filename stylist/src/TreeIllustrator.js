@@ -55,6 +55,12 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         TIMESTAMP: 'TIMESTAMP', // e.g., a modification date
         SEMANTIC: 'SEMANTIC'    // a conventional version number, e.g., "3.2.0a"
     };
+    var hostApplications = {
+        JUPYTER_NOTEBOOK: 'JUPYTER_NOTEBOOK',    // a.k.a. IPython notebook
+        //TODO: ARBOR_WORKFLOW: 'ARBOR_WORKFLOW' 
+        //TODO: OPENTREE_TOOLS: 'OPENTREE_TOOLS'
+        STANDALONE: 'STANDALONE'                 // "naked" stylist, perhaps from a static file
+    };
 
     /* Here we can share information among all classes and instances */
 
@@ -1185,7 +1191,9 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             var $fileUploadPanel = $('#'+ self.id() +'-datasource-upload-panel');
             var chosenSource = $chooser.val();
             switch(chosenSource) {
-                // Match against strings defined in stylist.js
+                /* Match against strings defined in `stylist.js`. We'll start
+                 * with some special cases that drive changes to the UI.
+                 */
                 case "Enter OpenTree study and tree ids":
                     $opentreeIDsPanel.show();
                     $nexsonUrlPanel.hide();
@@ -1207,13 +1215,27 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     self.metadata.source.value( $.trim($otherField.val()) );
                     break;
 
-                case "Upload tree data":
+                case "Enter URL to a GitHub gist":
+                    $opentreeIDsPanel.hide();
+                    $nexsonUrlPanel.show();
+                    $fileUploadPanel.hide();
+                    self.metadata.source.type(dataSourceTypes.URL);
+                    var $otherField = $('#'+ self.id() +'-datasource-nexsonurl');
+                        // TODO: Use another field for Gist URLs?
+                    self.metadata.source.value( $.trim($otherField.val()) );
+                    break;
+
+                //case "Upload tree data":
+                case "Newick string":
+                case "Newick string with extra data":
+                case "NEXUS":
                     $opentreeIDsPanel.hide();
                     $nexsonUrlPanel.hide();
                     $fileUploadPanel.show();
                     break;
 
                 default:
+                    // TODO: handle Jupyter kernel values
                     // assume this is the name of an explicit URL
                     $opentreeIDsPanel.hide();
                     $nexsonUrlPanel.hide();
@@ -1235,6 +1257,11 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     });
                     if (!treeInfo) {
                         console.warn("No tree found under '"+ chosenSource +"'!");
+                        return;
+                    }
+                    if (!'url' in treeInfo) {
+                        // This string should be added to the special cases above!
+                        console.warn("No URL found for '"+ chosenSource +"'!");
                         return;
                     }
                     self.metadata.source.type(dataSourceTypes.URL);
@@ -1457,6 +1484,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         alignments: alignments,
         dataSourceTypes: dataSourceTypes,
         versionTypes: versionTypes,
+        hostApplications: hostApplications,
         cache: cache,
 
         // expose view-model classes

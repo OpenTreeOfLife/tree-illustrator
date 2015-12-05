@@ -35,8 +35,42 @@ function getParameterByName(name) {
     return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
 }
 
-/* TODO: Offer all studies and trees from the Open Tree of Life repository,
+/* Determine the current host application, so we can adapt to the advantages
+ * and limitations of each:
+ *  - storage options and requirements
+ *      - slot- vs. URL-based storage
+ *      - naming restrictions (uniqueness, etc)
+ *  - data sources and formats, e.g.
+ *      - values from a server-side kernel in Jupyter
+ *      - user's resources in OpenTree repository
+ *      - special adapters/validators for tree data
+ *  - optional features and UI
+ *  - adjustments to layout and style
+ *
+ * The host application should be specified on the query-string of
+ * 'stylist.html', for example 
+ *      .../stylist.html?hostApplication=JUPYTER_NOTEBOOK
+ * The default value is a standalone page, which depends entirely on outside
+ * web services for data and storage.
+ */
+var hostApplication = TreeIllustrator.hostApplications.STANDALONE;
+// validate received host-app string against enumerated values
+$.each(TreeIllustrator.hostApplications, function(i, testValue) {
+    if (getParameterByName('host') == testValue) {
+        hostApplication = testValue;
+    }
+});
+console.log("Tree Illustrator host application: "+ hostApplication);
+
+/* Offer all studies and trees from the Open Tree of Life repository,
  * plus other sources and tree formats.
+ *
+ * This should adapt to the current host application, for example:
+ *  - "local" variables from an iPython notebook (incl. server-side kernel)
+ *  - similar "local" data in an Arbor workflow
+ *  - the current user's studies/trees/favorites in OpenTree
+ *
+ * N.B. The current display logic will hide any group that has no children.
  */
 var availableTrees = [
     {
@@ -47,12 +81,20 @@ var availableTrees = [
         name: "From notebook kernel (python2)",
         children: [
             /* read these from the specified kernel */
+            {
+                name: "<i>No interesting variables found! Please run the appropriate Python cells and try again.</i>",
+                disabled: true  // mark as info-only (not clickable)
+            }
         ]
     },
     {
         name: "From notebook kernel (R)",
         children: [
             /* read these from the specified kernel */
+            {
+                name: "<i>No interesting variables found! Please run the appropriate R cells and try again.</i>",
+                disabled: true  // mark as info-only (not clickable)
+            }
         ]
     },
     {
@@ -105,6 +147,21 @@ var availableTrees = [
         ]
     }
 ];
+
+function updateAvailableTrees() {
+    /* Build an appropriate (nested) list of choices, based on the current host
+     * application.
+     *
+     * TODO: Is this a one-time (init) operation that mangles the defaults, or
+     * should it be repeatable to accept new trees as they appear?
+     */
+    switch(hostApplication) {
+        case TreeIllustrator.hostApplications.JUPYTER_NOTEBOOK:
+            break;
+        case TreeIllustrator.hostApplications.STANDALONE:
+            break;
+    }
+}
 
 
 /* Conversion utilities for physical units
