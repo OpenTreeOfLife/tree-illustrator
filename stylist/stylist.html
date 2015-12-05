@@ -489,7 +489,7 @@
                                 <option data-bind="attr: {value: name, label: name}"></option>
                             </optgroup>
                           <!-- /ko -->
-                          <!-- ko if: !($data.children && !($data.children.length)) -->
+                          <!-- ko if: !('children' in $data) -->
                                 <option data-bind="attr: {value: $data.name, label: $data.name}"></option>
                           <!-- /ko -->
                         </select>
