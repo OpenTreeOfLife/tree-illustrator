@@ -471,12 +471,26 @@
                     <label class="control-label"
                            data-bind="attr: {for: '#'+ id() +'-datasource-chooser'}" >Data source</label> 
                     <div class="controls">
+                        <!--
                         <select style="margin-bottom: 0;"
                                 data-bind="options: stylist.availableTrees,
                                            optionsValue: 'name',
                                            optionsText: 'name',
                                            attr: {id: id() +'-datasource-chooser'},
                                            event: {change: useChosenTreeDataSource.bind($data)}">
+                        </select>
+                        -->
+                        <select style="margin-bottom: 0;"
+                                data-bind="foreach: stylist.availableTrees,
+                                           event: {change: useChosenTreeDataSource.bind($data)}">
+                          <!-- ko if: children && children.length -->
+                            <optgroup data-bind="foreach: children">
+                                <option data-bind="attr: {value: name, label: name, id: id() +'-datasource-chooser'}"></option>
+                            </optgroup>
+                          <!-- /ko -->
+                          <!-- ko if: !children || !(children.length) -->
+                                <option data-bind="attr: {value: name, label: name, id: id() +'-datasource-chooser'}"></option>
+                          <!-- /ko -->
                         </select>
                     </div>
                     <div class="controls mini-form" 

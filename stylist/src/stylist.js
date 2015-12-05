@@ -44,29 +44,65 @@ var availableTrees = [
         url: './placeholder-tree.json'
     },
     {
-        name: "Tuovila, 2013", 
-        url: buildStudyFetchURL( '2380' )
-        /* NOTE that this one has two trees!
-        treeID: 'tree4999',
-        otusID: 'tree5000'
-        */ 
+        name: "From notebook kernel (python2)",
+        children: [
+            /* read these from the specified kernel */
+        ]
     },
     {
-        name: "Jansen, 2007", 
-        url: buildStudyFetchURL( 'pg_10' )
+        name: "From notebook kernel (R)",
+        children: [
+            /* read these from the specified kernel */
+        ]
     },
     {
-        name: "Drew BT, 2014", 
-        url: buildStudyFetchURL( 'pg_2821' )
+        name: "Examples",
+        children: [
+            {
+                name: "Tuovila, 2013", 
+                url: buildStudyFetchURL( '2380' )
+                /* NOTE that this one has two trees!
+                treeID: 'tree4999',
+                otusID: 'tree5000'
+                */ 
+            },
+            {
+                name: "Jansen, 2007", 
+                url: buildStudyFetchURL( 'pg_10' )
+            },
+            {
+                name: "Drew BT, 2014", 
+                url: buildStudyFetchURL( 'pg_2821' )
+            }
+        ]
     },
     {
-        name: "Enter OpenTree study and tree ids"
+        name: "Upload tree data as...",
+        children: [
+            {
+                name: "Newick string"
+            },
+            {
+                name: "Newick string with extra data"
+            },
+            {
+                name: "NEXUS"
+            }
+        ]
     },
     {
-        name: "Enter URL to NexSON 1.0"
-    },
-    {
-        name: "Upload tree data"
+        name: "On the web",
+        children: [
+            {
+                name: "Enter OpenTree study and tree ids"
+            },
+            {
+                name: "Enter URL to NexSON 1.0"
+            },
+            {
+                name: "Enter URL to a GitHub gist"
+            }
+        ]
     }
 ];
 
