@@ -1232,7 +1232,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                         if (selectedTrees.length > 0) {
                             treeInfo = selectedTrees[0];
                         }
-                    }
+                    });
                     if (!treeInfo) {
                         console.warn("No tree found under '"+ chosenSource +"'!");
                         return;
