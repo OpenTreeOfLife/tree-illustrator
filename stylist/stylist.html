@@ -482,10 +482,9 @@
                         -->
                         <select style="margin-bottom: 0;"
                                 data-bind="foreach: stylist.availableTrees,
-                                           attr: {},
                                            event: {change: useChosenTreeDataSource.bind($data)}">
                           <!-- ko if: $data.children && $data.children.length -->
-                            <optgroup data-bind="attr: {label: name, title: console.log('... '+ $data)},
+                            <optgroup data-bind="attr: {label: name, title: console.log($data)},
                                                  foreach: $data.children">
                                 <option data-bind="attr: {value: name, label: name}"></option>
                             </optgroup>
