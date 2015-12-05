@@ -491,7 +491,7 @@
                             </optgroup>
                           <!-- /ko -->
                           <!-- ko if: !('children' in $data) -->
-                                <option data-bind="attr: {value: $data.name, label: $data.name, disabled: disabled}"></option>
+                                <option data-bind="attr: {value: $data.name, label: $data.name, disabled: $data.disabled}"></option>
                           <!-- /ko -->
                         </select>
                     </div>
