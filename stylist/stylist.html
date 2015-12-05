@@ -482,13 +482,14 @@
                         -->
                         <select style="margin-bottom: 0;"
                                 data-bind="foreach: stylist.availableTrees,
+                                           attr: {title: console.log($data)},
                                            event: {change: useChosenTreeDataSource.bind($data)}">
-                          <!-- ko if: children && children.length -->
-                            <optgroup data-bind="foreach: children">
+                          <!-- ko if: $data.children && $data.children.length -->
+                            <optgroup data-bind="foreach: $data.children">
                                 <option data-bind="attr: {value: name, label: name, id: id() +'-datasource-chooser'}"></option>
                             </optgroup>
                           <!-- /ko -->
-                          <!-- ko if: !children || !(children.length) -->
+                          <!-- ko if: !$data.children || !($data.children.length) -->
                                 <option data-bind="attr: {value: name, label: name, id: id() +'-datasource-chooser'}"></option>
                           <!-- /ko -->
                         </select>
