@@ -149,7 +149,6 @@ function updateAvailableTrees() {
              * TODO: Can we distinguish R-via-Python from the Python kernel?
              */
             getTreeSourceList(function(response) {
-                debugger;
                 var notebookSourceList = ko.utils.arrayFirst(availableTrees(), function(item) {
                     return item.name() === 'From notebook kernel';
                 });
