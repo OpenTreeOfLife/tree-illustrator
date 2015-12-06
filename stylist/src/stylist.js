@@ -56,7 +56,7 @@ function getParameterByName(name) {
 var hostApplication = TreeIllustrator.hostApplications.STANDALONE;
 // validate received host-app string against enumerated values
 $.each(TreeIllustrator.hostApplications, function(i, testValue) {
-    if (getParameterByName('host') == testValue) {
+    if (getParameterByName('hostApplication') == testValue) {
         hostApplication = testValue;
     }
 });
@@ -77,16 +77,6 @@ var availableTrees = ko.mapping.fromJS([
     {
         name: "Placeholder tree", 
         url: './placeholder-tree.json'
-    },
-    {
-        name: "From notebook kernel (python2)",
-        children: [
-            /* read these from the specified kernel */
-            {
-                name: "No variables found! Run some Python cells and try again.",
-                disabled: true  // info-only (not clickable)
-            }
-        ]
     },
     {
         name: "From notebook kernel",
