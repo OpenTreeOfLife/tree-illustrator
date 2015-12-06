@@ -612,18 +612,19 @@ function listAllNotebookVars( callback ) {
      * TODO: 'callback' is a function that expects a response object with 'data' or 'error'
      */
     var response = {};
-    var kernelCode = "", 
+    var kernelLanguage = IPython.notebook.metadata.kernelspec.language,
+        kernelCode = "", 
         failureMsg = "Unable to retrieve kernel vars!";
-    switch(IPython.notebook.metadata.kernelspec.language) {
+    switch(kernelLanguage) {
         case 'python':
             kernelCode = "_ignore_names = ['In', 'Out', 'exit', 'get_ipython', 'quit'];"
-                       + "[[_x, type(eval(_x)).__name__] for _x in dir()"
+                       + "[[_x, type(eval(_x)).__name__, 'Python'] for _x in dir()"
                            + "if (_x not in _ignore_names) and (_x.startswith('_') == False)]";
             break;
 
         default:
             response.error = ("I don't know how to read variables from a '"+
-                IPython.notebook.metadata.kernelspec.language +"' kernel!");
+                kernelLanguage +"' kernel!");
         console.error(response.error);
         // return the error immediately
         callback( response );
