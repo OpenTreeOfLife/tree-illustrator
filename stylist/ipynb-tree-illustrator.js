@@ -632,15 +632,29 @@ function listAllNotebookVars( callback ) {
     // Fetch a complete list of (non-default) vars from the kernel
     var kernelCallback = function(out) {
         switch (out.msg_type) {
-            case 'execute_result':
-                // result should be in property 'text/plain'
+            case 'execute_result':  
+            case 'stream':          
                 console.log( out.content.data );
                 var restoredOutput;
                 try {
-                    // string should be JSON
+                    // string should evaluate as JS (not valid JSON)
                     // TODO: Confirm this in Jupyter docs!
-                    restoredOutput = JSON.parse(out.content.data['text/plain']);
+                    switch (out.msg_type) {
+                        case 'execute_result':  
+                            // result should be in `data['text/plain']`
+                            //restoredOutput = JSON.parse(out.content.data['text/plain']);
+                            restoredOutput = eval(out.content.data['text/plain']);
+                        case 'stream':          
+                            // result should be the main `data` property
+                            restoredOutput = eval(out.content.data);
+                        default:
+                            var msg = ("Unexpected out.msg_type: "+ out.msg_type);
+                            console.error(msg);
+                            callback(msg);
+                            return;
+                    }
                 } catch (e) {
+                    // return more, in case there's an unexpected mimetype
                     restoredOutput = out.content.data;
                 }
                 // return this to our upstream callback
