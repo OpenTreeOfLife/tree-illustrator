@@ -484,7 +484,7 @@
                                 data-bind="foreach: stylist.availableTrees,
                                            attr: {id: id() +'-datasource-chooser'},
                                            event: {change: useChosenTreeDataSource.bind($data)}">
-                          <!-- ko if: $data.children && $data.children.length -->
+                          <!-- ko if: $data.children && $data.children().length -->
                             <optgroup data-bind="attr: {label: name},
                                                  foreach: $data.children">
                                 <option data-bind="attr: {value: $data.name, label: $data.name, disabled: $data.disabled}"></option>
