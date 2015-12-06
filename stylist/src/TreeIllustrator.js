@@ -1250,7 +1250,9 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     var treeInfo = null;
                     $.each(testLists, function(i, testList) {
                         // ASSUMES unique display text for all items in nested list!
-                        var selectedTrees = $.grep(testList, function(o) {return o.name === chosenSource;});
+                        var selectedTrees = $.grep(testList, function(o) {
+                            return o.name() === chosenSource;
+                        });
                         if (selectedTrees.length > 0) {
                             treeInfo = selectedTrees[0];
                         }
@@ -1265,7 +1267,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                         return;
                     }
                     self.metadata.source.type(dataSourceTypes.URL);
-                    self.metadata.source.value( treeInfo.url );
+                    self.metadata.source.value( treeInfo.url() );
             }
             stylist.refreshViz();
         }
