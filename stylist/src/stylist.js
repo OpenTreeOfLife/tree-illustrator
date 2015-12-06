@@ -169,7 +169,7 @@ function updateAvailableTrees() {
                                 nbVarType = nbVar[1],
                                 nbVarLanguage = nbVar[2];
                             notebookSourceList.children.push({
-                                name: (nbVarName +" &nbsp; ("+ nbVarLanguage +" "+ nbVarType +")")
+                                name: (nbVarName +" ("+ nbVarLanguage +" "+ nbVarType +")")
                             });
                         });
                     }
