@@ -148,6 +148,7 @@ function updateAvailableTrees() {
              * TODO: Can we deal with multiple kernels in the newest notebooks?
              * TODO: Can we distinguish R-via-Python from the Python kernel?
              */
+            var nbLanguage = IPython.notebook.metadata.kernelspec.language;
             getTreeSourceList(function(response) {
                 debugger;
                 var notebookSourceList = ko.utils.arrayFirst(availableTrees(), function(item) {
@@ -165,8 +166,11 @@ function updateAvailableTrees() {
                     } else {
                         // show any variables returned and their source kernel/lang
                         $.each(data, function(i, nbVar) {
+                            // nbVar is a two-item list like ['Hi mom', 'str']
+                            var nbVarName = nbVar[0],
+                                nbVarType = nbVar[1];
                             notebookSourceList.children.push({
-                                name: (" (python2?)")
+                                name: (nbVarName +" ("+ nbLanguage +" "+ nbVarType +")")
                             });
                         });
                     }
