@@ -78,9 +78,11 @@ function receiveMessage(e) {
 
         case 'listAllNotebookVars_response':
             // TODO: send the response to a registered(?) callback
+            listAllNotebookVars_callback(msg.data.response);
             break;
         case 'getTreeSourceData_response':
             getTreeSourceData_callback(msg.data);
+            debugger;
             break;
 
         default:
@@ -165,7 +167,7 @@ function saveIllustration(forcePosition, callback) {
 var getTreeSourceList_callback = null,
     getTreeSourceData_callback = null;
 
-function getTreeSourceList(id, callback) {
+function getTreeSourceList(callback) {
     getTreeSourceList_callback = callback;
 
     notebookWindow.postMessage({

@@ -603,11 +603,13 @@ function injectTree( data, treeIndex, options ) {
     // TODO: consider a more general message 'addOrReplaceElement' with friendly JS wrappers
 }
 
-function listAllNotebookVars() {
+function listAllNotebookVars( callback ) {
     /* Return a list of variables (the name and type for each) currently
      * defined in the kernel, so TI * can offer these as sources for its trees,
      * supplemental data, etc. 
      * TODO: Add methods for non-python kernels!
+     * 
+     * TODO: 'callback' is a function that expects a response object with 'data' or 'error'
      */
     var kernelCode = "", 
         failureMsg = "Unable to retrieve kernel vars!";
@@ -632,16 +634,34 @@ function listAllNotebookVars() {
         switch (out.msg_type) {
             case 'execute_result':
                 // result should be in property 'text/plain'
-                console.log( out.content.data ); // see esp. ["text/plain"] 
-                alert( out.content.data['text/plain'] );
-                // TODO: respond to upstream callback(s)?
-                break;
+                console.log( out.content.data );
+                var restoredOutput;
+                try {
+                    // string should be JSON
+                    // TODO: Confirm this in Jupyter docs!
+                    restoredOutput = JSON.parse(out.content.data['text/plain']);
+                } catch (e) {
+                    restoredOutput = out.content.data;
+                }
+                // return this to our upstream callback
+                callback(restoredOutput)
+                return;
 
             case 'stream':
                 // result should be the main 'data' property
                 console.log( out.content.data );
                 alert( out.content.data );
-                break;
+                var restoredOutput;
+                try {
+                    // string should be JSON
+                    // TODO: Confirm this in Jupyter docs!
+                    restoredOutput = JSON.parse(out.content.data);
+                } catch (e) {
+                    restoredOutput = out.content.data;
+                }
+                // return this to our upstream callback
+                callback(restoredOutput)
+                return;
 
             case 'error':
             case 'pyerr':
@@ -650,8 +670,7 @@ function listAllNotebookVars() {
                           out.content.ename +"\n"+ 
                           out.content.evalue;
                 console.error(msg);
-                alert(msg);
-                // TODO: respond to upstream callback(s)?
+                callback(msg);
                 return;
         }
     };

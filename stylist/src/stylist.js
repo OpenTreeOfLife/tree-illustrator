@@ -63,7 +63,8 @@ $.each(TreeIllustrator.hostApplications, function(i, testValue) {
 console.log("Tree Illustrator host application: "+ hostApplication);
 
 /* Offer all studies and trees from the Open Tree of Life repository,
- * plus other sources and tree formats.
+ * plus other sources and tree formats. We'll make a tree of Knockout
+ * observables, so we can update them (and the UI) on-the-fly.
  *
  * This should adapt to the current host application, for example:
  *  - "local" variables from an iPython notebook (incl. server-side kernel)
@@ -72,7 +73,7 @@ console.log("Tree Illustrator host application: "+ hostApplication);
  *
  * N.B. The current display logic will hide any group that has no children.
  */
-var availableTrees = [
+var availableTrees = ko.mapping.fromJS([
     {
         name: "Placeholder tree", 
         url: './placeholder-tree.json'
@@ -88,13 +89,9 @@ var availableTrees = [
         ]
     },
     {
-        name: "From notebook kernel (R)",
+        name: "From notebook kernel",
         children: [
-            /* read these from the specified kernel */
-            {
-                name: "No variables found! Run some R cells and try again.",
-                disabled: true  // info-only (not clickable)
-            }
+            /* A list of variables, each marked with its language/kernel */
         ]
     },
     {
@@ -146,23 +143,61 @@ var availableTrees = [
             }
         ]
     }
-];
+]);
 
 function updateAvailableTrees() {
     /* Build an appropriate (nested) list of choices, based on the current host
      * application.
      *
-     * TODO: Is this a one-time (init) operation that mangles the defaults, or
-     * should it be repeatable to accept new trees as they appear?
+     * N.B. this should be repeatable to update tree sources as they come and go.
      */
     switch(hostApplication) {
         case TreeIllustrator.hostApplications.JUPYTER_NOTEBOOK:
+            /* Fetch notebook variables from the server-side kernel, via
+             * Jupyter's JS API.
+             * TODO: Can we deal with multiple kernels in the newest notebooks?
+             * TODO: Can we distinguish R-via-Python from the Python kernel?
+             */
+            getTreeSourceList(function(response) {
+                var notebookSourceList = ko.utils.arrayFirst(availableTrees, function(item) {
+                    return item.name() === 'From notebook kernel';
+                });
+                notebookSourceList.removeAll();
+                if ('data' in response) {
+                    var data = response.data;
+                    if (data.length === 0) {
+                        // explain the empty list, suggest a remedy
+                        notebookSourceList.push({
+                            name: "No variables found! Run code cells and try again.",
+                            disabled: true  // info-only (not clickable)
+                        });
+                    } else {
+                        // show any variables returned and their source kernel/lang
+                        $.each(data, function(i, nbVar) {
+                            notebookSourceList.push({
+                                name: (" (python2?)")
+                            });
+                        });
+                    }
+                } else {
+                    console.error(response.error || "No data returned (unspecified error)!");
+                    // show the error in the source-list, and suggest a remedy
+                    notebookSourceList.push({
+                        name: "ERROR loading notebook values. Run code cells and try again.",
+                        disabled: true  // info-only (not clickable)
+                    });
+                }
+            })
+            
             break;
+
         case TreeIllustrator.hostApplications.STANDALONE:
+            // nothing to do here
             break;
     }
 }
-
+// Update the list with initial values
+updateAvailableTrees();
 
 /* Conversion utilities for physical units
  */
