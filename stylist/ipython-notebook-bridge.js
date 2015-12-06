@@ -77,8 +77,9 @@ function receiveMessage(e) {
             break;
 
         case 'listAllNotebookVars_response':
-            // TODO: send the response to a registered(?) callback
-            listAllNotebookVars_callback(msg.data.response);
+            // N.B. the expected callback is named for a general API, not the
+            // details of Jupyter notebook.
+            getTreeSourceList_callback(msg.data.response);
             break;
         case 'getTreeSourceData_response':
             getTreeSourceData_callback(msg.data);
