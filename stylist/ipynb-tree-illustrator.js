@@ -644,9 +644,11 @@ function listAllNotebookVars( callback ) {
                             // result should be in `data['text/plain']`
                             //restoredOutput = JSON.parse(out.content.data['text/plain']);
                             restoredOutput = eval(out.content.data['text/plain']);
+                            break;
                         case 'stream':          
                             // result should be the main `data` property
                             restoredOutput = eval(out.content.data);
+                            break;
                         default:
                             var msg = ("Unexpected out.msg_type: "+ out.msg_type);
                             console.error(msg);
