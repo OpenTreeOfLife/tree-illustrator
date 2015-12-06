@@ -1240,11 +1240,11 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     $opentreeIDsPanel.hide();
                     $nexsonUrlPanel.hide();
                     $fileUploadPanel.hide();
-                    // find the matching URL (at any level of this nested list) and set it instead
-                    var testLists = [stylist.availableTrees];
-                    $.each(stylist.availableTrees, function(i, testItem) {
+                    // Look for the matching URL at any level of this tree of *observable* arrays
+                    var testLists = [stylist.availableTrees()];
+                    $.each(stylist.availableTrees(), function(i, testItem) {
                         if ('children' in testItem) {
-                            testLists.push(testItem.children);
+                            testLists.push(testItem.children());
                         }
                     });
                     var treeInfo = null;
