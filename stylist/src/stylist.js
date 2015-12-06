@@ -186,8 +186,6 @@ function updateAvailableTrees() {
             break;
     }
 }
-// Update the list with initial values
-updateAvailableTrees();
 
 /* Conversion utilities for physical units
  */
@@ -650,6 +648,9 @@ $(document).ready(function() {
 
     // TODO: Add "safety net" if there are unsaved changes
     // TODO: Add JSON support for older IE?
+
+    // Update the list with initial values
+    updateAvailableTrees();
 
     // Has my opener provided an initial illustration or template? If so, load it now
     var startingID = getParameterByName('startingID');
