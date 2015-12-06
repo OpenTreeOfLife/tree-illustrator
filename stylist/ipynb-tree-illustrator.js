@@ -611,6 +611,7 @@ function listAllNotebookVars( callback ) {
      * 
      * TODO: 'callback' is a function that expects a response object with 'data' or 'error'
      */
+    var response = {};
     var kernelCode = "", 
         failureMsg = "Unable to retrieve kernel vars!";
     switch(IPython.notebook.metadata.kernelspec.language) {
@@ -621,9 +622,11 @@ function listAllNotebookVars( callback ) {
             break;
 
         default:
-            console.error("I don't know how to read variables from a '"+
+            response.error = ("I don't know how to read variables from a '"+
                 IPython.notebook.metadata.kernelspec.language +"' kernel!");
-            return [ ];
+        console.error(response.error);
+        // return the error immediately
+        callback( response );
     }
     /* For a more thorough test of the kernel language and version, use 
        `IPython.notebook.metadata.language_info`
@@ -650,9 +653,9 @@ function listAllNotebookVars( callback ) {
                             restoredOutput = eval(out.content.data);
                             break;
                         default:
-                            var msg = ("Unexpected out.msg_type: "+ out.msg_type);
-                            console.error(msg);
-                            callback(msg);
+                            response.error = ("Unexpected out.msg_type: "+ out.msg_type);
+                            console.error(response.error);
+                            callback(response);
                             return;
                     }
                 } catch (e) {
@@ -660,33 +663,18 @@ function listAllNotebookVars( callback ) {
                     restoredOutput = out.content.data;
                 }
                 // return this to our upstream callback
-                callback(restoredOutput)
-                return;
-
-            case 'stream':
-                // result should be the main 'data' property
-                console.log( out.content.data );
-                alert( out.content.data );
-                var restoredOutput;
-                try {
-                    // string should be JSON
-                    // TODO: Confirm this in Jupyter docs!
-                    restoredOutput = JSON.parse(out.content.data);
-                } catch (e) {
-                    restoredOutput = out.content.data;
-                }
-                // return this to our upstream callback
-                callback(restoredOutput)
+                response.data = restoredOutput;
+                callback(response);
                 return;
 
             case 'error':
             case 'pyerr':
             default:
-                var msg = failureMsg +"\n\n"+ 
-                          out.content.ename +"\n"+ 
-                          out.content.evalue;
-                console.error(msg);
-                callback(msg);
+                response.error = failureMsg +"\n\n"+ 
+                                 out.content.ename +"\n"+ 
+                                 out.content.evalue;
+                console.error(response.error);
+                callback( response );
                 return;
         }
     };
