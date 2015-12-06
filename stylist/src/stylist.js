@@ -152,19 +152,19 @@ function updateAvailableTrees() {
                 var notebookSourceList = ko.utils.arrayFirst(availableTrees(), function(item) {
                     return item.name() === 'From notebook kernel';
                 });
-                notebookSourceList.removeAll();
+                notebookSourceList.children.removeAll();
                 if ('data' in response) {
                     var data = response.data;
                     if (data.length === 0) {
                         // explain the empty list, suggest a remedy
-                        notebookSourceList.push({
+                        notebookSourceList.children.push({
                             name: "No variables found! Run code cells and try again.",
                             disabled: true  // info-only (not clickable)
                         });
                     } else {
                         // show any variables returned and their source kernel/lang
                         $.each(data, function(i, nbVar) {
-                            notebookSourceList.push({
+                            notebookSourceList.children.push({
                                 name: (" (python2?)")
                             });
                         });
@@ -172,7 +172,7 @@ function updateAvailableTrees() {
                 } else {
                     console.error(response.error || "No data returned (unspecified error)!");
                     // show the error in the source-list, and suggest a remedy
-                    notebookSourceList.push({
+                    notebookSourceList.children.push({
                         name: "ERROR loading notebook values. Run code cells and try again.",
                         disabled: true  // info-only (not clickable)
                     });
