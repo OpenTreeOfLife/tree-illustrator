@@ -608,6 +608,7 @@ function listAllNotebookVars( callback ) {
      * defined in the kernel, so TI * can offer these as sources for its trees,
      * supplemental data, etc. 
      * TODO: Add methods for non-python kernels!
+     * TODO: Send a more structured response, by kernel?
      * 
      * TODO: 'callback' is a function that expects a response object with 'data' or 'error'
      */

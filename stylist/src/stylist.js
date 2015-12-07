@@ -169,7 +169,9 @@ function updateAvailableTrees() {
                                 nbVarType = nbVar[1],
                                 nbVarLanguage = nbVar[2];
                             notebookSourceList.children.push({
-                                name: (nbVarName +" ("+ nbVarLanguage +" "+ nbVarType +")")
+                                name: (nbVarName +" ("+ nbVarLanguage +" "+ nbVarType +")"),
+                                kernel: nbVarLanguage  
+                                  // TODO: refers to kernel-id vs. language? eg 'python2'
                             });
                         });
                     }

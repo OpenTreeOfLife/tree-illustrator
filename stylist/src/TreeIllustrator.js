@@ -1235,8 +1235,10 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     break;
 
                 default:
-                    // TODO: handle Jupyter kernel values
-                    // assume this is the name of an explicit URL
+                    /* Handle common cases for listed tree sources:
+                     *  - explicit "fetch" URLs for data on the web
+                     *  - Jupyter kernel values from a hosting notebook
+                     */
                     $opentreeIDsPanel.hide();
                     $nexsonUrlPanel.hide();
                     $fileUploadPanel.hide();
@@ -1261,13 +1263,21 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                         console.warn("No tree found under '"+ chosenSource +"'!");
                         return;
                     }
-                    if (!'url' in treeInfo) {
-                        // This string should be added to the special cases above!
-                        console.warn("No URL found for '"+ chosenSource +"'!");
+                    if ('url' in treeInfo) {
+                        self.metadata.source.type(dataSourceTypes.URL);
+                        self.metadata.source.value( treeInfo.url() );
+                    } else if ('kernel' in treeInfo) { // or 'kernel'? 'nbkernel'?
+                        // assume this is 'python' for now
+                        // TODO: For a multi-kernel notebook, expect a specific kernel-id, eg 'python2'
+                        var nbVarName = treeInfo.name.split(' ')[0];
+                        getTreeSourceData(nbVarName, function(response) {
+                            debugger;
+                        });
+                    } else {
+                        // Maybe this string should be added to the special cases above!
+                        console.warn("No URL or kernel found for '"+ chosenSource +"'!");
                         return;
                     }
-                    self.metadata.source.type(dataSourceTypes.URL);
-                    self.metadata.source.value( treeInfo.url() );
             }
             stylist.refreshViz();
         }
