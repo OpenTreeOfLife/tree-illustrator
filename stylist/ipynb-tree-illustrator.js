@@ -580,6 +580,7 @@ function receiveMessage(e) {
                     tiDomain
                 );
             });
+            break;
 
         default:
             alert("Unexpected method ["+ msg.data.method +"] in this message!");
