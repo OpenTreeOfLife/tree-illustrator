@@ -613,8 +613,8 @@ function listAllNotebookVars( callback ) {
      * 
      * TODO: 'callback' is a function that expects a response object with 'data' or 'error'
      */
-    var response = {};
-    var kernelLanguage = IPython.notebook.metadata.kernelspec.language,
+    var response = {},
+        kernelLanguage = IPython.notebook.metadata.kernelspec.language,
         kernelCode = "", 
         failureMsg = "Unable to retrieve kernel vars!";
     switch(kernelLanguage) {
@@ -702,7 +702,9 @@ function getNotebookVar( varName, callback ) {
      * 
      * 'callback' is a function that expects a response object with 'data' or 'error'
      */
-    var kernelCode = "", 
+    var response = {},
+        kernelLanguage = IPython.notebook.metadata.kernelspec.language,
+        kernelCode = "", 
         failureMsg = "Unable to retrieve variable '"+ varName +"' from this kernel!";
     switch(IPython.notebook.metadata.kernelspec.language) {
         case 'python':
@@ -710,37 +712,59 @@ function getNotebookVar( varName, callback ) {
             break;
 
         default:
-            console.error("I don't know how to read variables from a '"+
-                IPython.notebook.metadata.kernelspec.language +"' kernel!");
-            return null;
+            response.error = ("I don't know how to read variables from a '"+
+                kernelLanguage +"' kernel!");
+            console.error(response.error);
+            // return the error immediately
+            callback( response );
     }
     /* For a more thorough test of the kernel language and version, use 
        `IPython.notebook.metadata.language_info`
     */
 
-    // Fetch a complete list of (non-default) vars from the kernel
+    // Fetch and evaluate a single variable from the kernel
     var kernelCallback = function(out) {
-        var response = {};
         //console.log( out.content.data ); // see esp. ["text/plain"] 
         switch (out.msg_type) {
             case 'execute_result':
-                // result should be in property 'text/plain'
-                response.data = out.content.data['text/plain'];
-                break;
-
             case 'stream':
-                // result should be the main 'data' property
-                response.data = out.content.data;
-                break;
+                console.log( out.content.data );
+                var restoredOutput;
+                try {
+                    // string should evaluate as JS (not valid JSON)
+                    // TODO: Confirm this in Jupyter docs!
+                    switch (out.msg_type) {
+                        case 'execute_result':  
+                            // result should be in `data['text/plain']`
+                            //restoredOutput = JSON.parse(out.content.data['text/plain']);
+                            restoredOutput = eval(out.content.data['text/plain']);
+                            break;
+                        case 'stream':          
+                            // result should be the main `data` property
+                            restoredOutput = eval(out.content.data);
+                            break;
+                        default:
+                            response.error = ("Unexpected out.msg_type: "+ out.msg_type);
+                            console.error(response.error);
+                            callback(response);
+                            return;
+                    }
+                } catch (e) {
+                    // return more, in case there's an unexpected mimetype
+                    restoredOutput = out.content.data;
+                }
+                // return this to our upstream callback
+                response.data = restoredOutput;
+                callback(response);
+                return;
 
             case 'error':
             case 'pyerr':
             default:
-                var msg = failureMsg +"\n\n"+ 
+                response.error = failureMsg +"\n\n"+ 
                           out.content.ename +"\n"+ 
                           out.content.evalue;
-                console.error(msg);
-                response.error = msg;
+                console.error(response.error);
                 // TODO: respond to upstream callback(s)?
         }
         callback( response );

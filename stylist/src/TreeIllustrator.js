@@ -1271,7 +1271,13 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                         // TODO: For a multi-kernel notebook, expect a specific kernel-id, eg 'python2'
                         var nbVarName = treeInfo.name().split(' ')[0];
                         getTreeSourceData(nbVarName, function(response) {
-                            debugger;
+                            if ('data' in response) {
+                                var data = response.data;
+                            } else {
+                                var msg = response.error || "No data returned (unspecified error)!";
+                                console.error(msg);
+                                alert(msg);
+                            }
                         });
                     } else {
                         // Maybe this string should be added to the special cases above!

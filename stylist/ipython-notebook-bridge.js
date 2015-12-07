@@ -82,7 +82,7 @@ function receiveMessage(e) {
             getTreeSourceList_callback(msg.data.response);
             break;
         case 'getTreeSourceData_response':
-            getTreeSourceData_callback(msg.data);
+            getTreeSourceData_callback(msg.data.response);
             break;
 
         default:
