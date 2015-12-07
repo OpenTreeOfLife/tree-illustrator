@@ -157,10 +157,10 @@ function updateAvailableTrees() {
                     var data = response.data;
                     if (data.length === 0) {
                         // explain the empty list, suggest a remedy
-                        notebookSourceList.children.push(ko.observable({
-                            name: "No variables found! Run code cells and try again.",
-                            disabled: true  // info-only (not clickable)
-                        }));
+                        notebookSourceList.children.push({
+                            name: ko.observable("No variables found! Run code cells and try again."),
+                            disabled: ko.observable(true)  // info-only (not clickable)
+                        });
                     } else {
                         // show any variables returned and their source kernel/lang
                         $.each(data, function(i, nbVar) {
@@ -168,20 +168,20 @@ function updateAvailableTrees() {
                             var nbVarName = nbVar[0],
                                 nbVarType = nbVar[1],
                                 nbVarLanguage = nbVar[2];
-                            notebookSourceList.children.push(ko.observable({
-                                name: (nbVarName +" ("+ nbVarLanguage +" "+ nbVarType +")"),
-                                kernel: nbVarLanguage  
+                            notebookSourceList.children.push({
+                                name: ko.observable(nbVarName +" ("+ nbVarLanguage +" "+ nbVarType +")"),
+                                kernel: ko.observable(nbVarLanguage)  
                                   // TODO: refers to kernel-id vs. language? eg 'python2'
-                            }));
+                            });
                         });
                     }
                 } else {
                     console.error(response.error || "No data returned (unspecified error)!");
                     // show the error in the source-list, and suggest a remedy
-                    notebookSourceList.children.push(ko.observable({
-                        name: "ERROR loading notebook values. Run code cells and try again.",
-                        disabled: true  // info-only (not clickable)
-                    }));
+                    notebookSourceList.children.push({
+                        name: ko.observable("ERROR loading notebook values. Run code cells and try again."),
+                        disabled: ko.observable(true)  // info-only (not clickable)
+                    });
                 }
             })
             
