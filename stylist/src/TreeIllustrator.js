@@ -1269,7 +1269,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     } else if ('kernel' in treeInfo) { // or 'kernel'? 'nbkernel'?
                         // assume this is 'python' for now
                         // TODO: For a multi-kernel notebook, expect a specific kernel-id, eg 'python2'
-                        var nbVarName = treeInfo.name.split(' ')[0];
+                        var nbVarName = treeInfo.name().split(' ')[0];
                         getTreeSourceData(nbVarName, function(response) {
                             debugger;
                         });
