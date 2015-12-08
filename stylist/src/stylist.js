@@ -106,6 +106,8 @@ var availableTrees = ko.mapping.fromJS([
         ]
     },
     {
+        name: "Upload tree data"
+        /*
         name: "Upload tree data as...",
         children: [
             {
@@ -118,6 +120,7 @@ var availableTrees = ko.mapping.fromJS([
                 name: "NEXUS"
             }
         ]
+        */
     },
     {
         name: "On the web",

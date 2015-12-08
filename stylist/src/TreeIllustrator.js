@@ -1272,7 +1272,12 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                         var nbVarName = treeInfo.name().split(' ')[0];
                         getTreeSourceData(nbVarName, function(response) {
                             if ('data' in response) {
-                                var data = response.data;
+                                var treeSourceData = response.data;
+                                debugger;
+                                /* TODO: To interpret this as tree source data,
+                                 * we'll need to figure out its format. Pass it to
+                                 * a series of "sniffers" to identify Newick, Nexson, etc.
+                                 */
                             } else {
                                 var msg = response.error || "No data returned (unspecified error)!";
                                 console.error(msg);
@@ -1349,7 +1354,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                         if (textStatus !== 'success') {
                             if (jqXHR.status >= 500) {
                                 // major server-side error, just show raw response for tech support
-                                var errMsg = 'Sorry, there was an error ('+ jqXHR.status +') converting this study to Nexson:\n\n'+ jqXHR.responseText;
+                                var errMsg = 'Sorry, there was an error ('+ jqXHR.status +') converting this tree to Nexson:\n\n'+ jqXHR.responseText;
                                 alert(errMsg);
                                 return;
                             }
@@ -1357,7 +1362,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                             var data = $.parseJSON(jqXHR.responseText);
                             // TODO: This should be properly parsed JSON, show it more sensibly
                             // (but for now, repeat the crude feedback used above)
-                            var errMsg = 'Sorry, there was an error ('+ jqXHR.status +') converting this study to Nexson:\n\n'+ jqXHR.responseText;
+                            var errMsg = 'Sorry, there was an error ('+ jqXHR.status +') converting this tree to Nexson:\n\n'+ jqXHR.responseText;
                             alert(errMsg);
                             return;
                         }
