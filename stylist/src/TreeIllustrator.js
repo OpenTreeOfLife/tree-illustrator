@@ -1232,6 +1232,9 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                 //case "NEXUS":
                     $opentreeIDsPanel.hide();
                     $nexsonUrlPanel.hide();
+                    // enable "pasted text" field for this method
+                    var $pastedField = $('#'+ self.id() +'-datasource-pasted');
+                    $pastedField.attr('disabled', false);
                     $fileUploadPanel.show();
                     break;
 
@@ -1274,6 +1277,9 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                         // Disable the format chooser while we try to guess
                         var $inputFormatChooser = $('#'+ self.id() +'-datasource-format');
                         $inputFormatChooser.attr('disabled', true);
+                        // disable "pasted text" field (display only)
+                        var $pastedField = $('#'+ self.id() +'-datasource-pasted');
+                        $pastedField.attr('disabled', true);
                         $fileUploadPanel.show();
                         // TODO: For a multi-kernel notebook, expect a specific kernel-id, eg 'python2'
                         var nbVarName = treeInfo.name().split(' ')[0];
@@ -1284,8 +1290,11 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                                  * need to figure out its format. Pass it to a 
                                  * series of "sniffers" to identify Newick, Nexson, etc.
                                  */
+debugger;
                                 var matchingFormat = mostLikelyDataFormat(self.metadata.source.value());
                                 $inputFormatChooser.val(matchingFormat);
+                                // show this text in the (disabled) text field
+                                $pastedField.val(self.metadata.source.value());
                             } else {
                                 var msg = response.error || "No data returned (unspecified error)!";
                                 console.error(msg);
