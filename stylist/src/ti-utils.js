@@ -53,13 +53,21 @@ function isProbablyNeXML(data) {
     } else {
         try {
             testXML = $.parseXML(data);
+            if (!testXML) {
+                // if data is not a string, result is null 
+                return false;
+            }
         } catch (err) {
             // var failed to parse as XML
             ///console.error(err);
             return false;
         }
     }
-    var rootNodeName = $(data).children()[0].nodeName;
+    if ($(testXML).children().length === 0) {
+        // XML is strangely empty
+        return false;
+    }
+    var rootNodeName = $(testXML).children()[0].nodeName;
     switch( rootNodeName ) {
         case 'nex:nexml':
             break;
