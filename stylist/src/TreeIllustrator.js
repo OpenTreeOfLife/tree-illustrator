@@ -1225,10 +1225,11 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     self.metadata.source.value( $.trim($otherField.val()) );
                     break;
 
+                case "Paste/enter tree data":
                 //case "Upload tree data":
-                case "Newick string":
-                case "Newick string with extra data":
-                case "NEXUS":
+                //case "Newick string":
+                //case "Newick string with extra data":
+                //case "NEXUS":
                     $opentreeIDsPanel.hide();
                     $nexsonUrlPanel.hide();
                     $fileUploadPanel.show();
@@ -1239,9 +1240,6 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                      *  - explicit "fetch" URLs for data on the web
                      *  - Jupyter kernel values from a hosting notebook
                      */
-                    $opentreeIDsPanel.hide();
-                    $nexsonUrlPanel.hide();
-                    $fileUploadPanel.hide();
                     // Look for the matching URL at any level of this tree of *observable* arrays
                     var testLists = [stylist.availableTrees()];
                     $.each(stylist.availableTrees(), function(i, testItem) {
@@ -1264,25 +1262,36 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                         return;
                     }
                     if ('url' in treeInfo) {
+                        $opentreeIDsPanel.hide();
+                        $nexsonUrlPanel.hide();
+                        $fileUploadPanel.hide();
                         self.metadata.source.type(dataSourceTypes.URL);
                         self.metadata.source.value( treeInfo.url() );
                     } else if ('kernel' in treeInfo) { // or 'kernel'? 'nbkernel'?
                         // assume this is 'python' for now
+                        $opentreeIDsPanel.hide();
+                        $nexsonUrlPanel.hide();
+                        // Disable the format chooser while we try to guess
+                        var $inputFormatChooser = $('#'+ self.id() +'-datasource-format');
+                        $inputFormatChooser.attr('disabled', true);
+                        $fileUploadPanel.show();
                         // TODO: For a multi-kernel notebook, expect a specific kernel-id, eg 'python2'
                         var nbVarName = treeInfo.name().split(' ')[0];
                         getTreeSourceData(nbVarName, function(response) {
                             if ('data' in response) {
                                 var treeSourceData = response.data;
-                                debugger;
-                                /* TODO: To interpret this as tree source data,
-                                 * we'll need to figure out its format. Pass it to
-                                 * a series of "sniffers" to identify Newick, Nexson, etc.
+                                /* To interpret this as tree source data, we'll 
+                                 * need to figure out its format. Pass it to a 
+                                 * series of "sniffers" to identify Newick, Nexson, etc.
                                  */
+                                var matchingFormat = mostLikelyDataFormat(self.metadata.source.value());
+                                $inputFormatChooser.val(matchingFormat);
                             } else {
                                 var msg = response.error || "No data returned (unspecified error)!";
                                 console.error(msg);
                                 alert(msg);
                             }
+                            $inputFormatChooser.attr('disabled', false);
                         });
                     } else {
                         // Maybe this string should be added to the special cases above!
@@ -1325,15 +1334,22 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             } else {
                 // call opentree web services to convert to nexson
                 //TODO: Apply other pasted formats (and REMEMBER THEM in the saved illustration!)
-                //var $inputFormatChooser = $('#'+ self.id() +'-datasource-format');
-                //var inputFormat = $inputFormatChooser.val();
+                var $inputFormatChooser = $('#'+ self.id() +'-datasource-format');
+                //$inputFormatChooser.attr('disabled', true);
+                var inputFormat = $inputFormatChooser.val();
+                if (inputFormat === '') {
+                    alert("Please choose the format of this tree data, then try again.");
+                    return;
+                }
                 $.ajax({
                     type: 'POST',
                     dataType: 'json',
                     // crossDomain: true,
                     contentType: "application/json; charset=utf-8",
                     url: 'https://devtree.opentreeoflife.org/curator/to_nexson',
-                    // NOTE that idPrefix and firstAvailable*ID args are currently required to get well-formed Nexson!
+                    /* NOTE that idPrefix and firstAvailable*ID args are
+                     * currently required to get well-formed Nexson!
+                     */
                     data: ('{"output": "ot:nexson", '+
                             '"auth_token": "ANONYMOUS", '+
                             '"idPrefix": "", ' +
@@ -1346,8 +1362,9 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                             '"firstAvailableAnnotationID": "1", '+
                             '"firstAvailableAgentID": "1", '+
                             '"firstAvailableMessageID": "1", '+
-                            '"inputFormat": '+ JSON.stringify('newick') +', '+
-                            '"content": '+ JSON.stringify($.trim(self.metadata.source.value())) +' }'),
+                            '"inputFormat": '+ JSON.stringify(inputFormat) +', '+
+                            '"content": '+ JSON.stringify($.trim(self.metadata.source.value())) +
+                           ' }'),
                     processData: false,
                     complete: function( jqXHR, textStatus ) {
                         // report errors or malformed data, if any
@@ -1496,6 +1513,14 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                 });
             });
         });
+    }
+
+    /* Use sniffers to determine the most likely format of input tree data */
+    var mostLikelyDataFormat = function (data) {
+        return utils.isProbablyNewick(data) ? 'newick' : 
+                   utils.isProbablyNEXUS(data) ? 'nexus' :
+                       utils.isProbablyNeXML(data) ? 'nexus' :
+                           ''  // format unknown
     }
 
     /* expose class constructors (and static methods) for instantiation */

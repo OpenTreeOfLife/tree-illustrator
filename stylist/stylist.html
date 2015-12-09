@@ -522,6 +522,7 @@
                     <div class="controls" 
                          style="display: none; margin-top: 0.25em;"
                          data-bind="attr: {id: id() +'-datasource-upload-panel'}">
+                        <textarea data-bind="attr: {id: id() +'-datasource-pasted'}" placeholder="Paste tree as text..."></textarea>
                         <select data-bind="attr: {id: id() +'-datasource-format'}" name="inputFormat" 
                                 class="input-block-level" style="margin-bottom: 3px;" 
                                 oninput="return true;" onchange="return true;">
@@ -530,12 +531,13 @@
                             <option value="nexus" disabled="disabled">NEXUS (coming soon)</option>
                             <option value="nexml" disabled="disabled">NeXML (coming soon)</option>
                         </select>
-                        <textarea data-bind="attr: {id: id() +'-datasource-pasted'}" placeholder="Paste tree as text..."></textarea>
                         <button data-bind="click: convertPastedDataToTree.bind($data, id())" style="margin: 3px 0;">Convert and update tree</button>
+<!-- TODO: Add typical file-upload feature
                        <br/>
                         <span style="color: #c33;">Coming soon:</span>
                         <input type="file" disabled="disabled"
                                data-bind="attr: {id: id() +'-datasource-upload'}" />
+-->
                     </div>
                 </div>
                 <div class="control-group">

@@ -106,6 +106,23 @@ var availableTrees = ko.mapping.fromJS([
         ]
     },
     {
+        name: "Paste/enter tree data"
+        /*
+        name: "Paste/enter tree data as...",
+        children: [
+            {
+                name: "Newick string"
+            },
+            {
+                name: "Newick string with extra data"
+            },
+            {
+                name: "NEXUS"
+            }
+        ]
+        */
+    },
+    {
         name: "Upload tree data"
         /*
         name: "Upload tree data as...",

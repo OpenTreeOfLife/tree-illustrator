@@ -9,11 +9,72 @@ function jiggle( range ) {
     return Math.round(Math.random() * range * 2) - range; 
 }
 
+
+/* "Sniffers" to guess the format of user-entered tree data. 
+ * N.B. these don't need to be fool-proof; they're just used to pre-select
+ * the most likely format. 
+ */
+function isProbablyNewick(data) {
+    if (typeof(data) !== 'string') {
+        return false;
+    }
+    data = $.trim(data);
+    // Look for expected start and end marks
+    // N.B. this will reject a valid (but trivial) string like 'A;'
+    if (data.startsWith('(') && data.endsWith(');')) {
+        return true;
+    }
+    return false;
+}
+
+var matchesNEXUSBlockStarter = new RegExp('begin \\w+;');
+function isProbablyNEXUS(data) {
+    if (typeof(data) !== 'string') {
+        return false;
+    }
+    // Look for required(?) first line
+    if ($.trim(data).startsWith("#nexus")) {
+        return true;
+    }
+    // ... or accept typical NEXUS block starter
+    if (matchesNEXUSBlockStarter.test(data)) {
+        return true;
+    }
+    return false;
+}
+
+function isProbablyNeXML(data) {
+    /* NOTE that this is the most "expensive" sniffer, so it's probably
+     * best to check the others first.
+     */
+    var testXML;
+    if (data instanceof XMLDocument) {
+        testXML = data;
+    } else {
+        $.parseXML(data);
+    }
+    var rootNodeName = $(data).children()[0].nodeName;
+    switch( rootNodeName ) {
+        case 'nex:nexml':
+            break;
+        case 'nexml':
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
+
 // export some members as a simple API
 var api = [
-    'jiggle'
+    'jiggle',
+    'isProbablyNewick',
+    'isProbablyNEXUS',
+    'isProbablyNeXML'
 ];
 $.each(api, function(i, methodName) {
     // populate the default 'module.exports' object
     exports[ methodName ] = eval( methodName );
 });
+
