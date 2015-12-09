@@ -1297,7 +1297,8 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                                 var matchingFormat = mostLikelyDataFormat(treeSourceData);
                                 $inputFormatChooser.val(matchingFormat);
                                 // show this text in the (disabled) text field
-                                $pastedField.val(treeSourceData);
+                                var treeSourceAsText = JSON.stringify($.trim(treeSourceData))
+                                $pastedField.val(treeSourceAsText);
                             } else {
                                 var msg = response.error || "No data returned (unspecified error)!";
                                 console.error(msg);
