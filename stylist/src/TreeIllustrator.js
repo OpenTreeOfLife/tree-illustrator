@@ -1291,7 +1291,9 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                                  * series of "sniffers" to identify Newick, Nexson, etc.
                                  */
 debugger;
-                                var matchingFormat = mostLikelyDataFormat(self.metadata.source.value());
+// TODO: push this source into persistent storage?
+///self.metadata.source.value(treeSourceData);
+                                var matchingFormat = mostLikelyDataFormat(treeSourceData);
                                 $inputFormatChooser.val(matchingFormat);
                                 // show this text in the (disabled) text field
                                 $pastedField.val(self.metadata.source.value());

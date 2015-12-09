@@ -51,7 +51,14 @@ function isProbablyNeXML(data) {
     if (data instanceof XMLDocument) {
         testXML = data;
     } else {
-        $.parseXML(data);
+        try {
+            testXML = $.parseXML(data);
+        } catch (err) {
+            // was not XML
+            console.warn("This var failed to parse as XML:");
+            console.warn(err);
+            return false;
+        }
     }
     var rootNodeName = $(data).children()[0].nodeName;
     switch( rootNodeName ) {
