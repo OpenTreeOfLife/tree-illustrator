@@ -1296,7 +1296,7 @@ debugger;
                                 var matchingFormat = mostLikelyDataFormat(treeSourceData);
                                 $inputFormatChooser.val(matchingFormat);
                                 // show this text in the (disabled) text field
-                                $pastedField.val(self.metadata.source.value());
+                                $pastedField.val(treeSourceData);
                             } else {
                                 var msg = response.error || "No data returned (unspecified error)!";
                                 console.error(msg);

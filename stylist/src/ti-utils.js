@@ -54,9 +54,8 @@ function isProbablyNeXML(data) {
         try {
             testXML = $.parseXML(data);
         } catch (err) {
-            // was not XML
-            console.warn("This var failed to parse as XML:");
-            console.warn(err);
+            // var failed to parse as XML
+            ///console.error(err);
             return false;
         }
     }
