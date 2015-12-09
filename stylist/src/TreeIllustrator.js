@@ -1234,7 +1234,8 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     $nexsonUrlPanel.hide();
                     // enable "pasted text" field for this method
                     var $pastedField = $('#'+ self.id() +'-datasource-pasted');
-                    $pastedField.attr('disabled', false);
+                    $pastedField.attr('disabled', false)
+                                .css('color','#aaa');
                     $fileUploadPanel.show();
                     break;
 
@@ -1279,7 +1280,8 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                         $inputFormatChooser.attr('disabled', true);
                         // disable "pasted text" field (display only)
                         var $pastedField = $('#'+ self.id() +'-datasource-pasted');
-                        $pastedField.attr('disabled', true);
+                        $pastedField.attr('disabled', true)
+                                    .css('color',''); // restore default text color
                         $fileUploadPanel.show();
                         // TODO: For a multi-kernel notebook, expect a specific kernel-id, eg 'python2'
                         var nbVarName = treeInfo.name().split(' ')[0];
@@ -1290,9 +1292,8 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                                  * need to figure out its format. Pass it to a 
                                  * series of "sniffers" to identify Newick, Nexson, etc.
                                  */
-debugger;
-// TODO: push this source into persistent storage?
-///self.metadata.source.value(treeSourceData);
+                                // TODO: push this source into persistent storage?
+                                ///self.metadata.source.value(treeSourceData);
                                 var matchingFormat = mostLikelyDataFormat(treeSourceData);
                                 $inputFormatChooser.val(matchingFormat);
                                 // show this text in the (disabled) text field
