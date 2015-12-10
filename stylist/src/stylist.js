@@ -535,6 +535,7 @@ function showStyleGuidePicker() {
  */
 var vegaSpec;
 function refreshViz(options) {
+console.warn('refreshViz() STARTING');
     if (!options) options = {}; 
 
     ill.updateVegaSpec();  // TODO: trigger updates on a more sensible basis

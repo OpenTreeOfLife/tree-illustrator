@@ -1407,6 +1407,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                         // store it in the cache, at the key defined above
                         setCachedData( treeSourceCacheKey, data );
                         // adjust node-label field to show "explicit" labels (this will trigger a display refresh)
+debugger;
                         var $labelChooser = $('#'+ self.id() +'-labelfield-chooser');
                         $labelChooser.val('explicitLabel').change();
                         //stylist.refreshViz();
