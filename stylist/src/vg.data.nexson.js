@@ -517,9 +517,11 @@ console.log(data);
                 if ('@label' in itsOTU) {
                     // This is uncommon, but appears in our converted Newick.
                     // Yield to an explicit label on the node itself!
-                    console.log(">> stealing otu label '"+ itsOTU['@label'] +"' for this node");
                     if ($.trim(node.explicitLabel) === '') {
+                        console.log(">> stealing otu label '"+ itsOTU['@label'] +"' for this node");
                         node.explicitLabel = itsOTU['@label'];
+                    } else {
+                        console.log(".. existing explicitLabel: "+ node.explicitLabel);
                     }
                 }
             }
