@@ -1345,6 +1345,9 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                 // N.B. This data will be safely cloned by Vega when spec is parsed!
                 // NOTE that we should still refresh immediately, in case the cached tree data was loaded
                 // created for another tree, or an earlier version of this one.
+debugger;
+                var $labelChooser = $('#'+ self.id() +'-labelfield-chooser');
+                $labelChooser.val('explicitLabel').change();
                 stylist.refreshViz();
             } else {
                 // call opentree web services to convert to nexson
