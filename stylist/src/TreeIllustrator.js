@@ -1532,10 +1532,11 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
 
     /* Use sniffers to determine the most likely format of input tree data */
     var mostLikelyDataFormat = function (data) {
-        return utils.isProbablyNewick(data) ? 'newick' : 
-                   utils.isProbablyNEXUS(data) ? 'nexus' :
-                       utils.isProbablyNeXML(data) ? 'nexus' :
-                           ''  // format unknown
+debugger;
+        if (utils.isProbablyNewick(data)) { return  'newick'; }
+        if (utils.isProbablyNEXUS(data))  { return  'nexus'; }
+        if (utils.isProbablyNeXML(data))  { return  'nexml'; }
+        return '';  // format unknown
     }
 
     /* expose class constructors (and static methods) for instantiation */
