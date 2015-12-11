@@ -1345,9 +1345,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                 // N.B. This data will be safely cloned by Vega when spec is parsed!
                 // NOTE that we should still refresh immediately, in case the cached tree data was loaded
                 // created for another tree, or an earlier version of this one.
-debugger;
-                var $labelChooser = $('#'+ self.id() +'-labelfield-chooser');
-                $labelChooser.val('explicitLabel').change();
+                self.nodeLabelField('explicitLabel');
                 stylist.refreshViz();
             } else {
                 // call opentree web services to convert to nexson
@@ -1409,11 +1407,9 @@ debugger;
 
                         // store it in the cache, at the key defined above
                         setCachedData( treeSourceCacheKey, data );
-                        // adjust node-label field to show "explicit" labels (this will trigger a display refresh)
-debugger;
-                        var $labelChooser = $('#'+ self.id() +'-labelfield-chooser');
-                        $labelChooser.val('explicitLabel').change();
-                        //stylist.refreshViz();
+                        // force node-label field to show "explicit" labels (TODO: for Newick only?)
+                        self.nodeLabelField('explicitLabel');
+                        stylist.refreshViz();
                     }
                 });
             }
