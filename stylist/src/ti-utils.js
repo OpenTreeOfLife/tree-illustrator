@@ -27,13 +27,13 @@ function isProbablyNewick(data) {
     return false;
 }
 
-var matchesNEXUSBlockStarter = new RegExp('begin \\w+;');
+var matchesNEXUSBlockStarter = new RegExp('begin \\w+;', 'i');
 function isProbablyNEXUS(data) {
     if (typeof(data) !== 'string') {
         return false;
     }
     // Look for required(?) first line
-    if ($.trim(data).startsWith("#nexus")) {
+    if ($.trim(data).startsWith("#nexus") || $.trim(data).startsWith("#NEXUS")) {
         return true;
     }
     // ... or accept typical NEXUS block starter

@@ -1532,7 +1532,6 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
 
     /* Use sniffers to determine the most likely format of input tree data */
     var mostLikelyDataFormat = function (data) {
-debugger;
         if (utils.isProbablyNewick(data)) { return  'newick'; }
         if (utils.isProbablyNEXUS(data))  { return  'nexus'; }
         if (utils.isProbablyNeXML(data))  { return  'nexml'; }
