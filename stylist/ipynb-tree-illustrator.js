@@ -198,7 +198,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
                                           +' style="width:24px; height: 24px; display: inline-block; margin: -7px 0 -5px -5px;">');
                     $modalHeader.css('padding', '8px 15px'); 
                     $modalDialog.css({'width':'90%', 'height':'90%'}); // almost fills the window
-                    $modalBody.css('padding','0px');
+                    $modalBody.css('padding','0px 1px 0 0');
 
                     // update internal references to 
                     var elementSelector = ('#'+ elementID);
