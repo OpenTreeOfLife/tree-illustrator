@@ -193,10 +193,12 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     var $titleArea = $('h4.modal-title:contains(Tree Illustrator)');
                     var $modalHeader = $titleArea.closest('.modal-header');
                     var $modalDialog = $modalHeader.closest('.modal-dialog');
+                    var $modalBody = $modalDialog.find('.modal-body').eq(0);
                     $titleArea.prepend('<img src="//tree.opentreeoflife.org/favicon.ico"'
                                           +' style="width:24px; height: 24px; display: inline-block; margin: -7px 0 -5px -5px;">');
                     $modalHeader.css('padding', '8px 15px'); 
                     $modalDialog.css({'width':'90%', 'height':'90%'}); // almost fills the window
+                    $modalBody.css('padding','0px');
 
                     // update internal references to 
                     var elementSelector = ('#'+ elementID);
