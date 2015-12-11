@@ -487,11 +487,11 @@
                           <!-- ko if: $data.children && $data.children().length -->
                             <optgroup data-bind="attr: {label: name},
                                                  foreach: $data.children">
-                                <option data-bind="attr: {value: $data.name, label: $data.name, disabled: $data.disabled}"></option>
+                                <option data-bind="text: $data.name, attr: {value: $data.name, disabled: $data.disabled}"></option>
                             </optgroup>
                           <!-- /ko -->
                           <!-- ko if: !('children' in $data) -->
-                                <option data-bind="attr: {value: $data.name, label: $data.name, disabled: $data.disabled}"></option>
+                                <option data-bind="text: $data.name, attr: {value: $data.name, disabled: $data.disabled}"></option>
                           <!-- /ko -->
                         </select>
                     </div>
