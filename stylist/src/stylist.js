@@ -643,6 +643,7 @@ function fetchAndLoadIllustrationTemplate( templateID ) {
 $(document).ready(function() {
     // test for the preset ppi (pixels / inch) in this browser
     browser_ppi = $('#svg-toolbox').width() / 10.0;
+    $('#svg-toolbox').hide();  // to avoid crazy page width in Firefox
     // NOTE that this is still unlikely to match the physical size of any particular monitor!
     // If that's important, we might want to let the user tweak this value.
     $('#browser-ppi-indicator').text(browser_ppi);
