@@ -30,21 +30,21 @@ body {
     background-color: #aaa;
 }
 #sidecar-pulltab {
-    height: 40px;
+    height: 36px;
     width: 36px;
-    margin-left: -24px;
     border-radius: 12px;
-    margin-top: 30px;
+    margin-top: -24px;
+    margin-left: -24px;
 }
 #sidecar-pulltab a {
-    margin: 10px 6px;
+    margin: 12px 7px;
 }
 
 #editor {
     width: 520px;
     height: 100%;
     /* N.B. Any vertical padding will screw up its full height! */
-    padding: 0 6px 0 18px;
+    padding: 0 6px;
     background-color: #f9f9f9;
     overflow-y: scroll;
 }
