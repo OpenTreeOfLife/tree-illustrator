@@ -198,8 +198,10 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     var $tiIframe = $modalBody.find('iframe').eq(0);
                     $titleArea.prepend('<img src="//tree.opentreeoflife.org/favicon.ico"'
                                           +' style="width:24px; height: 24px; display: inline-block; margin: -7px 0 -5px -5px;">');
-                    $modalHeader.css('padding', '8px 15px'); 
                     $modalDialog.css({'width':'90%', 'height':'90%'}); // almost fills the window
+                    // Slim down modal UI elements to show more of the Tree Illustrator
+                    $modalHeader.css('padding', '6px 10px'); 
+                    $modalFooter.css('padding', '6px 10px'); 
                     $modalBody.css('padding','0px 1px 0 0');
                     // Let the IFRAME take up 90% of window width...
                     var forcedHeight = $('body').height() * 0.9;
