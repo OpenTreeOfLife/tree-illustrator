@@ -16,6 +16,7 @@ body {
 #sidecar-grabber {
     float: left;
     width: 12px;
+height: 400px;
 }
 #sidecar-grabber:hover {
     background-color: #000;
@@ -29,9 +30,9 @@ body {
     width: 36px;
     margin-left: -24px;
     border-radius: 12px;
-    padding: 10px 6px;
 }
 #sidecar-pulltab a {
+    margin: 10px 6px;
 }
 
 #editor {
