@@ -8,15 +8,31 @@ body {
     border-radius: 4px;
 }
 
+/* put editor into a sliding "sidecar" */
+#sidecar {
+    position: absolute;
+    right: 0px; /* on-screen position */
+}
+#sidecar-grabber {
+    float: left;
+    width: 12px;
+    background-color: #ccc;
+}
+#sidecar-grabber:hover {
+    background-color: #000;
+}
+#sidecar-pulltab {
+    height: 40px;
+    width: 25px;
+    margin-left: -25px;
+}
+#sidecar-pulltab a {
+}
+
 #editor {
     width: 520px;
     padding: 8px 12px;
-/*
-    float: right;
-*/
     background-color: #f9f9f9;
-    position: absolute;
-    right: 0px; /* on-screen position */
 }
 
 #sticky-viewer-frame {

@@ -23,7 +23,7 @@
   </head>
   <body>
 
-   <div class="Xspan6"> 
+   <div class="Xpan6"> 
     <div id="sticky-viewer-frame">
         <div id="viz-top-control-bar" style="text-align: center; overflow: hidden;">
             <button class="btn btn-small pull-right" onclick="stylist.toggleFixedRulers(this); return false;">Hide rulers</button>
@@ -54,6 +54,12 @@
     </div><!-- #stick-viewer-frame -->
    </div><!-- .Xpan6 -->
 
+   <div id="sidecar">
+    <div id="sidecar-grabber">
+     <div id="sidecar-pulltab">
+        <a class="icon-chevron-up"></a>
+     </div>
+    </div>
     <div id="editor" class="Xpan6" style="padding-right: 20px;">
 
         <div>
@@ -898,7 +904,8 @@
             SVG width: <strong id="svg-width-indicator">??</strong>, SVG height: <strong id="svg-height-indicator">??</strong>
         </div>
 
-    </div>
+    </div><!-- /#editor -->
+   </div><!-- /#sidecar -->
     
     <!-- Add a persistent SVG element to hold re-usable parts that we don't
          want vega to clobber. NOTE that we also use its size (in physical
