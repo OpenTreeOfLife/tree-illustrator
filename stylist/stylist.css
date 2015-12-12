@@ -1,6 +1,6 @@
 body {
-    /* force an always-on scrollbar to avoid glitches */
-    overflow-y: scroll;
+    margin: 0;
+    padding: 0;
 }
 .button-bar {
     background-color: #ddd;
@@ -18,14 +18,14 @@ body {
     float: left;
     width: 12px;
     height: 100%;
-    /* N.B. padding here will screw up its full-height!
+    /* N.B. Any vertical padding will screw up its full height!
     padding-top: 50%;
     */
 }
-#sidecar-grabber:hover,
-#sidecar-pulltab:hover {
+.grabber-active {
     background-color: #000;
 }
+*/
 #sidecar-grabber,
 #sidecar-pulltab {
     background-color: #aaa;
@@ -44,10 +44,10 @@ body {
 #editor {
     width: 520px;
     height: 100%;
-    /* N.B. padding here will screw up its full-height!
-    padding: 8px 12px;
-    */
+    /* N.B. Any vertical padding will screw up its full height! */
+    padding: 0 6px 0 18px;
     background-color: #f9f9f9;
+    overflow-y: scroll;
 }
 
 #sticky-viewer-frame {
