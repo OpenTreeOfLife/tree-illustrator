@@ -22,19 +22,20 @@
     <link rel="stylesheet" type="text/css" media="print" href="stylist-print.css">
   </head>
   <body>
+  <div id="top-bar">
+    <div id="viz-top-control-bar" style="text-align: center; overflow: hidden;">
+        <button class="btn btn-small pull-right" onclick="stylist.toggleFixedRulers(this); return false;">Hide rulers</button>
 
+        <button class="btn btn-small pull-left" onclick="stylist.zoomViewport('IN', this); return false;">Zoom in</button>
+        <button class="btn btn-small pull-left" onclick="stylist.zoomViewport('OUT', this); return false;">Zoom out</button>
+
+        <button class="btn btn-small" onclick="stylist.zoomViewport(1.0, this); return false;">Actual size</button>
+        <button class="btn btn-small" onclick="stylist.resizeViewportToShowAll(); return false;">Fit contents</button>
+    </div>
+  </div>
+  <div id="main"><!-- ie, underneath #top-bar -->
    <div class="Xpan6"> 
     <div id="sticky-viewer-frame">
-        <div id="viz-top-control-bar" style="text-align: center; overflow: hidden;">
-            <button class="btn btn-small pull-right" onclick="stylist.toggleFixedRulers(this); return false;">Hide rulers</button>
-
-            <button class="btn btn-small pull-left" onclick="stylist.zoomViewport('IN', this); return false;">Zoom in</button>
-            <button class="btn btn-small pull-left" onclick="stylist.zoomViewport('OUT', this); return false;">Zoom out</button>
-
-            <button class="btn btn-small" onclick="stylist.zoomViewport(1.0, this); return false;">Actual size</button>
-            <button class="btn btn-small" onclick="stylist.resizeViewportToShowAll(); return false;">Fit contents</button>
-        </div>
-
         <div id="viz-outer-frame">
             <div id="fixed-ruler-units" class="viz-fixed-ruler">&nbsp;</div>
             <div id="fixed-ruler-top"   class="viz-fixed-ruler"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg></div>
@@ -906,6 +907,7 @@
 
     </div><!-- /#editor -->
    </div><!-- /#sidecar -->
+  </div><!-- /#main -->
     
     <!-- Add a persistent SVG element to hold re-usable parts that we don't
          want vega to clobber. NOTE that we also use its size (in physical
