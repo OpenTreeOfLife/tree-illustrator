@@ -946,10 +946,10 @@ function drawRuler( svgParent, orientation, units, scale ) {
 var topBarHeight, bottomBarHeight;
 function matchViewportToWindowSize() {
     if (!topBarHeight) {
-        topBarHeight = $('#viz-top-control-bar').height();
-        bottomBarHeight = $('#viz-bottom-control-bar').height();
+        topBarHeight = $('#top-bar').height();
+        bottomBarHeight = $('#viz-bottom-control-bar').height() || 0;
         // freeze the control bars at their current height        
-        $('#viz-top-control-bar').height(topBarHeight);
+        $('#top-bar').height(topBarHeight);
         $('#viz-bottom-control-bar').height(bottomBarHeight);
     }
     var columnHeight = $('#sticky-viewer-frame').height();
