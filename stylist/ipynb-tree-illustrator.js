@@ -204,7 +204,7 @@ var IPythonTreeIllustrator = function(window, document, $) {
                     // Let the IFRAME take up 90% of window width...
                     var forcedHeight = $('body').height() * 0.9;
                     // ... with some allowance for modal UI elements
-                    forcedHeight -= ($modalHeader.height() + $modalFooter.height());
+                    forcedHeight -= ($modalHeader.outerHeight() + $modalFooter.outerHeight());
                     $tiIframe.height( forcedHeight +"px" );
 
                     // update internal references to 
