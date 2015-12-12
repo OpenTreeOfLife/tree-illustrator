@@ -12,11 +12,15 @@ body {
 #sidecar {
     position: absolute;
     right: 0px; /* on-screen position */
+    height: 100%;
 }
 #sidecar-grabber {
     float: left;
     width: 12px;
-height: 400px;
+    height: 100%;
+    /* N.B. padding here will screw up its full-height!
+    padding-top: 50%;
+    */
 }
 #sidecar-grabber:hover,
 #sidecar-pulltab:hover {
@@ -31,6 +35,7 @@ height: 400px;
     width: 36px;
     margin-left: -24px;
     border-radius: 12px;
+    margin-top: 30px;
 }
 #sidecar-pulltab a {
     margin: 10px 6px;
@@ -38,7 +43,10 @@ height: 400px;
 
 #editor {
     width: 520px;
+    height: 100%;
+    /* N.B. padding here will screw up its full-height!
     padding: 8px 12px;
+    */
     background-color: #f9f9f9;
 }
 
