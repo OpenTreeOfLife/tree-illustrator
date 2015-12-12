@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html id="full-screen-area">
   <head>
-    <title>Stylist - Tree Illustrator test</title/>
+    <title>Tree Illustrator</title/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="//d3js.org/d3.v3.js"></script>
     <script src="knockout-2.3.0.js"></script>
@@ -22,11 +22,8 @@
     <link rel="stylesheet" type="text/css" media="print" href="stylist-print.css">
   </head>
   <body>
-   <div class="container-fluid" 
-        style="background-color: #fff;">
-   <div class="row-fluid">
 
-   <div class="span6"> 
+   <div class="Xspan6"> 
     <div id="sticky-viewer-frame">
         <div id="viz-top-control-bar" style="text-align: center; overflow: hidden;">
             <button class="btn btn-small pull-right" onclick="stylist.toggleFixedRulers(this); return false;">Hide rulers</button>
@@ -55,9 +52,9 @@
             </label>
         </div>
     </div><!-- #stick-viewer-frame -->
-   </div><!-- .span6 -->
+   </div><!-- .Xpan6 -->
 
-    <div id="editor" class="span6" style="padding-right: 20px;">
+    <div id="editor" class="Xpan6" style="padding-right: 20px;">
 
         <div>
             <button id="enter-full-screen" class="btn btn-small pull-right"
@@ -971,45 +968,9 @@
       </defs>
     </svg>
 
-   </div><!-- .row-fluid -->
-   </div><!-- .container-fluid -->
-
-<!--
-    <hr style="clear: left;"/>
-    <p>TODO here:</p>
-    <ul>
-        <li>[X] free-standing instance of vega 'interactive' demo</li>
-        <li>[X] mock up basic UI for "cascade" (style selection, etc)
-        <li>[X] add Knockout for widget binding, adaptive UI</li>
-        <li>[X] add basic vega tree module
-            <br/><em>Surprise! There <strong>was</strong> no tree module, so I've added stuff.</em>
-        </li>
-        <li>[X] transform NexSON trees for rendering</li>
-        <li>[X] adapt a generic cladogram to use vega grammar</li>
-        <li>[X] add (static) lists of:
-            <ul>
-                <li>[X] styles (house styles and personal?)</li>
-                <li>[~] data sources</li>
-                <li>[~] ornaments</li>
-                <li>[~] illustration ("editorial") decisions</li>
-            </ul>
-        </li>
-        <li>[X] selection from any list triggers updates/modification</li>
-        <li>[ ] add event handlers for nodes (expand/collapse)</li>
-        <li>[ ] allow mapping of tree/supporting data to style properties</li>
-        <li>[ ] auto-save (or manually save) changes from interaction?
-            <ul>
-                <li>[ ] expand/collapse of nodes</li>
-                <li>[ ] zoom/pan of tree view</li>
-                <li>[~] added ornaments (UI for this?)</li>
-                <li>[ ] highlights</li>
-            </ul>
-        </li>
-    </ul>
--->
   </body>
   <script type="text/javascript">
-    // Add truly page-specific logic here
+    // Add truly page-specific logic here?
   </script>
 
     <!-- hidden template for style-guide chooser -->

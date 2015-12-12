@@ -8,6 +8,17 @@ body {
     border-radius: 4px;
 }
 
+#editor {
+    width: 520px;
+    padding: 8px 12px;
+/*
+    float: right;
+*/
+    background-color: #f9f9f9;
+    position: absolute;
+    right: 0px; /* on-screen position */
+}
+
 #sticky-viewer-frame {
     position: fixed;
     width: 46%;
