@@ -18,7 +18,8 @@ body {
     width: 12px;
 height: 400px;
 }
-#sidecar-grabber:hover {
+#sidecar-grabber:hover,
+#sidecar-pulltab:hover {
     background-color: #000;
 }
 #sidecar-grabber,
