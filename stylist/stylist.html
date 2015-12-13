@@ -31,14 +31,15 @@
                 style="display: none;"
                 onclick="stylist.exitFullScreen(); return false;">Exit full screen</button>
 
-        <button class="btn btn-small pull-left" style="width: 70px; margin-right: 20px;"
+        <button class="btn btn-small pull-left" style="width: 88px; margin-right: 20px;"
                 onclick="stylist.toggleFixedRulers(this); return false;">Hide rulers</button>
 
         <button class="btn btn-small pull-left" onclick="stylist.zoomViewport('IN', this); return false;">Zoom in</button>
-        <button class="btn btn-small pull-left" onclick="stylist.zoomViewport('OUT', this); return false;">Zoom out</button>
+        <button class="btn btn-small pull-left" style="margin-right: 20px;" 
+                onclick="stylist.zoomViewport('OUT', this); return false;">Zoom out</button>
 
-        <button class="btn btn-small" onclick="stylist.zoomViewport(1.0, this); return false;">Actual size</button>
-        <button class="btn btn-small" onclick="stylist.resizeViewportToShowAll(); return false;">Fit contents</button>
+        <button class="btn btn-small pull-left" onclick="stylist.zoomViewport(1.0, this); return false;">Actual size</button>
+        <button class="btn btn-small pull-left" onclick="stylist.resizeViewportToShowAll(); return false;">Fit contents</button>
     </div>
   </div>
   <div id="main"><!-- ie, underneath #top-bar -->
