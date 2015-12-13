@@ -23,7 +23,7 @@
   </head>
   <body>
   <div id="top-bar">
-    <div id="viz-top-control-bar" style="text-align: center; overflow: hidden;">
+    <div id="viz-top-control-bar" style="text-align: center;">
         <button id="enter-full-screen" class="btn btn-small pull-right"
                 style="display: none;"
                 onclick="stylist.enterFullScreen(); return false;">Full screen</button>
@@ -39,7 +39,8 @@
                 onclick="stylist.zoomViewport('OUT', this); return false;">Zoom out</button>
 
         <button class="btn btn-small pull-left" onclick="stylist.zoomViewport(1.0, this); return false;">Actual size</button>
-        <button class="btn btn-small pull-left" onclick="stylist.resizeViewportToShowAll(); return false;">Fit contents</button>
+        <button class="btn btn-small pull-left" style="margin-right: 20px;" 
+                onclick="stylist.resizeViewportToShowAll(); return false;">Fit contents</button>
 
         <div class="btn-group pull-left" style="position: relative;">
             <button class="btn btn-small">Print actual size</button>
