@@ -24,7 +24,15 @@
   <body>
   <div id="top-bar">
     <div id="viz-top-control-bar" style="text-align: center; overflow: hidden;">
-        <button class="btn btn-small pull-right" onclick="stylist.toggleFixedRulers(this); return false;">Hide rulers</button>
+        <button id="enter-full-screen" class="btn btn-small pull-right"
+                style="margin-top: 8px; display: none;"
+                onclick="stylist.enterFullScreen(); return false;">Full screen</button>
+        <button id="exit-full-screen" class="btn btn-small pull-right"
+                style="margin-top: 8px; display: none;"
+                onclick="stylist.exitFullScreen(); return false;">Exit full screen</button>
+
+        <button class="btn btn-small pull-left" style="margin-right: 20px;"
+                onclick="stylist.toggleFixedRulers(this); return false;">Hide rulers</button>
 
         <button class="btn btn-small pull-left" onclick="stylist.zoomViewport('IN', this); return false;">Zoom in</button>
         <button class="btn btn-small pull-left" onclick="stylist.zoomViewport('OUT', this); return false;">Zoom out</button>
@@ -64,12 +72,6 @@
     <div id="editor">
 
         <div>
-            <button id="enter-full-screen" class="btn btn-small pull-right"
-                    style="margin-top: 8px; display: none;"
-                    onclick="stylist.enterFullScreen(); return false;">Full screen</button>
-            <button id="exit-full-screen" class="btn btn-small pull-right"
-                    style="margin-top: 8px; display: none;"
-                    onclick="stylist.exitFullScreen(); return false;">Exit full screen</button>
             <h2 style="margin: 0 0 4px;">Tree Illustrator (prototype)</h2>
         </div>
 
