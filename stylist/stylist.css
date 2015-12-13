@@ -79,11 +79,6 @@ body {
     height: 100%;
     /* background-color: #ffd; */
 }
-#viz-bottom-control-bar {
-    margin: 24px 0 8px;
-    overflow: hidden;
-}
-
 #viz-outer-frame {
     /* size and position will likely vary in different host applications */
     background-color: #eee;

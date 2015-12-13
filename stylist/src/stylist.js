@@ -1397,15 +1397,21 @@ function getPrintableSVG( options ) {
     return combinedSVG;
 }
 
-function printIllustration() {
-    // print standalone SVG as a simple document
+function printIllustration(options) {
+    /* Print standalone SVG as a simple document, or display its current output SVG.
+     *   EXAMPLE: printIllustration();
+     *   EXAMPLE: printIllustration({INCLUDE_DIAGNOSTICS: true});
+     *   EXAMPLE: printIllustration({INCLUDE_DIAGNOSTICS: true, SHOW_SVG: true});
+     */
+    if (!options) options = {};
+    var showDiagnostics = options.INCLUDE_DIAGNOSTICS || false;
+    var leaveWindowOpen = options.SHOW_SVG || false;
+
     var w=window.open();
     if (!w) {
         alert("Please allow popups for this domain.");
         return;
     }
-    var showDiagnostics = $('#toggle-printing-diagnostics').is(':checked');
-    var leaveWindowOpen = $('#toggle-offer-svg').is(':checked');
 
     // generate a simple HTML5 page with inline SVG
     // TODO: generate standalone SVG document (to save or share) instead?
