@@ -40,6 +40,18 @@
 
         <button class="btn btn-small pull-left" onclick="stylist.zoomViewport(1.0, this); return false;">Actual size</button>
         <button class="btn btn-small pull-left" onclick="stylist.resizeViewportToShowAll(); return false;">Fit contents</button>
+
+        <div class="btn-group pull-left" style="position: relative;">
+            <button class="btn btn-small">Print actual size</button>
+            <button class="btn btn-small dropdown-toggle" data-toggle="dropdown">
+                <span class="caret"></span>
+           </button>
+         <ul class="dropdown-menu" style="text-align: left;">
+           <li><a tabindex="-1" href="#"><i class="icon icon-ok"></i>&nbsp; Include rulers, crop marks, description</a></li>
+           <li><a tabindex="-1" href="#"><i class="icon icon-EMPTY"></i>&nbsp; Show output SVG (to clip and save)</a></li>
+         </ul>
+        </div>
+
     </div>
   </div>
   <div id="main"><!-- ie, underneath #top-bar -->
