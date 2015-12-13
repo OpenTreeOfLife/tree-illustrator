@@ -31,27 +31,32 @@
                 style="display: none;"
                 onclick="stylist.exitFullScreen(); return false;">Exit full screen</button>
 
-        <button class="btn btn-small pull-left" style="width: 88px; margin-right: 20px;"
-                onclick="stylist.toggleFixedRulers(this); return false;">Hide rulers</button>
-
-        <button class="btn btn-small pull-left" onclick="stylist.zoomViewport('IN', this); return false;">Zoom in</button>
-        <button class="btn btn-small pull-left" style="margin-right: 20px;" 
-                onclick="stylist.zoomViewport('OUT', this); return false;">Zoom out</button>
-
-        <button class="btn btn-small pull-left" onclick="stylist.zoomViewport(1.0, this); return false;">Actual size</button>
-        <button class="btn btn-small pull-left" style="margin-right: 20px;" 
-                onclick="stylist.resizeViewportToShowAll(); return false;">Fit contents</button>
-
-        <div class="btn-group pull-left" style="position: relative;">
-            <button class="btn btn-small">Print actual size</button>
-            <button class="btn btn-small dropdown-toggle" data-toggle="dropdown">
-                <span class="caret"></span>
-           </button>
+      <div class="btn-group pull-left" style="position: relative; margin-right: 20px;">
+          <button class="btn btn-small">Print actual size</button>
+          <button class="btn btn-small dropdown-toggle" data-toggle="dropdown">
+              <span class="caret"></span>
+          </button>
          <ul class="dropdown-menu" style="text-align: left;">
            <li><a tabindex="-1" href="#"><i class="icon icon-ok"></i>&nbsp; Include rulers, crop marks, description</a></li>
            <li><a tabindex="-1" href="#"><i class="icon icon-EMPTY"></i>&nbsp; Show output SVG (to clip and save)</a></li>
          </ul>
-        </div>
+      </div>
+
+      <div class="btn-group pull-left" style="margin-right: 20px;">
+          <button class="btn btn-small pull-left" style="width: 88px;"
+                  onclick="stylist.toggleFixedRulers(this); return false;">Hide rulers</button>
+      </div>
+
+      <div class="btn-group pull-left" style="margin-right: 20px;">
+        <button class="btn btn-small pull-left" style="width: 88px;"
+        <button class="btn btn-small pull-left" onclick="stylist.zoomViewport('IN', this); return false;">Zoom in</button>
+        <button class="btn btn-small pull-left" style="" 
+                onclick="stylist.zoomViewport('OUT', this); return false;">Zoom out</button>
+
+        <button class="btn btn-small pull-left" onclick="stylist.zoomViewport(1.0, this); return false;">Actual size</button>
+        <button class="btn btn-small pull-left" style="" 
+                onclick="stylist.resizeViewportToShowAll(); return false;">Fit contents</button>
+      </div>
 
     </div>
   </div>
