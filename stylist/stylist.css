@@ -30,13 +30,13 @@ body {
     z-index: 6;
     right: 0px; /* on-screen position */
     height: 100%;
-    -webkit-box-shadow: -2px 0px 8px 0px rgba(0,0,0,0.4);
-    -moz-box-shadow: -2px 0px 8px 0px rgba(0,0,0,0.4);
-    box-shadow: -2px 0px 8px 0px rgba(0,0,0,0.4);
+    -webkit-box-shadow: -2px 3px 8px 0px rgba(0,0,0,0.4);
+    -moz-box-shadow: -2px 3px 8px 0px rgba(0,0,0,0.4);
+    box-shadow: -2px 3px 8px 0px rgba(0,0,0,0.4);
 }
 #sidecar-grabber {
     float: left;
-    width: 12px;
+    width: 6px;
     height: 100%;
     /* N.B. Any vertical padding will screw up its full height!
     padding-top: 50%;
@@ -47,7 +47,7 @@ body {
 }
 #sidecar-grabber,
 #sidecar-pulltab {
-    background-color: #aaa;
+    background-color: #888;
 }
 #sidecar-pulltab {
     height: 36px;
