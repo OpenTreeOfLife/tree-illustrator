@@ -46,9 +46,11 @@ body {
 .grabber-active {
     background-color: #000;
 }
-#sidecar-grabber,
-#sidecar-pulltab {
+.sidebar-toggle {
     background-color: #888;
+}
+.sidebar-toggle.hovering {
+    background-color: #000;
 }
 #sidecar-pulltab {
     height: 36px;

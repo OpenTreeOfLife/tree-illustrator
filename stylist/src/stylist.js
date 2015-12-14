@@ -717,7 +717,7 @@ $(document).ready(function() {
             var currentlyVisible = $('#sidecar').css('right') === '0px';
             var hiddenX = -( $('#sidecar').width() );
             var visibleX = 0;
-            if (currentVisible) {
+            if (currentlyVisible) {
                 $('#sidecar').css('right', hiddenX);
                 $('#sidecar-pulltab a').removeClass('icon-chevron-right')
                                        .addClass('icon-chevron-left');
