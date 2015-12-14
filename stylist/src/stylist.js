@@ -704,6 +704,31 @@ $(document).ready(function() {
 
     matchViewportToWindowSize();
 
+    // enable hiding/showing the "sidecar" UI
+    $('.sidecar-toggle')  // ie, the splitter and all pull tabs
+        // change color (of *all* toggling elements) on mouseover
+        .unbind('hover').hover(function() {
+            $(this).addClass('hovering');
+        }, function() {
+            $(this).removeClass('hovering');
+        })
+        // hide/show (based on current position)
+        .unbind('click').click(function() {
+            var currentlyVisible = $('#sidecar').css('right') === '0px';
+            var hiddenX = -( $('#sidecar').width() );
+            var visibleX = 0;
+            if (currentVisible) {
+                $('#sidecar').css('right', hiddenX);
+                $('#sidecar-pulltab a').removeClass('icon-chevron-right')
+                                       .addClass('icon-chevron-left');
+            } else {
+                $('#sidecar').css('right', visibleX);
+                $('#sidecar-pulltab a').removeClass('icon-chevron-left')
+                                       .addClass('icon-chevron-right');
+            }
+            matchViewportToWindowSize();
+        });
+
     // resizing the window should refresh/resize the viewport
     $(window).resize(function() {
         try {
