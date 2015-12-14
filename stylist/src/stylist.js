@@ -710,7 +710,7 @@ $(document).ready(function() {
             matchViewportToWindowSize();
             zoomViewport('REFRESH');
         } catch(e) {
-            console.warn("Unable to complet resize:");
+            console.warn("Unable to complete resize:");
             console.warn(e);
         }
     });
@@ -953,7 +953,7 @@ function matchViewportToWindowSize() {
     var columnHeight = $('#sticky-viewer-frame').height();
     var availableHeight = columnHeight - topBarHeight;
     var $outerFrame = $("#viz-outer-frame");
-    var nudge = -60;
+    var nudge = -10;
     $outerFrame.height(availableHeight + nudge);
 }
 
