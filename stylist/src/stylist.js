@@ -943,17 +943,15 @@ function drawRuler( svgParent, orientation, units, scale ) {
     }
 }
 
-var topBarHeight, bottomBarHeight;
+var topBarHeight;
 function matchViewportToWindowSize() {
     if (!topBarHeight) {
         topBarHeight = $('#top-bar').height();
-        bottomBarHeight = $('#viz-bottom-control-bar').height() || 0;
-        // freeze the control bars at their current height        
+        // freeze the control bar at its current height        
         $('#top-bar').height(topBarHeight);
-        $('#viz-bottom-control-bar').height(bottomBarHeight);
     }
     var columnHeight = $('#sticky-viewer-frame').height();
-    var availableHeight = columnHeight - topBarHeight - bottomBarHeight;
+    var availableHeight = columnHeight - topBarHeight;
     var $outerFrame = $("#viz-outer-frame");
     var nudge = -60;
     $outerFrame.height(availableHeight + nudge);
