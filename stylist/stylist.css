@@ -66,6 +66,7 @@ body {
 
 #editor {
     width: 520px;
+    margin-left: 6px;  /* must match #sidecar-grabber width above */
     height: 100%;
     /* N.B. Any vertical padding will screw up its full height! */
     padding: 0 6px;
