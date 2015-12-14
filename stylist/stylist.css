@@ -46,10 +46,10 @@ body {
 .grabber-active {
     background-color: #000;
 }
-.sidebar-toggle {
+.sidecar-toggle {
     background-color: #888;
 }
-.sidebar-toggle.hovering {
+.sidecar-toggle.hovering {
     background-color: #000;
 }
 #sidecar-pulltab {
