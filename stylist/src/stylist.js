@@ -953,7 +953,7 @@ function matchViewportToWindowSize() {
     var columnHeight = $('#sticky-viewer-frame').height();
     var availableHeight = columnHeight - topBarHeight;
     var $outerFrame = $("#viz-outer-frame");
-    var nudge = -10;
+    var nudge = -30;
     $outerFrame.height(availableHeight + nudge);
 }
 
