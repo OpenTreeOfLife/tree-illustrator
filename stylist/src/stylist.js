@@ -728,6 +728,7 @@ $(document).ready(function() {
                                        .addClass('icon-chevron-right');
             }
             matchViewportToWindowSize();
+            zoomViewport('REFRESH');
         });
 
     // resizing the window should refresh/resize the viewport
@@ -984,7 +985,6 @@ function matchViewportToWindowSize() {
 
     // adjust width based on position of sidecar
     var availableWidth = $('#sidecar').offset().left;
-console.log(">>> availableWidth: "+ availableWidth);
     nudge = -28;  // allow for scrollbars, etc.
     $outerFrame.width(availableWidth + nudge);
 }
