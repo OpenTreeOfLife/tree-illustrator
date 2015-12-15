@@ -713,7 +713,8 @@ $(document).ready(function() {
             $('.sidecar-toggle').removeClass('hovering');
         })
         // hide/show (based on current position)
-        .unbind('click').click(function() {
+        .unbind('click').click(function(e) {
+            e.stopPropagation();  // don't trigger my parent elements!
 console.log('CLICK on this element:');
 console.log(this);
             var currentlyVisible = $('#sidecar').css('right') === '0px';
