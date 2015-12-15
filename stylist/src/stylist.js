@@ -708,12 +708,14 @@ $(document).ready(function() {
     $('.sidecar-toggle')  // ie, the splitter and all pull tabs
         // change color (of *all* toggling elements) on mouseover
         .unbind('hover').hover(function() {
-            $(this).addClass('hovering');
+            $('.sidecar-toggle').addClass('hovering');
         }, function() {
-            $(this).removeClass('hovering');
+            $('.sidecar-toggle').removeClass('hovering');
         })
         // hide/show (based on current position)
         .unbind('click').click(function() {
+console.log('CLICK on this element:');
+console.log(this);
             var currentlyVisible = $('#sidecar').css('right') === '0px';
             var hiddenX = -( $('#sidecar').width() );
             var visibleX = 0;
