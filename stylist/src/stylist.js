@@ -983,8 +983,8 @@ function matchViewportToWindowSize() {
     $outerFrame.height(availableHeight + nudge);
 
     // adjust width based on position of sidecar
-    var availableWidth = $('body').width() - $('#sidecar').offset().left;
-    nudge = -26;  // allow for scrollbars, etc.
+    var availableWidth = $('#sidecar').offset().left;
+    nudge = 0;  // allow for scrollbars, etc.
     $outerFrame.width(availableWidth + nudge);
 }
 
