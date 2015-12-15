@@ -715,8 +715,6 @@ $(document).ready(function() {
         // hide/show (based on current position)
         .unbind('click').click(function(e) {
             e.stopPropagation();  // don't trigger my parent elements!
-console.log('CLICK on this element:');
-console.log(this);
             var currentlyVisible = $('#sidecar').css('right') === '0px';
             var hiddenX = -( $('#sidecar').width() );
             var visibleX = 0;
@@ -985,7 +983,7 @@ function matchViewportToWindowSize() {
     $outerFrame.height(availableHeight + nudge);
 
     // adjust width based on position of sidecar
-    var availableWidth = $('body').width() - $('#sidecar').outerWidth();
+    var availableWidth = $('body').width() - $('#sidecar').offset().left;
     nudge = -26;  // allow for scrollbars, etc.
     $outerFrame.width(availableWidth + nudge);
 }
