@@ -397,6 +397,29 @@ button.btn-mini-function {
     font-family: serif;
 }
 
+/* cursors and colors for tree handles */
+.tree-hotspot {
+    cursor: move;
+}
+.tree-root-handle {
+    cursor: move;
+}
+.tree-size-handle {
+    cursor: nwse-resize;
+}
+.tree-hsize-handle {
+    cursor: ew-resize;
+}
+.tree-vsize-handle {
+    cursor: ns-resize;
+}
+.tree-radius-handle {
+    cursor: move;
+}
+.tree-angle-handle {
+    cursor: move;
+}
+
 /* diagnostic styles for viewport, masks, etc.
 #viewport-bounds {
     stroke: red !important;

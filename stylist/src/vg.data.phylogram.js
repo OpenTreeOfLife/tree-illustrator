@@ -280,6 +280,111 @@ prototype.buildPhylogram = function(data) {
         d.path = pathGenerator(d);
       });
 
+      var getBoundingBoxFromPoints = function( points, options ) {
+          // get X/Y bounds from a list of point-like objects
+          options = options || {useCoordinates: 'DISPLAY'};
+          var extents = {
+              minX:  Number.MAX_VALUE,
+              maxX: -Number.MAX_VALUE,
+              minY:  Number.MAX_VALUE,
+              maxY: -Number.MAX_VALUE
+          };
+          if (options.useCoordinates === 'CARTESIAN') {
+              points.map(function(n) {
+                  extents.minX = Math.min(n.cartesian_x, extents.minX);
+                  extents.minY = Math.min(n.cartesian_y, extents.minY);
+                  extents.maxX = Math.max(n.cartesian_x, extents.maxX);
+                  extents.maxY = Math.max(n.cartesian_y, extents.maxY);
+              });
+          } else {
+              points.map(function(n) {
+                  extents.minX = Math.min(n.x, extents.minX);
+                  extents.minY = Math.min(n.y, extents.minY);
+                  extents.maxX = Math.max(n.x, extents.maxX);
+                  extents.maxY = Math.max(n.y, extents.maxY);
+              });
+          }
+          return extents;
+      }
+
+      /* Generate a "hotspot" path based on layout and dimensions. 
+       * (This is used to respond to mouse actions, etc. while editing.) 
+       */
+      var hotspotGenerator = function() {
+          // "M 200 175 A 25 25 0 1 0 217.678 217.678"
+          switch(layout) {
+              case 'cartesian':
+                  // Use the final bounding box of all nodes
+                  var extents = getBoundingBoxFromPoints( data.phyloNodes );
+                  // rename for clarity
+                  var top =     extents.minY,
+                      right =   extents.maxX,
+                      bottom =  extents.maxY,
+                      left =    extents.minX;
+                  return "M "+ left +","+ top
+                       +" L "+ right +","+ top
+                       +" L "+ right +","+ bottom
+                       +" L "+ left +","+ bottom
+                       +" Z";
+              case 'cladogram':
+                  var extents = getBoundingBoxFromPoints( data.phyloNodes );
+                  var path = "M 0,0";   // start and end at root node
+                  switch(tipsAlignment) {
+                    case 'TOP':
+                      return path
+                            +" L "+ extents.minX +","+ extents.minY
+                            +" L "+ extents.maxX +","+ extents.minY
+                            +" Z";
+                    case 'RIGHT':
+                      return path
+                            +" L "+ extents.maxX +","+ extents.minY
+                            +" L "+ extents.maxX +","+ extents.maxY
+                            +" Z";
+                    case 'BOTTOM':
+                      return path
+                            +" L "+ extents.minX +","+ extents.maxY
+                            +" L "+ extents.maxX +","+ extents.maxY
+                            +" Z";
+                    case 'LEFT':
+                      return path
+                            +" L "+ extents.minX +","+ extents.minY
+                            +" L "+ extents.minX +","+ extents.maxY
+                            +" Z";
+                  }
+              case 'radial':
+                  // sweep out the entire area of the graph
+                  var path = "M0,0 L";   // start at root node, begin first line
+                  // create a fake "edge" to discern the full arc
+                  var extents =  getBoundingBoxFromPoints( data.phyloNodes, {useCoordinates: 'CARTESIAN'} );
+                  var fullWidthEdge = {
+                      source: {cartesian_x: extents.maxX, cartesian_y: extents.minY},
+                      target: {cartesian_x: extents.maxX, cartesian_y: extents.maxY}
+                  };
+                  // get the full arc as a path string
+                  var pathGenerator = radialRightAngleDiagonal();
+                  // prepend root node position and close the final shape
+                  // EXAMPLE output: 'M-228,19 A229,229 0 0,0 -227,26L-227,26'
+                  //    BECOMES 'M0,0 L-228,19 A229,229 0 1,1 -227,26L-227,26 Z'
+                  path += pathGenerator(fullWidthEdge).slice(1); // trim initial 'M'
+                  path += " Z";
+                  // Flip the large-arc and sweep flags for "outer sweep"; see
+                  //  https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths#Arcs
+                  //  http://www.w3.org/TR/SVG/paths.html#PathDataEllipticalArcCommands
+                  path = path.replace("0 0,0 ", "0 1,1 "); 
+                  return path;
+
+              default:
+                  console.error("Unknown tree layout for bounding box!");
+                  return "M -50,-50 L -50,50, L 50,50, L 50,-50 Z";
+          }
+      }
+
+      data.hotspot = [  // emulate a tuple
+          {
+              "path": hotspotGenerator() 
+          }
+      ];
+
       // copy layout properties to the phylotree, for possible use downstream
       data.layout = layout;
       data.tipsAlignment = tipsAlignment;
@@ -581,7 +686,7 @@ prototype.buildPhylogram = function(data) {
             srcAngle = coordinateToAngle(src, radius),
             midAngle = coordinateToAngle(mid, radius),
             clockwise = Math.abs(midAngle - srcAngle) > Math.PI ? midAngle <= srcAngle : midAngle > srcAngle,
-            rotation = 0,
+            rotation = 0,  // this is moot for a circle
             largeArc = 0,
             sweep = clockwise ? 0 : 1;
         var pathString = 'M' + src + ' ' +

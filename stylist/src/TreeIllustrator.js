@@ -1101,6 +1101,29 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                                     } /* end of label marks */
                                 ]
                             } /* end of grouped node+label */ 
+                            ,
+                            {  /* hotspot for direct manipulation of the tree */
+                                "name": "tree-hotspot",
+                                "type": "path",
+                                "from": {
+                                    "data": dataSourceName,
+                                    "transform": [
+                                        {"type":"pluck", "field":"hotspot" }
+                                    ]
+                                },
+                                "properties": {
+                                    "update": {
+                                        "path": {"field": "path"}, // , "transform":{"scale":"x"}},
+                                        "stroke": {"value": "#f00"},
+                                        "strokeWidth": {"value": "1px"},
+                                        "fill": {"value": "#f00"},
+                                        "opacity": {"value": "0.0"}
+                                    },
+                                    "hover": {
+                                        "opacity": {"value": "0.1"}
+                                    }
+                                }
+                            }
                         ] /* end of inner group marks */
                     }; /* end of inner group */
 
