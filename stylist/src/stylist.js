@@ -541,26 +541,7 @@ console.warn('refreshViz() STARTING');
     ill.updateVegaSpec();  // TODO: trigger updates on a more sensible basis
 
     vg.parse.spec(ill.vegaSpec, function(chart) {
-      var view = chart({el:"#viz-outer-frame", renderer:"svg"});
-      // , data:cachedData? })  <== MUST BE INLINE, NOT URL!
-/*
-        .on("mouseover", function(event, item) {
-          // invoke hover properties on cousin one hop forward in scenegraph
-          view.update({
-            props: "hover",
-            items: item.cousin(1)
-          });
-        })
-        .on("mouseout", function(event, item) {
-          // reset cousin item, using animated transition
-          view.update({
-            props: "update",
-            items: item.cousin(1),
-            duration: 250,
-            ease: "linear"
-          });
-        })
-*/
+        var view = chart({el:"#viz-outer-frame", renderer:"svg"});
         view.update();
 
         if (options.SHOW_ALL) {
@@ -568,6 +549,37 @@ console.warn('refreshViz() STARTING');
         } else {
             initTreeIllustratorWindow();
         }
+
+        /* (Re)bind event handlers for element hotspots */
+        // N.B. jQuery event delegation doesn't seem to work with SVG elements!
+        var $scrollingViewport = $("#viz-outer-frame").find('div.vega');
+        //$scrollingViewport.delegate(".tree-hotspot", "click hover mouseover mouseout mouseenter mouseleave", function ...
+        $scrollingViewport.find('.tree-hotspot')
+            .off('.hotspot')  // remove any prior bindings
+            .on("mouseenter.hotspot mouseleave.hotspot click.hotspot", function ( event ) {
+                var $hotspot = $(this).find('path');
+                var $treeGroup = $hotspot.closest('g.mark-group[class*=tree-]');
+                var treeID = $treeGroup.attr('class').split(/\s+/)[1];
+                console.log(">> treeID: "+ treeID +", event: "+ event.type);
+                //TODO: var treeElement = 
+                switch(event.type) {
+                    case 'click':
+                        break;
+                    case 'mouseenter':
+                        $hotspot.css({
+                            'fillOpacity': "0.2",
+                            'strokeOpacity': "0.6"
+                        });
+                        break;
+                    case 'mouseleave':
+                        $hotspot.css({
+                            'fill-opacity': "0", 
+                            'stroke-opacity': "0"
+                        });
+                        break;
+                }
+            })
+
     });
 }
 

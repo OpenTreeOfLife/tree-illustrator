@@ -1113,14 +1113,15 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                                 },
                                 "properties": {
                                     "update": {
-                                        "path": {"field": "path"}, // , "transform":{"scale":"x"}},
-                                        "stroke": {"value": "#f00"},
+                                        "path": {"field": "path"},
+                                        "stroke": {"value": "#0f0"},
                                         "strokeWidth": {"value": "1px"},
-                                        "fill": {"value": "#f00"},
-                                        "opacity": {"value": "0.0"}
+                                        "strokeOpacity": {"value": "0.0"},
+                                        "fill": {"value": "#0f0"},
+                                        "fillOpacity": {"value": "0.0"}
                                     },
                                     "hover": {
-                                        "opacity": {"value": "0.1"}
+                                        //"opacity": {"value": "0.1"}
                                     }
                                 }
                             }
