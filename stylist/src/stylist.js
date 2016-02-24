@@ -11,6 +11,7 @@ var $ = require('jquery'),
     pluckTransform = require('./vg.data.pluck.js');
     nexsonTransform = require('./vg.data.nexson.js');
     phylogramTransform = require('./vg.data.phylogram.js');
+    assert = require('assert');
 
 // expose TreeIllustrator to JS in the main UI 
 global.TreeIllustrator = TreeIllustrator;
@@ -535,6 +536,7 @@ function showStyleGuidePicker() {
  */
 var vegaSpec;
 function refreshViz(options) {
+var startTime = new Date();
 console.warn('refreshViz() STARTING');
     if (!options) options = {}; 
 
@@ -579,7 +581,7 @@ console.warn('refreshViz() STARTING');
                         break;
                 }
             })
-
+        console.warn("refreshViz() took "+ (new Date() - startTime) +" ms to complete");
     });
 }
 
@@ -1030,6 +1032,28 @@ function zoomViewport( directionOrZoomLevel ) {
     // TODO: update scrollTop, scrollLeft to stay in place?
 
     initTreeIllustratorWindow();
+}
+
+/* Convert between internal viewport coordinates and handle overlay (a second
+ * SVG with UI for direct manipulation of trees, etc.)
+ */
+function internalUnitsToOverlayPixels( coords ) {
+    console.log("display_ppi: "+ display_ppi);
+    assert((('x' in coords) && ('y' in coords)),
+           "Incoming object should include 'x' and 'y' properties.");
+    return {
+        x: coords.x * display_ppi,
+        y: coords.y * display_ppi 
+    };
+}
+function overlayPixelsToInternalUnits(coords) {
+    console.log("display_ppi: "+ display_ppi);
+    assert((('x' in coords) && ('y' in coords)),
+           "Incoming object should include 'x' and 'y' properties.");
+    return {
+        x: coords.x / display_ppi,
+        y: coords.y / display_ppi 
+    };
 }
 
 function resizeViewportToShowAll() {
@@ -1677,6 +1701,8 @@ var api = [
     'browser_ppi',
     'internal_ppi',
     'display_ppi',
+    'internalUnitsToOverlayPixels',
+    'overlayPixelsToInternalUnits',
     'availableTrees',
     'zoomViewport',
     'printIllustration',
