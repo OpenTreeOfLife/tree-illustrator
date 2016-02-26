@@ -1225,7 +1225,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     self.metadata.source.type(dataSourceTypes.URL);
                     var studyID = self.metadata.source.phylesystemStudyID(); 
                     var treeID = self.metadata.source.phylesystemTreeID();
-                    var treeNexsonURL = 'http://api.opentreeoflife.org/phylesystem/v1/study/'
+                    var treeNexsonURL = 'https://api.opentreeoflife.org/phylesystem/v1/study/'
                                       + studyID +'/tree/'+ treeID +'?output_nexml2json=1.0.0';
                     self.metadata.source.value( treeNexsonURL );
                     break;

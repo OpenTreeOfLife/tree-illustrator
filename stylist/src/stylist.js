@@ -757,7 +757,7 @@ $(document).ready(function() {
 
 function buildStudyFetchURL( studyID ) {
     // ASSUMES we're using the phylesystem API to load studies from the OpenTree dev site
-    var template = "http://api.opentreeoflife.org/phylesystem/v1/study/{STUDY_ID}?output_nexml2json=1.0.0&auth_token=ANONYMOUS"
+    var template = "https://api.opentreeoflife.org/phylesystem/v1/study/{STUDY_ID}?output_nexml2json=1.0.0&auth_token=ANONYMOUS"
     return template.replace('{STUDY_ID}', studyID);
 }
 
