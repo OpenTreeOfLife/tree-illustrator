@@ -1118,8 +1118,11 @@ function zoomViewport( directionOrZoomLevel ) {
     initTreeIllustratorWindow();
 }
 
-/* Manage handles (embed/remove SVG) for direct manipulation of trees, etc. */
+/* Manage handles (embed/remove SVG) for direct manipulation of trees, etc.
+ * CURRENTLY UNUSED! in favor of "inline" handles for each element.
+ */
 function addElementHandles() {
+    // CURRENTLY UNUSED
     var viewportSVG = d3.selectAll("#viz-outer-frame div.vega svg");
     if (viewportSVG.empty()) {
         console.warn("addElementHandles(): viewport SVG not found!");
@@ -1134,7 +1137,7 @@ function addElementHandles() {
     // TODO: clear and (re)build handles for all active elements?
 }
 function removeElementHandles() {
-    // remove all crop-mark instances
+    // CURRENTLY UNUSED
     var viewportSVG = d3.selectAll("#viz-outer-frame div.vega svg");
     viewportSVG.selectAll("#handles").remove();
 }
@@ -1815,8 +1818,6 @@ var api = [
     'availableStyleGuides',
     'showStyleGuidePicker',
     'applyChosenStyleGuide',
-    'addElementHandles',
-    'removeElementHandles',
     'enterFullScreen',
     'exitFullScreen',
     'ill'
