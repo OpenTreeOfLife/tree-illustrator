@@ -849,7 +849,7 @@
 
     <div class="button-bar" style="margin-bottom: 0.4em;">
         <button class="btn btn-small" 
-                onclick="stylist.ill.addIllustratedTree(); return false;"
+                onclick="var tree = stylist.ill.addIllustratedTree(); stylist.showAccordionPanelForElement( tree.id() ); return false;"
         >Add tree...</button>
         <button class="btn btn-small" 
                 onclick="stylist.ill.addSupportingDataset(); return false;"

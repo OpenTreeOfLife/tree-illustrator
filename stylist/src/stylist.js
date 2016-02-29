@@ -558,7 +558,6 @@ $(document).ready(function() {
             var $hotspot = $(dragHandle);
             var $treeGroup = $hotspot.closest('g.mark-group[class*=tree-]');
             var treeID = $treeGroup.attr('class').split(/\s+/)[1];
-            console.log(">> treeID: "+ treeID +", DRAGGING...");
             // Track locations *relative* to the viewport, so we can drag *and* scroll as needed.
             var $scrollingViewport = $("#viz-outer-frame").find('div.vega');
             var mouseLoc = getViewportMouseLoc(event, $scrollingViewport);
@@ -630,6 +629,7 @@ console.warn('refreshViz() STARTING');
                 var mouseLoc = getViewportMouseLoc(event, $scrollingViewport);
                 switch(event.type) {
                     case 'mousedown':
+                        showAccordionPanelForElement( treeID );
                         dragHandle = hotspotEl;
                         dragElement = stylist.ill.getElementByID( treeID );
                         dragStartHandleLoc = mouseLoc;
@@ -654,9 +654,9 @@ console.warn('refreshViz() STARTING');
                         break;
                     case 'mouseleave':
                         if (dragHandle === hotspotEl) {
-                            console.log(">> treeID: "+ treeID +", MOUSEOUT BUT STILL DRAGGING...");
+                            //console.log(">> treeID: "+ treeID +", MOUSEOUT BUT STILL DRAGGING...");
                         } else {
-                            console.log(">> treeID: "+ treeID +", MOUSEOUT AND DONE!");
+                            //console.log(">> treeID: "+ treeID +", MOUSEOUT AND DONE!");
                             $hotspot.css({
                                 'fill-opacity': "0",
                                 'stroke-opacity': "0"
@@ -1630,6 +1630,28 @@ function hideAccordionHint(e) {
         .find("i.help-rollover")
         .hide();
 }
+function showAccordionPanel( panelID ) {
+    /* Drive the sidebar UI to show a particular section on demand, 
+     * e.g. show a tree's properties when user clicks on it in viz.
+     */
+    var $chosenPanel = $(panelID);
+    if ($chosenPanel.length === 0) {
+        console.error('showAccordionPanel(): No such panel as '+ panelID);
+        return;
+    }
+    if ($chosenPanel.hasClass('in')) {
+        // It's already open; don't toggle it shut!
+    } else {
+        var $itsToggle = $('#ti-main-accordion .accordion-toggle[href='+ panelID +']');
+        $itsToggle.click();
+    }
+    // TODO: show sidecar in all cases?
+}
+function showAccordionPanelForElement( elementID ) {
+    var panelID = '#ti-panel-'+ elementID;
+    showAccordionPanel( panelID );
+}
+
 $(document).ready(function() {
     $('#ti-main-accordion .panel-body').on('shown', accordionPanelShown);
     $('#ti-main-accordion .panel-body').on('hidden', accordionPanelHidden);
@@ -1817,6 +1839,8 @@ var api = [
     'resizeViewportToShowAll',
     'availableStyleGuides',
     'showStyleGuidePicker',
+    'showAccordionPanel',
+    'showAccordionPanelForElement',
     'applyChosenStyleGuide',
     'enterFullScreen',
     'exitFullScreen',
