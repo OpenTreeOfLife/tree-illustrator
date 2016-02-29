@@ -1129,7 +1129,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                                         },
                                         "properties": {
                                             "update": {
-                                                "path": {"field": "path"},
+                                                "path": {"field": "path"},  // TODO: Can we make this dynamic, perhaps a callable?
                                                 "stroke": {"value": "#0f0"},
                                                 "strokeWidth": {"value": "1px"},
                                                 "strokeOpacity": {"value": "0.0"},
@@ -1160,8 +1160,22 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                                             "update": {
                                                 "name": {"field": "name"},
                                                 "id": {"field": "name"},
-                                                "shape": "circle",
-                                                "size": {"value": "80"},  /* will be scaled on-the-fly */
+                                                "shape": {"field": "shape"}, /* default shape is "circle" */
+                                                "size": {"field": "size"},
+                                                //FAILS "rotate": {"field": "rotate"},
+                                                //WORKS "size": {"value": "80"},
+                                                //WORKS "size": {"value": "80", "mult": 2 },  
+                                                //FAILS "size": {"value": "80", "mult": {"field": "data.scale"} },  
+                                                //FAILS "size": {"value": "80", "mult": {"field": "scale"} },  
+                                                //FAILS "size": {"value": "80", "mult": {"field": "data.scale"} },  
+                                                //FAILS "size": {"value": "80", "mult": {"field": "scale", "default": 1} },  
+                                                /* TODO: Use optional scale and rotation?
+                                                "size": {"value": "80", "mult": {"field": "scale", "default": 1} },  
+                                                "size": {"value": "80", "mult": {"field": "data.scale", "default": 1} },  
+                                                "width": {"value": "80", "mult": {"field": "data.scale", "default": 1} },  
+                                                "height": {"value": "200", "mult": {"field": "data.scale", "default": 1} },  
+                                                "rotate": {"field": "rotate"},
+                                                */
                                                 "fill": {"value": "#0c0"},
                                                 "fillOpacity": {"value": "0.0"},
                                                 "stroke": {"value": "#f00"},
@@ -1238,6 +1252,9 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
 
         // Add validation for fields that need it
         self.metadata.name.extend({required: true});
+
+        // capture hotspot and handle logic?
+        self.hotspot = data.hotspot;
 
         // TODO: Based on the element type, offer appropriate styles and constraints
         // TODO: Include options to map selected data to visual style

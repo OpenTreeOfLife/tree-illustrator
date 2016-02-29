@@ -651,11 +651,13 @@ console.warn('refreshViz() STARTING');
                 }
             });
 
-        $scrollingViewport.find('.tree-hotspot')
+        // TODO: Add proper IDs for vertex handles, vs. convention (first path is for "center/move" handle)
+        $scrollingViewport.find('.tree-hotspot, .handles .vertex-handle path:first-child')
+            .css('cursor','move')
             .off('.hotspot')  // remove any prior bindings
             //.on("mouseenter.hotspot mouseleave.hotspot mousedown.hotspot mouseup.hotspot click.hotspot mousemove.hotspot", function ( event ) {
             .on("mousedown.hotspot", function ( event ) {
-                var $hotspot = $(this).find('path');
+                var $hotspot = $(this).is('path') ? $(this) : $(this).find('path');
                 var hotspotEl = $hotspot[0];
                 var $treeGroup = $hotspot.closest('g.mark-group[class*=tree-]');
                 var treeID = $treeGroup.attr('class').split(/\s+/)[1];

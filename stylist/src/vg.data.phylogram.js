@@ -393,7 +393,7 @@ prototype.buildPhylogram = function(data) {
                       bottom =  extents.maxY,
                       left =    extents.minX;
 
-                  handles.push({ name: 'center', x: 0, y: 0 });
+                  handles.push({ name: 'center', x: 0, y: 0, shape: 'diamond', rotate: 45, size: 120 });
                   handles.push({ name: 'top-left', x: left, y: top });
                   handles.push({ name: 'top-right', x: right, y: top });
                   handles.push({ name: 'bottom-right', x: right, y: bottom });
@@ -401,7 +401,7 @@ prototype.buildPhylogram = function(data) {
                   break;
 
               case 'cladogram':
-                  handles.push({ name: 'center', x: 0, y: 0 });
+                  handles.push({ name: 'center', x: 0, y: 0, shape: 'diamond', size: 120 });
                   var extents = getBoundingBoxFromPoints( data.phyloNodes );
                   switch(tipsAlignment) {
                     case 'TOP':
@@ -424,7 +424,7 @@ prototype.buildPhylogram = function(data) {
                   break;
 
               case 'radial':
-                  handles.push({ name: 'center', x: 0, y: 0 });
+                  handles.push({ name: 'center', x: 0, y: 0, shape: 'diamond', size: 120 });
                   // Reckon three handle positions (on perimeter) in Cartesian coordinates...
                   var extents = getBoundingBoxFromPoints( data.phyloNodes, {useCoordinates: 'CARTESIAN'} );
                   var startPoint = {x: extents.maxX, y: extents.minY},
@@ -441,6 +441,10 @@ prototype.buildPhylogram = function(data) {
                   handles.push( $.extend(midPoint, {name: 'radius'}) );
                   break;
           }
+          // merge in default properties as needed
+          $.each(handles, function(i,h) {
+              handles[i] = $.extend({ shape:'circle', size:80, rotate:0 }, handles[i]);
+          });
           return handles;
       }
 
