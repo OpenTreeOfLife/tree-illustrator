@@ -1163,7 +1163,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                                                 "shape": "circle",
                                                 "size": {"value": "80"},  /* will be scaled on-the-fly */
                                                 "fill": {"value": "#0c0"},
-                                                "fillOpacity": {"value": "1.0"},
+                                                "fillOpacity": {"value": "0.0"},
                                                 "stroke": {"value": "#f00"},
                                                 "strokeWidth": {"value": "6"},  /* grabbable but hidden */
                                                 "strokeOpacity": {"value": "0.0"}

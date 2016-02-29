@@ -617,53 +617,56 @@ console.warn('refreshViz() STARTING');
         // N.B. jQuery event delegation doesn't seem to work with SVG elements!
         var $scrollingViewport = $("#viz-outer-frame").find('div.vega');
         //$scrollingViewport.delegate(".tree-hotspot", "click hover mouseover mouseout mouseenter mouseleave", function ...
+        $scrollingViewport.find('.handles')
+            .off('.hotspot')  // remove any prior bindings
+            .on("mouseenter.hotspot", function ( event ) {
+                // Show this element's handles
+                var $hotspot = $(this).find('.tree-hotspot path');
+                $hotspot.css({
+                    'fillOpacity': "0.2",
+                    'strokeOpacity': "0.6"
+                });
+                var $handles = $(this).find('.vertex-handle path');
+                $handles.css({
+                    'fillOpacity': "1.0",
+                });
+            })
+            .on("mouseleave.hotspot", function ( event ) {
+                var $hotspot = $(this).find('.tree-hotspot path');
+                var hospotEl = $hotspot[0];
+                if (dragHandle === hospotEl) {
+                    //console.log(">> treeID: "+ treeID +", MOUSEOUT BUT STILL DRAGGING...");
+                } else {
+                    //console.log(">> treeID: "+ treeID +", MOUSEOUT AND DONE!");
+                    $hotspot.css({
+                        'fill-opacity': "0",
+                        'stroke-opacity': "0"
+                    });
+                    var $handles = $(this).find('.vertex-handle path');
+                    $handles.css({
+                        'fillOpacity': "0",
+                    });
+                }
+            });
+
         $scrollingViewport.find('.tree-hotspot')
             .off('.hotspot')  // remove any prior bindings
-            .on("mouseenter.hotspot mouseleave.hotspot mousedown.hotspot mouseup.hotspot click.hotspot mousemove.hotspot", function ( event ) {
+            //.on("mouseenter.hotspot mouseleave.hotspot mousedown.hotspot mouseup.hotspot click.hotspot mousemove.hotspot", function ( event ) {
+            .on("mousedown.hotspot", function ( event ) {
                 var $hotspot = $(this).find('path');
                 var hotspotEl = $hotspot[0];
                 var $treeGroup = $hotspot.closest('g.mark-group[class*=tree-]');
                 var treeID = $treeGroup.attr('class').split(/\s+/)[1];
-                //console.log(">> treeID: "+ treeID +", event: "+ event.type);
                 // Track locations *relative* to the viewport, so we can drag *and* scroll as needed.
                 var mouseLoc = getViewportMouseLoc(event, $scrollingViewport);
-                switch(event.type) {
-                    case 'mousedown':
-                        showAccordionPanelForElement( treeID );
-                        dragHandle = hotspotEl;
-                        dragElement = stylist.ill.getElementByID( treeID );
-                        dragStartHandleLoc = mouseLoc;
-                        // stash the initial position (translation matrix), or 0,0 if not set
-                        var rawTranslate = d3.transform(d3.select($hotspot[0]).attr('transform')).translate;
-                        //dragStartElementLoc = { x: (rawTranslate ? rawTranslate[0] : 0), y: (rawTranslate ? rawTranslate[1] : 0) };
-                        dragStartElementLoc = { x: dragElement.rootX(), y: dragElement.rootY() };
-                        break;
-                    case 'mousemove':
-                        // N.B. the body will handle these and continue dragging.
-                        break;
-                    case 'mouseup':
-                    case 'click':
-                        // N.B. the body will handle these and stop dragging.
-                        break;
-                    case 'mouseenter':
-                        // Show this tree's handles
-                        $hotspot.css({
-                            'fillOpacity': "0.2",
-                            'strokeOpacity': "0.6"
-                        });
-                        break;
-                    case 'mouseleave':
-                        if (dragHandle === hotspotEl) {
-                            //console.log(">> treeID: "+ treeID +", MOUSEOUT BUT STILL DRAGGING...");
-                        } else {
-                            //console.log(">> treeID: "+ treeID +", MOUSEOUT AND DONE!");
-                            $hotspot.css({
-                                'fill-opacity': "0",
-                                'stroke-opacity': "0"
-                            });
-                        }
-                        break;
-                }
+                showAccordionPanelForElement( treeID );
+                dragHandle = hotspotEl;
+                dragElement = stylist.ill.getElementByID( treeID );
+                dragStartHandleLoc = mouseLoc;
+                // stash the initial position (translation matrix), or 0,0 if not set
+                var rawTranslate = d3.transform(d3.select($hotspot[0]).attr('transform')).translate;
+                //dragStartElementLoc = { x: (rawTranslate ? rawTranslate[0] : 0), y: (rawTranslate ? rawTranslate[1] : 0) };
+                dragStartElementLoc = { x: dragElement.rootX(), y: dragElement.rootY() };
             });
         console.warn("refreshViz() took "+ (new Date() - startTime) +" ms to complete");
     });
