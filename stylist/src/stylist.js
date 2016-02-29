@@ -556,7 +556,8 @@ $(document).ready(function() {
     $('body').on("mousemove", function ( event ) {
         if (dragHandle) {
             var $hotspot = $(dragHandle);
-            var $treeGroup = $hotspot.closest('g.mark-group[class*=tree-]');
+            var $handleGroup = $hotspot.closest('g.mark-group.handles');
+            var $treeGroup = $handleGroup.closest('g.mark-group[class*=tree-]');
             var treeID = $treeGroup.attr('class').split(/\s+/)[1];
             // Track locations *relative* to the viewport, so we can drag *and* scroll as needed.
             var $scrollingViewport = $("#viz-outer-frame").find('div.vega');
@@ -565,7 +566,8 @@ $(document).ready(function() {
                 x: (mouseLoc.x - dragStartHandleLoc.x) / viewportMagnification,
                 y: (mouseLoc.y - dragStartHandleLoc.y) / viewportMagnification
             }
-            $hotspot.attr('transform', "translate("+ dragCurrentHandleDelta.x +","+ dragCurrentHandleDelta.y +")");
+            // Move *all* handles, not just the main hotspot
+            $handleGroup.attr('transform', "translate("+ dragCurrentHandleDelta.x +","+ dragCurrentHandleDelta.y +")");
             /* Update the element's rootX and rootY properties.
              * N.B. this will update the visible UI, but not the viewport!
              *
@@ -663,9 +665,7 @@ console.warn('refreshViz() STARTING');
                 dragHandle = hotspotEl;
                 dragElement = stylist.ill.getElementByID( treeID );
                 dragStartHandleLoc = mouseLoc;
-                // stash the initial position (translation matrix), or 0,0 if not set
-                var rawTranslate = d3.transform(d3.select($hotspot[0]).attr('transform')).translate;
-                //dragStartElementLoc = { x: (rawTranslate ? rawTranslate[0] : 0), y: (rawTranslate ? rawTranslate[1] : 0) };
+                // stash the element's initial position (in illustration's units)
                 dragStartElementLoc = { x: dragElement.rootX(), y: dragElement.rootY() };
             });
         console.warn("refreshViz() took "+ (new Date() - startTime) +" ms to complete");
