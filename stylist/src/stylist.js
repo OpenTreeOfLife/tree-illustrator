@@ -922,6 +922,15 @@ function initTreeIllustratorWindow() {
     // adjust viewport/viewbox to reflect current magnification (display_ppi)
     updateViewportViewbox( $scrollingViewport );
 
+    /* Resize any actual-sizes elements (e.g. manipulation handles) in the viewport.
+     * N.B. We do this by inverting the current viewport magnification. Sneaky!
+     */
+    var actualSizeElements = d3.selectAll('#viz-outer-frame .actual-size path');
+    actualSizeElements.attr("transform", function(d) {
+        // We use the datum from phylogram model, e.g. vertexHandles[0]
+        return "translate("+ (d.datum.x || 0) +","+ (d.datum.y || 0) +") scale("+ (1 / viewportMagnification) +")";
+    });
+
     // sync scrolling of rulers to viewport
     //TODO: delegate these for one-time call!
     $scrollingViewport.off('scroll').on('scroll', function() {
@@ -960,7 +969,7 @@ function initTreeIllustratorWindow() {
         .attr("width", rulerWidth+"px")
         .attr("height", viewportHeight+"px");
     drawRuler(leftRuler, 'VERTICAL', ill.style.printSize.units(), leftRulerScale);
-    
+
     enableViewportMask();
 }
 

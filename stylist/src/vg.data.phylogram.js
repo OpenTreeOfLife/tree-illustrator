@@ -378,12 +378,78 @@ prototype.buildPhylogram = function(data) {
                   return "M -50,-50 L -50,50, L 50,50, L 50,-50 Z";
           }
       }
+      /* Generate a series of vertex handles based on layout and dimensions.
+       * (These are also used to respond to mouse actions, etc. while editing.)
+       */
+      var handleGenerator = function() {
+          var handles = [ ];
+          switch(layout) {
+              case 'cartesian':
+                  // Grab the center to move, or any corner to resize
+                  var extents = getBoundingBoxFromPoints( data.phyloNodes );
+                  // rename for clarity
+                  var top =     extents.minY,
+                      right =   extents.maxX,
+                      bottom =  extents.maxY,
+                      left =    extents.minX;
+
+                  handles.push({ name: 'center', x: 0, y: 0 });
+                  handles.push({ name: 'top-left', x: left, y: top });
+                  handles.push({ name: 'top-right', x: right, y: top });
+                  handles.push({ name: 'bottom-right', x: right, y: bottom });
+                  handles.push({ name: 'bottom-left', x: left, y: bottom });
+                  break;
+
+              case 'cladogram':
+                  handles.push({ name: 'center', x: 0, y: 0 });
+                  var extents = getBoundingBoxFromPoints( data.phyloNodes );
+                  switch(tipsAlignment) {
+                    case 'TOP':
+                      handles.push({ name: 'top-left', x: extents.minX, y: extents.minY });
+                      handles.push({ name: 'top-right', x: extents.maxX, y: extents.minY });
+                      break;
+                    case 'RIGHT':
+                      handles.push({ name: 'top-right', x: extents.maxX, y: extents.minY });
+                      handles.push({ name: 'bottom-right', x: extents.maxX, y: extents.maxY });
+                      break;
+                    case 'BOTTOM':
+                      handles.push({ name: 'bottom-left', x: extents.minX, y: extents.maxY });
+                      handles.push({ name: 'bottom-right', x: extents.maxX, y: extents.maxY });
+                      break;
+                    case 'LEFT':
+                      handles.push({ name: 'top-left', x: extents.minX, y: extents.minY });
+                      handles.push({ name: 'bottom-left', x: extents.minX, y: extents.maxY });
+                      break;
+                  }
+                  break;
+
+              case 'radial':
+                  handles.push({ name: 'center', x: 0, y: 0 });
+                  // Reckon three handle positions (on perimeter) in Cartesian coordinates...
+                  var extents = getBoundingBoxFromPoints( data.phyloNodes, {useCoordinates: 'CARTESIAN'} );
+                  var startPoint = {x: extents.maxX, y: extents.minY},
+                      midPoint = {x: extents.maxX, y: (extents.maxY + extents.minY) / 2},
+                      endPoint = {x: extents.maxX, y: extents.maxY};
+                  // ... then convert to polar coordinates (simple arrays)
+                  startPoint = cartesianToPolarProjection( startPoint, {returnType: 'POLAR_COORDS'} );
+                  endPoint = cartesianToPolarProjection( endPoint, {returnType: 'POLAR_COORDS'} );
+                  midPoint = cartesianToPolarProjection( midPoint, {returnType: 'POLAR_COORDS'} );
+
+                  // pass all polar properties (angle, radius, theta) plus a descriptive name
+                  handles.push( $.extend(startPoint, {name: 'start-angle'}) );
+                  handles.push( $.extend(endPoint, {name: 'end-angle'}) );
+                  handles.push( $.extend(midPoint, {name: 'radius'}) );
+                  break;
+          }
+          return handles;
+      }
 
       data.hotspot = [  // emulate a tuple
           {
-              "path": hotspotGenerator() 
+              "path": hotspotGenerator()
           }
       ];
+      data.vertexHandles = handleGenerator(); // returns an array
 
       // copy layout properties to the phylotree, for possible use downstream
       data.layout = layout;

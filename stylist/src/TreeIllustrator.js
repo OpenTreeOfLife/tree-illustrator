@@ -1114,28 +1114,66 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                                 ]
                             } /* end of grouped node+label */ 
                             ,
-                            {  /* hotspot for direct manipulation of the tree */
-                                "name": "tree-hotspot",
-                                "type": "path",
-                                "from": {
-                                    "data": dataSourceName,
-                                    "transform": [
-                                        {"type":"pluck", "field":"hotspot" }
-                                    ]
-                                },
-                                "properties": {
-                                    "update": {
-                                        "path": {"field": "path"},
-                                        "stroke": {"value": "#0f0"},
-                                        "strokeWidth": {"value": "1px"},
-                                        "strokeOpacity": {"value": "0.0"},
-                                        "fill": {"value": "#0f0"},
-                                        "fillOpacity": {"value": "0.0"}
+                            {   /* group tree hotspot and handles */
+                                "type":"group",
+                                "name": "handles",
+                                "marks":[
+                                    {  /* hotspot for direct manipulation of the tree */
+                                        "name": "tree-hotspot",
+                                        "type": "path",
+                                        "from": {
+                                            "data": dataSourceName,
+                                            "transform": [
+                                                {"type":"pluck", "field":"hotspot" }
+                                            ]
+                                        },
+                                        "properties": {
+                                            "update": {
+                                                "path": {"field": "path"},
+                                                "stroke": {"value": "#0f0"},
+                                                "strokeWidth": {"value": "1px"},
+                                                "strokeOpacity": {"value": "0.0"},
+                                                "fill": {"value": "#0f0"},
+                                                "fillOpacity": {"value": "0.0"}
+                                            },
+                                            "hover": {
+                                                //"opacity": {"value": "0.1"}
+                                            }
+                                        }
                                     },
-                                    "hover": {
-                                        //"opacity": {"value": "0.1"}
+                                    {  /* corner handles for size and angle adjustments */
+                                        "name": "vertex-handle actual-size",
+                                        "type": "symbol",
+                                        "from": {
+                                            "data": dataSourceName,
+                                            "transform": [
+                                              {"type":"pluck", "field":"vertexHandles" }
+                                            ]
+                                        },
+                                        "properties": {
+                                            "enter": {
+                                                "name": {"field": "name"},
+                                                "id": {"field": "name"},
+                                                "x": {"field": "x"},
+                                                "y": {"field": "y"}
+                                            },
+                                            "update": {
+                                                "name": {"field": "name"},
+                                                "id": {"field": "name"},
+                                                "shape": "circle",
+                                                "size": {"value": "80"},  /* will be scaled on-the-fly */
+                                                "fill": {"value": "#0c0"},
+                                                "fillOpacity": {"value": "1.0"},
+                                                "stroke": {"value": "#f00"},
+                                                "strokeWidth": {"value": "6"},  /* grabbable but hidden */
+                                                "strokeOpacity": {"value": "0.0"}
+                                            },
+                                            "hover": {
+                                                //"opacity": {"value": "0.1"}
+                                            }
+                                        }
                                     }
-                                }
+                                 ]
                             }
                         ] /* end of inner group marks */
                     }; /* end of inner group */
