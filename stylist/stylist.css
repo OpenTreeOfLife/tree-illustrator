@@ -90,22 +90,21 @@ body {
     border: 1px solid #ccc;
     overflow: visible; /* don't hide viewport scrollbars */
     height: 85%; /* JS will adjust this on resize */
-    position: relative; /* to support 100% size of #handles below */
 }
 #viz-outer-frame #handles {
-    /* this should float "above" the main viz-frame */
+    /* this should match the size+position of the main viz-frame */
     position: absolute;
     z-index: 1000;
     width: 100%;
     height: 100%;
-    /* background-color: rgba(255,0,0,0.05); */
+    background-color: rgba(255,0,0,0.05);
 }
 #viz-outer-frame div.vega {
+    float: left;
     width: 100%;
+    height: 100%;
     border: 1px solid #ddd;
     margin: -1px;
-    float: left;
-    height: 100%;
     overflow: scroll;
     /* initial styles */
     margin-right: -16px;

@@ -371,6 +371,18 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
 
         /* define PUBLIC variables (and privileged methods) with 'self' */
 
+        self.getElementByID = function( elementID ) {
+            // return an element (eg, an IllustratedTree), or null if not found
+            var foundElement = null;
+            $.each(self.elements(), function(i, el) {
+                if (el.id() === elementID) {
+                    foundElement = el;
+                    return false;
+                }
+            });
+            return foundElement;
+        }
+
         self.getNextAvailableID = function( elementType ) {
             // creates a serial ID like 'dataset-4' or 'tree-12'
             var readyID = nextAvailableID[ elementType ];

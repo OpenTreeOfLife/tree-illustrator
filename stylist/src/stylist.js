@@ -528,6 +528,68 @@ function showStyleGuidePicker() {
     });
 }
 
+/* General support for direct-manipulation ops (esp. to track dragging with the mouse) */
+var dragHandle = null,  // the handle (HTML/SVG element) being dragged, if any
+    dragElement = null, // the Illustration element (eg, IllustratedTree) affected, if any
+    dragStartHandleLoc = null,  // replace with {x:<Number>, y:<Number>}, in screen px; reset to null when done
+    dragStartElementLoc = null, // same format, in the illustration's internal (SVG) pixels
+    dragCurrentHandleDelta = null;  // cumulative change in X/Y, in screen px; same format as dragStartLoc above
+
+function stopDragging( callback ) {
+    if (typeof(callback) === 'function') {
+        //callback(dragHandle, dragElement, ... );
+        callback();
+    }
+    dragHandle = null;
+    dragElement = null;
+    dragStartHandleLoc = null;
+    dragStartElementLoc = null;
+    dragCurrentHandleDelta = null;
+}
+
+$(document).ready(function() {
+    $('body').on("mouseup click mouseleave", function ( event ) {
+        if (dragHandle) {
+            stopDragging(refreshViz);
+        }
+    });
+    $('body').on("mousemove", function ( event ) {
+        if (dragHandle) {
+            var $hotspot = $(dragHandle);
+            var $treeGroup = $hotspot.closest('g.mark-group[class*=tree-]');
+            var treeID = $treeGroup.attr('class').split(/\s+/)[1];
+            console.log(">> treeID: "+ treeID +", DRAGGING...");
+            // Track locations *relative* to the viewport, so we can drag *and* scroll as needed.
+            var $scrollingViewport = $("#viz-outer-frame").find('div.vega');
+            var mouseLoc = getViewportMouseLoc(event, $scrollingViewport);
+            dragCurrentHandleDelta = {
+                x: (mouseLoc.x - dragStartHandleLoc.x) / viewportMagnification,
+                y: (mouseLoc.y - dragStartHandleLoc.y) / viewportMagnification
+            }
+            $hotspot.attr('transform', "translate("+ dragCurrentHandleDelta.x +","+ dragCurrentHandleDelta.y +")");
+            /* Update the element's rootX and rootY properties.
+             * N.B. this will update the visible UI, but not the viewport!
+             *
+             * For now, this is a direct translation of handle motion to element motion.
+             * TODO: Use constraints to enforce min. sizes, etc. (by tweaking its physicalRootX/Y instead?)
+             */
+            var dragElementToX = dragStartElementLoc.x + dragCurrentHandleDelta.x;
+            var dragElementToY = dragStartElementLoc.y + dragCurrentHandleDelta.y;
+            //var physicalX = stylist.pixelsToPhysicalUnits(dragToX, stylist.display_ppi);
+            dragElement.rootX( dragElementToX );
+            dragElement.rootY( dragElementToY );
+        }
+    });
+});
+
+function getViewportMouseLoc(event, $scrollingViewport) {
+    var vpOffset = $scrollingViewport.offset();
+    return {
+        x: (event.pageX - vpOffset.left + $scrollingViewport.scrollLeft()),
+        y: (event.pageY - vpOffset.top + $scrollingViewport.scrollTop())
+    };
+}
+
 /* The current Vega spec is generated using the chosen style (above) and 
  * the illustration source and decisions made in the web UI. When the
  * illustration is saved, the latest can also be embedded. Or perhaps we should
@@ -558,29 +620,51 @@ console.warn('refreshViz() STARTING');
         //$scrollingViewport.delegate(".tree-hotspot", "click hover mouseover mouseout mouseenter mouseleave", function ...
         $scrollingViewport.find('.tree-hotspot')
             .off('.hotspot')  // remove any prior bindings
-            .on("mouseenter.hotspot mouseleave.hotspot click.hotspot", function ( event ) {
+            .on("mouseenter.hotspot mouseleave.hotspot mousedown.hotspot mouseup.hotspot click.hotspot mousemove.hotspot", function ( event ) {
                 var $hotspot = $(this).find('path');
+                var hotspotEl = $hotspot[0];
                 var $treeGroup = $hotspot.closest('g.mark-group[class*=tree-]');
                 var treeID = $treeGroup.attr('class').split(/\s+/)[1];
-                console.log(">> treeID: "+ treeID +", event: "+ event.type);
-                //TODO: var treeElement = 
+                //console.log(">> treeID: "+ treeID +", event: "+ event.type);
+                // Track locations *relative* to the viewport, so we can drag *and* scroll as needed.
+                var mouseLoc = getViewportMouseLoc(event, $scrollingViewport);
                 switch(event.type) {
+                    case 'mousedown':
+                        dragHandle = hotspotEl;
+                        dragElement = stylist.ill.getElementByID( treeID );
+                        dragStartHandleLoc = mouseLoc;
+                        // stash the initial position (translation matrix), or 0,0 if not set
+                        var rawTranslate = d3.transform(d3.select($hotspot[0]).attr('transform')).translate;
+                        //dragStartElementLoc = { x: (rawTranslate ? rawTranslate[0] : 0), y: (rawTranslate ? rawTranslate[1] : 0) };
+                        dragStartElementLoc = { x: dragElement.rootX(), y: dragElement.rootY() };
+                        break;
+                    case 'mousemove':
+                        // N.B. the body will handle these and continue dragging.
+                        break;
+                    case 'mouseup':
                     case 'click':
+                        // N.B. the body will handle these and stop dragging.
                         break;
                     case 'mouseenter':
+                        // Show this tree's handles
                         $hotspot.css({
                             'fillOpacity': "0.2",
                             'strokeOpacity': "0.6"
                         });
                         break;
                     case 'mouseleave':
-                        $hotspot.css({
-                            'fill-opacity': "0", 
-                            'stroke-opacity': "0"
-                        });
+                        if (dragHandle === hotspotEl) {
+                            console.log(">> treeID: "+ treeID +", MOUSEOUT BUT STILL DRAGGING...");
+                        } else {
+                            console.log(">> treeID: "+ treeID +", MOUSEOUT AND DONE!");
+                            $hotspot.css({
+                                'fill-opacity': "0",
+                                'stroke-opacity': "0"
+                            });
+                        }
                         break;
                 }
-            })
+            });
         console.warn("refreshViz() took "+ (new Date() - startTime) +" ms to complete");
     });
 }
@@ -1032,6 +1116,27 @@ function zoomViewport( directionOrZoomLevel ) {
     // TODO: update scrollTop, scrollLeft to stay in place?
 
     initTreeIllustratorWindow();
+}
+
+/* Manage handles (embed/remove SVG) for direct manipulation of trees, etc. */
+function addElementHandles() {
+    var viewportSVG = d3.selectAll("#viz-outer-frame div.vega svg");
+    if (viewportSVG.empty()) {
+        console.warn("addElementHandles(): viewport SVG not found!");
+        return null;
+    }
+    if (viewportSVG.selectAll("#handles").empty()) {
+        // create a linked instance of handles
+        viewportSVG.insert('use', 'svg > g')
+                .attr('id', 'handles')
+                .attr('xlink:href', '#manipulation-handles');
+    }
+    // TODO: clear and (re)build handles for all active elements?
+}
+function removeElementHandles() {
+    // remove all crop-mark instances
+    var viewportSVG = d3.selectAll("#viz-outer-frame div.vega svg");
+    viewportSVG.selectAll("#handles").remove();
 }
 
 /* Convert between internal viewport coordinates and handle overlay (a second
@@ -1710,6 +1815,8 @@ var api = [
     'availableStyleGuides',
     'showStyleGuidePicker',
     'applyChosenStyleGuide',
+    'addElementHandles',
+    'removeElementHandles',
     'enterFullScreen',
     'exitFullScreen',
     'ill'
