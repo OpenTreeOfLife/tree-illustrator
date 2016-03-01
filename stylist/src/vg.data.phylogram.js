@@ -489,6 +489,12 @@ prototype.buildPhylogram = function(data) {
       data.nodeLabelSource = nodeLabelSource;
       data.showFallbackLabels = showFallbackLabels;
 
+      // copy generators for hotspot and other handles
+      //data.hotspotGenerator = hotspotGenerator;
+      //data.handleGenerator = handleGenerator;
+      Phylogram.hotspotGenerator = hotspotGenerator;
+      Phylogram.handleGenerator = handleGenerator;
+
       return data;
     }
       

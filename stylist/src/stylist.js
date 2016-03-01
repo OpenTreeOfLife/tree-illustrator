@@ -554,9 +554,26 @@ function startDragging( event ) {
     // Track locations *relative* to the viewport, so we can drag *and* scroll as needed.
     var $scrollingViewport = $("#viz-outer-frame").find('div.vega');
     dragStartHandleLoc = getIllustrationMouseLoc(event, $scrollingViewport);
+
+    /* TEST updating handles from stored generators
+    if (dragHandle) {
+        if (dragHandleName === 'hotspot') {
+            // update the entire hotspot shape
+            console.log("hotspot d BEFORE:"+ d3.select(dragHandle).attr('d'));
+            d3.select(dragHandle).attr('d', phylogramTransform.hotspotGenerator());
+            console.log("hotspot d AFTER:"+ d3.select(dragHandle).attr('d'));
+        } else {
+            // update just the positions of all 
+        }
+    } else {
+        console.error("No dragHandle found! How can this be?");
+        debugger;
+    }
+     */
 }
 
 function stopDragging( callback ) {
+    console.warn("<<<< stopDragging");
     if (typeof(callback) === 'function') {
         //callback(dragHandle, dragElement, ... );
         callback();
@@ -1790,8 +1807,11 @@ function showAccordionPanel( panelID ) {
     if ($chosenPanel.hasClass('in')) {
         // It's already open; don't toggle it shut!
     } else {
-        var $itsToggle = $('#ti-main-accordion .accordion-toggle[href='+ panelID +']');
-        $itsToggle.click();
+        // Toggle to show this panel; use API vs. a simulated click, which can stop dragging!
+        // Close other panels (these are "sticky" for some reason)
+        $chosenPanel.closest('.accordion').find('.collapse.in')
+            .collapse('hide');
+        $chosenPanel.collapse('show');
     }
     // TODO: show sidecar in all cases?
 }
