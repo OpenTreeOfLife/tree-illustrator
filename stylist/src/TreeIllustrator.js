@@ -599,7 +599,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     self.removeOrnament(el);
                 }
             } else {
-                console.error("confirmRemoveElement(): unexpeced element type: '"+ el.metadata.type() +"'!");
+                console.error("confirmRemoveElement(): unexpected element type: '"+ el.metadata.type() +"'!");
                 return;
             }
         }
@@ -1152,35 +1152,18 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                                         },
                                         "properties": {
                                             "enter": {
-                                                "name": {"field": "name"},
-                                                "id": {"field": "name"},
-                                                "x": {"field": "x"},
-                                                "y": {"field": "y"}
-                                            },
-                                            "update": {
-                                                "name": {"field": "name"},
-                                                "id": {"field": "name"},
+                                                "name": {"field":"name"},  /* assigned to datum, not to mark! */
                                                 "shape": {"field": "shape"}, /* default shape is "circle" */
                                                 "size": {"field": "size"},
-                                                //FAILS "rotate": {"field": "rotate"},
-                                                //WORKS "size": {"value": "80"},
-                                                //WORKS "size": {"value": "80", "mult": 2 },  
-                                                //FAILS "size": {"value": "80", "mult": {"field": "data.scale"} },  
-                                                //FAILS "size": {"value": "80", "mult": {"field": "scale"} },  
-                                                //FAILS "size": {"value": "80", "mult": {"field": "data.scale"} },  
-                                                //FAILS "size": {"value": "80", "mult": {"field": "scale", "default": 1} },  
-                                                /* TODO: Use optional scale and rotation?
-                                                "size": {"value": "80", "mult": {"field": "scale", "default": 1} },  
-                                                "size": {"value": "80", "mult": {"field": "data.scale", "default": 1} },  
-                                                "width": {"value": "80", "mult": {"field": "data.scale", "default": 1} },  
-                                                "height": {"value": "200", "mult": {"field": "data.scale", "default": 1} },  
-                                                "rotate": {"field": "rotate"},
-                                                */
                                                 "fill": {"value": "#0c0"},
                                                 "fillOpacity": {"value": "0.0"},
                                                 "stroke": {"value": "#f00"},
-                                                "strokeWidth": {"value": "6"},  /* grabbable but hidden */
+                                                "strokeWidth": {"value": "6"},  /* hidden hit area */
                                                 "strokeOpacity": {"value": "0.0"}
+                                            },
+                                            "update": {
+                                                "x": {"field": "x"},
+                                                "y": {"field": "y"},
                                             },
                                             "hover": {
                                                 //"opacity": {"value": "0.1"}
@@ -1201,7 +1184,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     console.log("updateVegaSpec(): ignoring ornaments for now");
 
                 } else {
-                    console.error("updateVegaSpec(): unexpeced element type: '"+ el.metadata.type() +"'!");
+                    console.error("updateVegaSpec(): unexpected element type: '"+ el.metadata.type() +"'!");
                 }
             });
 
