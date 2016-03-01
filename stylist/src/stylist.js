@@ -755,12 +755,31 @@ function refreshViz(options) {
                 }
             });
 
-        // TODO: Add proper IDs for vertex handles, vs. convention (first path is for "center/move" handle)
-        $scrollingViewport.find('.tree-hotspot, .handles .vertex-handle path')
+        // We can't add proper IDs for vertex handles, but startDragging will adapt
+        var allHandles = $scrollingViewport.find('.tree-hotspot, .handles .vertex-handle path')
             .css('cursor','move')
             .off('.hotspot')  // remove any prior bindings
             //.on("mouseenter.hotspot mouseleave.hotspot mousedown.hotspot mouseup.hotspot click.hotspot mousemove.hotspot", function ( event ) {
             .on("mousedown.hotspot", startDragging);
+
+        // Add SVG 'title' elements to provide tool-tips for all hotspots
+        $.each(allHandles, function(i, h) {
+            // extract and display its description as a tooltip
+            var $handle = $(this);
+            var d3handle = d3.select(this);
+            var tooltip = "TODO: Add a tooltip for this handle!";
+            if (d3handle.datum()) {
+                tooltip = d3handle.datum().tooltip;
+            } else {
+                // Some handles (esp. hotspots) don't have data
+                if ($handle.is('.tree-hotspot')) {
+                    tooltip = "Drag to move this tree on the page.";
+                }
+            }
+            d3handle.append("svg:title")
+                    .text(tooltip);
+        });
+        //All('#viz-outer-frame .vertex-handle path, #viz-outer-frame .tree-hotspot')
     });
     console.warn("refreshViz() took "+ (new Date() - startTime) +" ms to complete");
 }

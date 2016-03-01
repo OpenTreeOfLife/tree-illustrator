@@ -1153,6 +1153,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                                         "properties": {
                                             "enter": {
                                                 "name": {"field":"name"},  /* assigned to datum, not to mark! */
+                                                "tooltip": {"field":"tooltip"},  /* assigned to datum, not to mark! */
                                                 "shape": {"field": "shape"}, /* default shape is "circle" */
                                                 "size": {"field": "size"},
                                                 "fill": {"value": "#0c0"},

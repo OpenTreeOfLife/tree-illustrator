@@ -383,6 +383,8 @@ prototype.buildPhylogram = function(data) {
        */
       var handleGenerator = function() {
           var handles = [ ];
+          var moveHandleTip = "Drag to move this tree on the page.";
+          var resizeHandleTip = "Drag to change width and height";
           switch(layout) {
               case 'cartesian':
                   // Grab the center to move, or any corner to resize
@@ -393,38 +395,54 @@ prototype.buildPhylogram = function(data) {
                       bottom =  extents.maxY,
                       left =    extents.minX;
 
-                  handles.push({ name: 'center', x: 0, y: 0, shape: 'diamond', rotate: 45, size: 120 });
-                  handles.push({ name: 'top-left', x: left, y: top });
-                  handles.push({ name: 'top-right', x: right, y: top });
-                  handles.push({ name: 'bottom-right', x: right, y: bottom });
-                  handles.push({ name: 'bottom-left', x: left, y: bottom });
+                  handles.push({ name: 'center', x: 0, y: 0, shape: 'diamond', rotate: 45, size: 120,
+                                 tooltip: moveHandleTip });
+                  handles.push({ name: 'top-left', x: left, y: top,
+                                 tooltip: resizeHandleTip });
+                  handles.push({ name: 'top-right', x: right, y: top,
+                                 tooltip: resizeHandleTip });
+                  handles.push({ name: 'bottom-right', x: right, y: bottom,
+                                 tooltip: resizeHandleTip });
+                  handles.push({ name: 'bottom-left', x: left, y: bottom,
+                                 tooltip: resizeHandleTip });
                   break;
 
               case 'cladogram':
-                  handles.push({ name: 'center', x: 0, y: 0, shape: 'diamond', size: 120 });
+                  handles.push({ name: 'center', x: 0, y: 0, shape: 'diamond', size: 120,
+                                 tooltip: moveHandleTip });
                   var extents = getBoundingBoxFromPoints( data.phyloNodes );
                   switch(tipsAlignment) {
                     case 'TOP':
-                      handles.push({ name: 'top-left', x: extents.minX, y: extents.minY });
-                      handles.push({ name: 'top-right', x: extents.maxX, y: extents.minY });
+                      handles.push({ name: 'top-left', x: extents.minX, y: extents.minY,
+                                     tooltip: resizeHandleTip });
+                      handles.push({ name: 'top-right', x: extents.maxX, y: extents.minY,
+                                     tooltip: resizeHandleTip });
                       break;
                     case 'RIGHT':
-                      handles.push({ name: 'top-right', x: extents.maxX, y: extents.minY });
-                      handles.push({ name: 'bottom-right', x: extents.maxX, y: extents.maxY });
+                      handles.push({ name: 'top-right', x: extents.maxX, y: extents.minY,
+                                     tooltip: resizeHandleTip });
+                      handles.push({ name: 'bottom-right', x: extents.maxX, y: extents.maxY,
+                                     tooltip: resizeHandleTip });
+
                       break;
                     case 'BOTTOM':
-                      handles.push({ name: 'bottom-left', x: extents.minX, y: extents.maxY });
-                      handles.push({ name: 'bottom-right', x: extents.maxX, y: extents.maxY });
+                      handles.push({ name: 'bottom-left', x: extents.minX, y: extents.maxY,
+                                     tooltip: resizeHandleTip });
+                      handles.push({ name: 'bottom-right', x: extents.maxX, y: extents.maxY,
+                                     tooltip: resizeHandleTip });
                       break;
                     case 'LEFT':
-                      handles.push({ name: 'top-left', x: extents.minX, y: extents.minY });
-                      handles.push({ name: 'bottom-left', x: extents.minX, y: extents.maxY });
+                      handles.push({ name: 'top-left', x: extents.minX, y: extents.minY,
+                                     tooltip: resizeHandleTip });
+                      handles.push({ name: 'bottom-left', x: extents.minX, y: extents.maxY,
+                                     tooltip: resizeHandleTip });
                       break;
                   }
                   break;
 
               case 'radial':
-                  handles.push({ name: 'center', x: 0, y: 0, shape: 'diamond', size: 120 });
+                  handles.push({ name: 'center', x: 0, y: 0, shape: 'diamond', size: 120,
+                                 tooltip: moveHandleTip });
                   // Reckon three handle positions (on perimeter) in Cartesian coordinates...
                   var extents = getBoundingBoxFromPoints( data.phyloNodes, {useCoordinates: 'CARTESIAN'} );
                   var startPoint = {x: extents.maxX, y: extents.minY},
@@ -436,9 +454,12 @@ prototype.buildPhylogram = function(data) {
                   midPoint = cartesianToPolarProjection( midPoint, {returnType: 'POLAR_COORDS'} );
 
                   // pass all polar properties (angle, radius, theta) plus a descriptive name
-                  handles.push( $.extend(startPoint, {name: 'start-angle'}) );
-                  handles.push( $.extend(endPoint, {name: 'end-angle'}) );
-                  handles.push( $.extend(midPoint, {name: 'radius'}) );
+                  handles.push( $.extend(startPoint, {name: 'start-angle',
+                                                      tooltip: "Drag to change radius and starting angle"}) );
+                  handles.push( $.extend(endPoint, {name: 'end-angle',
+                                                    tooltip: "Drag to change radius and ending angle"}) );
+                  handles.push( $.extend(midPoint, {name: 'radius',
+                                                    tooltip: "Drag to change this tree's radius" }) );
                   break;
           }
           // merge in default properties as needed
