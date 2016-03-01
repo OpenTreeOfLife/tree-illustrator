@@ -530,23 +530,24 @@ function showStyleGuidePicker() {
 
 /* General support for direct-manipulation ops (esp. to track dragging with the mouse) */
 var dragHandle = null,  // the handle (HTML/SVG element) being dragged, if any
+    dragHandleName = null;
     dragStartHandleLoc = null,  // replace with {x:<Number>, y:<Number>}, in screen px; reset to null when done
     dragElement = null, // the Illustration element (eg, IllustratedTree) affected, if any
     dragStartElementProps = null, // related properties of the target element (XY coords, angles, etc.)
     dragCurrentHandleDelta = null;  // cumulative change in X/Y, in screen px; same format as dragStartHandleLoc above
 
 function startDragging( event ) {
-    /* Initiate sensible dragging behavior for the current handle and target element (e.g., 
-     * the 'center' handle is usedSee *which* hotspot this is, to determine correct behavior 
-     * with the current tree. Key decisions will persist in the vars defined above.
+    /* Initiate sensible dragging behavior for the current handle and target
+     * element.  See *which* hotspot this is to determine correct behavior with
+     * the current tree. Key decisions will persist in the vars defined above.
      */
-    var handleName = $(this).is('.tree-hotspot') ? 'hotspot' : d3.select(this).datum().name;
-    console.log("MOVING handle ["+ handleName +"]...");
     var $hotspot = $(this).is('path') ? $(this) : $(this).find('path');
     dragHandle = $hotspot[0];
+    dragHandleName = $(this).is('.tree-hotspot') ? 'hotspot' : d3.select(this).datum().name;
+    console.log(">> START DRAGGING handle ["+ dragHandleName +"]...");
     // Track locations *relative* to the viewport, so we can drag *and* scroll as needed.
     var $scrollingViewport = $("#viz-outer-frame").find('div.vega');
-    var mouseLoc = getViewportMouseLoc(event, $scrollingViewport);
+    var mouseLoc = getIllustrationMouseLoc(event, $scrollingViewport);
     dragStartHandleLoc = mouseLoc;
 
     // Fetch and examine the related illustration element
@@ -554,31 +555,7 @@ function startDragging( event ) {
     var elementID = $elementGroup.attr('class').split(/\s+/)[1];
     showAccordionPanelForElement( elementID );
     dragElement = stylist.ill.getElementByID( elementID );
-    // stash its starting properties (in illustration units)
-    dragStartElementProps = { x: dragElement.rootX(), y: dragElement.rootY() };
-
-    if (dragElement instanceof TreeIllustrator.IllustratedTree) {
-        // switch on tree layouts, then on handles for each
-        switch(handleName) {
-            case 'center':
-            case 'hotspot':
-                // drag to move (translate) the selected tree on the page
-                break;
-            case 'blah':
-                // do something else
-                break;
-        }
-    /*
-    ... else if (dragElement instanceof TreeIllustrator.SupportingDataset) {
-        // TODO
-    } else if (dragElement instanceof TreeIllustrator.Ornament) {
-        // TODO
-    */
-    } else {
-        console.error("drag logic: unexpected element type: '"+ dragElement.metadata.type() +"'!");
-        return;
-    }
-
+    // Next we'll stash its starting properties (in illustration units)
 }
 
 function stopDragging( callback ) {
@@ -587,6 +564,7 @@ function stopDragging( callback ) {
         callback();
     }
     dragHandle = null;
+    dragHandleName = null;
     dragElement = null;
     dragStartHandleLoc = null;
     dragStartElementProps = null;
@@ -601,39 +579,121 @@ $(document).ready(function() {
     });
     $('body').on("mousemove", function ( event ) {
         if (dragHandle) {
-            var $hotspot = $(dragHandle);
-            var $handleGroup = $hotspot.closest('g.mark-group.handles');
-            var $treeGroup = $handleGroup.closest('g.mark-group[class*=tree-]');
-            var treeID = $treeGroup.attr('class').split(/\s+/)[1];
+            /* Check target element's type and sub-type (eg, a circular tree) and
+             * the active handle name. These will dictate the dragging behavior
+             * and initialize dragStartElementProps if it's null or empty.
+             */
+            var $handle = $(dragHandle);
+            var $handlesGroup = $handle.closest('g.mark-group.handles');
             // Track locations *relative* to the viewport, so we can drag *and* scroll as needed.
             var $scrollingViewport = $("#viz-outer-frame").find('div.vega');
-            var mouseLoc = getViewportMouseLoc(event, $scrollingViewport);
+            var mouseLoc = getIllustrationMouseLoc(event, $scrollingViewport);
             dragCurrentHandleDelta = {
-                x: (mouseLoc.x - dragStartHandleLoc.x) / viewportMagnification,
-                y: (mouseLoc.y - dragStartHandleLoc.y) / viewportMagnification
+                x: (mouseLoc.x - dragStartHandleLoc.x),
+                y: (mouseLoc.y - dragStartHandleLoc.y)
             }
-            // Move *all* handles, not just the main hotspot
-            $handleGroup.attr('transform', "translate("+ dragCurrentHandleDelta.x +","+ dragCurrentHandleDelta.y +")");
-            /* Update the element's rootX and rootY properties.
-             * N.B. this will update the visible UI, but not the viewport!
-             *
-             * For now, this is a direct translation of handle motion to element motion.
-             * TODO: Use constraints to enforce min. sizes, etc. (by tweaking its physicalRootX/Y instead?)
-             */
-            var dragElementToX = dragStartElementProps.x + dragCurrentHandleDelta.x;
-            var dragElementToY = dragStartElementProps.y + dragCurrentHandleDelta.y;
-            //var physicalX = stylist.pixelsToPhysicalUnits(dragToX, stylist.display_ppi);
-            dragElement.rootX( dragElementToX );
-            dragElement.rootY( dragElementToY );
+
+            if (dragElement instanceof TreeIllustrator.IllustratedTree) {
+                // determine behavior by specific handles and (perhaps) tree layouts
+                switch(dragHandleName) {
+                    case 'center':
+                    case 'hotspot':
+                        // drag to move (translate) the entire tree on the page
+                        if (!dragStartElementProps) {
+                            dragStartElementProps = { x: dragElement.rootX(), y: dragElement.rootY() };
+                        }
+                        /* Update the element's rootX and rootY properties.
+                         * N.B. this will update the visible UI, but not the viewport!
+                         *
+                         * For now, this is a direct translation of handle motion to element motion.
+                         * TODO: Use constraints to enforce min. sizes, etc. (by tweaking its physicalRootX/Y instead?)
+                         */
+                        var dragElementToX = dragStartElementProps.x + dragCurrentHandleDelta.x;
+                        var dragElementToY = dragStartElementProps.y + dragCurrentHandleDelta.y;
+                        //var physicalX = stylist.pixelsToPhysicalUnits(dragToX, stylist.display_ppi);
+                        dragElement.rootX( dragElementToX );
+                        dragElement.rootY( dragElementToY );
+                        // Move *all* handles, not just the main hotspot (no need to redraw or further adjust these)
+                        $handlesGroup.attr('transform', "translate("+ dragCurrentHandleDelta.x +","+ dragCurrentHandleDelta.y +")");
+                        break;
+
+                    default:
+                        // other handles have different behavior based on tree layout
+                        switch(dragElement.layout()) {
+                            case TreeIllustrator.treeLayouts.RECTANGLE:
+                                switch(dragHandleName) {
+                                    case 'blah':
+                                        // do something else
+                                        break;
+                                    default:
+                                        console.error('Unknown drag handle ['+ dragHandleName +']');
+                                        return;
+                                }
+                                break;
+                            case TreeIllustrator.treeLayouts.CIRCLE:
+                                switch(dragHandleName) {
+                                    case 'radius':
+                                        // track original and new radius
+                                        if (!dragStartElementProps) {
+                                            dragStartElementProps = { rootX: dragElement.rootX(), rootY: dragElement.rootY(), radius: dragElement.radius() };
+                                        }
+                                        /* Ignore dragCurrentHandleDelta; just reckon current mouseLoc in viewport
+                                         * (illustration) coordinates and measure the distance from the root node.
+                                         */
+                                        var xDistance = Math.abs( mouseLoc.x - dragStartElementProps.rootX );
+                                        var yDistance = Math.abs( mouseLoc.y - dragStartElementProps.rootY );
+                                        var hypotenuse = Math.sqrt( Math.pow(xDistance, 2) + Math.pow(yDistance, 2) );
+                                        dragElement.radius( hypotenuse );
+                                        // TODO: Update hotspot and handle positions!
+                                        break;
+
+                                    default:
+                                        console.error('Unknown drag handle ['+ dragHandleName +']');
+                                        return;
+                                }
+                                break;
+                            case TreeIllustrator.treeLayouts.TRIANGLE:
+                                switch(dragHandleName) {
+                                    case 'blah':
+                                        // do something else
+                                        break;
+                                    default:
+                                        console.error('Unknown drag handle ['+ dragHandleName +']');
+                                        return;
+                                }
+                                break;
+                        }
+                }
+            /*
+            ... else if (dragElement instanceof TreeIllustrator.SupportingDataset) {
+                // TODO
+            } else if (dragElement instanceof TreeIllustrator.Ornament) {
+                // TODO
+            */
+            } else {
+                console.error("drag logic: unexpected element type: '"+ dragElement.metadata.type() +"'!");
+                return;
+            }
+
         }
     });
 });
 
 function getViewportMouseLoc(event, $scrollingViewport) {
+    // Reckon mouse position as display px, relative to the SVG viewport
     var vpOffset = $scrollingViewport.offset();
     return {
         x: (event.pageX - vpOffset.left + $scrollingViewport.scrollLeft()),
         y: (event.pageY - vpOffset.top + $scrollingViewport.scrollTop())
+    };
+}
+function getIllustrationMouseLoc(event, $scrollingViewport) {
+    // Reckon mouse position in the illustration's SVG coordinates
+    var viewportLoc = getViewportMouseLoc(event, $scrollingViewport);
+    // Reverse the current magnification and allow for padded viewport
+    return {
+        x: (viewportLoc.x / viewportMagnification) + viewbox.x,
+        y: (viewportLoc.y / viewportMagnification) + viewbox.y
     };
 }
 
