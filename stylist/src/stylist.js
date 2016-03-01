@@ -686,7 +686,23 @@ function getViewportMouseLoc(event, $scrollingViewport) {
     };
 }
 function getIllustrationMouseLoc(event, $scrollingViewport) {
-    // Reckon mouse position in the illustration's SVG coordinates
+    /* Reckon mouse position in the illustration's SVG coordinates.
+     * N.B. that d3 provides an easy method for this, but it can't be called
+     * except within a (d3) event handler on the SVG element itself.
+     *   https://github.com/mbostock/d3/blob/master/src/event/mouse.js
+     *   http://stackoverflow.com/a/27434285
+     * FAILS HERE: console.error( d3.mouse(d3.select('div.vega > svg')) );
+     */
+    /* This code invokes the d3 location test, but can't return a value directly.
+       To see it in action, uncomment both blocks marked D3_MOUSE_SENSING
+    var evt = document.createEvent ("MouseEvent");
+    evt.initMouseEvent("mousetest", true, true, window, 0,
+                       event.screenX, event.screenY, event.clientX, event.clientY,
+                       event.ctrlKey, event.altKey, event.shiftKey, event.metaKey,
+                       0, null);
+    $('div.vega > svg')[0].dispatchEvent(evt);
+    */
+
     var viewportLoc = getViewportMouseLoc(event, $scrollingViewport);
     // Reverse the current magnification and allow for padded viewport
     return {
@@ -779,7 +795,15 @@ function refreshViz(options) {
             d3handle.append("svg:title")
                     .text(tooltip);
         });
-        //All('#viz-outer-frame .vertex-handle path, #viz-outer-frame .tree-hotspot')
+
+    /* This code activates a d3 location test in response to a custom event,
+     * but it can't return a value directly. To see this in action, uncomment
+     * both blocks marked D3_MOUSE_SENSING
+        d3.select('div.vega > svg').on('mousetest', function () {
+            console.warn( d3.mouse(this) );
+        });
+     */
+
     });
     console.warn("refreshViz() took "+ (new Date() - startTime) +" ms to complete");
 }
