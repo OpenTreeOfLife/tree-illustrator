@@ -544,18 +544,16 @@ function startDragging( event ) {
     var $hotspot = $(this).is('path') ? $(this) : $(this).find('path');
     dragHandle = $hotspot[0];
     dragHandleName = $(this).is('.tree-hotspot') ? 'hotspot' : d3.select(this).datum().name;
-    console.log(">> START DRAGGING handle ["+ dragHandleName +"]...");
-    // Track locations *relative* to the viewport, so we can drag *and* scroll as needed.
-    var $scrollingViewport = $("#viz-outer-frame").find('div.vega');
-    var mouseLoc = getIllustrationMouseLoc(event, $scrollingViewport);
-    dragStartHandleLoc = mouseLoc;
-
     // Fetch and examine the related illustration element
     var $elementGroup = $hotspot.closest('g.mark-group[class*=tree-], g.mark-group[class*=dataset-], g.mark-group[class*=ornament-]');
     var elementID = $elementGroup.attr('class').split(/\s+/)[1];
     showAccordionPanelForElement( elementID );
     dragElement = stylist.ill.getElementByID( elementID );
-    // Next we'll stash its starting properties (in illustration units)
+    // On the first mousemove, we'll stash the element's starting properties (in illustration units)
+    ///console.log(">> START DRAGGING handle ["+ dragHandleName +"]...");
+    // Track locations *relative* to the viewport, so we can drag *and* scroll as needed.
+    var $scrollingViewport = $("#viz-outer-frame").find('div.vega');
+    dragStartHandleLoc = getIllustrationMouseLoc(event, $scrollingViewport);
 }
 
 function stopDragging( callback ) {
