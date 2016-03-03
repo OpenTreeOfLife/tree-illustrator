@@ -556,11 +556,12 @@ function startDragging( event ) {
     dragStartHandleLoc = getIllustrationMouseLoc(event, $scrollingViewport);
 
     /* TEST updating handles from stored generators
+     */
     if (dragHandle) {
         if (dragHandleName === 'hotspot') {
-            // update the entire hotspot shape
+            // update the main hotspot path (passing the modified tree)
             console.log("hotspot d BEFORE:"+ d3.select(dragHandle).attr('d'));
-            d3.select(dragHandle).attr('d', phylogramTransform.hotspotGenerator());
+            d3.select(dragHandle).attr('d', phylogramTransform.hotspotGenerator( dragElement ));
             console.log("hotspot d AFTER:"+ d3.select(dragHandle).attr('d'));
         } else {
             // update just the positions of all 
@@ -569,7 +570,6 @@ function startDragging( event ) {
         console.error("No dragHandle found! How can this be?");
         debugger;
     }
-     */
 }
 
 function stopDragging( callback ) {
@@ -735,6 +735,7 @@ function getIllustrationMouseLoc(event, $scrollingViewport) {
  * (re)loading the illustration?
  */
 var vegaSpec;
+var view; // a Vega ViewComponent (use to set signals, updates, etc.)
 function refreshViz(options) {
     var startTime = new Date();
     console.warn('refreshViz() STARTING');
@@ -743,7 +744,9 @@ function refreshViz(options) {
     ill.updateVegaSpec();  // TODO: trigger updates on a more sensible basis
 
     vg.parse.spec(ill.vegaSpec, function(chart) {
-        var view = chart({el:"#viz-outer-frame", renderer:"svg"});
+        view = chart({el:"#viz-outer-frame", renderer:"svg"});
+        // export the new view
+        exports.view = view; 
         view.update();
 
         if (options.SHOW_ALL) {
@@ -2012,7 +2015,8 @@ var api = [
     'applyChosenStyleGuide',
     'enterFullScreen',
     'exitFullScreen',
-    'ill'
+    'ill',
+    'view'
 ];
 $.each(api, function(i, methodName) {
     // populate the default 'module.exports' object
