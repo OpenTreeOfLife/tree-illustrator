@@ -659,6 +659,7 @@ $(document).ready(function() {
                                         var yDistance = Math.abs( mouseLoc.y - dragStartElementProps.rootY );
                                         var hypotenuse = Math.sqrt( Math.pow(xDistance, 2) + Math.pow(yDistance, 2) );
                                         dragElement.radius( hypotenuse );
+
                                         /* Update hotspot and handle positions */
                                         // Scale the main hotspot to match the ratio of old vs. new...
                                         var oldRadius = dragStartElementProps.radius,
@@ -666,6 +667,7 @@ $(document).ready(function() {
                                             sizeChangeRatio = pendingRadius / oldRadius;
                                         var $hotspot = $handlesGroup.find('.tree-hotspot path');
                                         $hotspot.attr('transform', "scale("+ sizeChangeRatio +")");
+                                        // ... hide its border (beause scaling stroke-width is ugly)
                                         $hotspot.css('stroke-opacity', '0');
                                         // ... and move the vertex handles to match ("push" from origin) by 
                                         // modifying the datum for each, then *carefully* updating its transforms.
@@ -682,10 +684,12 @@ $(document).ready(function() {
                                             itsDatum.y = itsDatum.old_y * sizeChangeRatio;
                                         });
                                         resetActualSizeElements();
+
                                         break;
 
                                     case 'start-angle':
                                     case 'end-angle':
+                                        // These should change radius *and* arc angles
                                         console.warn('TODO: handle ['+ dragHandleName +'] is not yet implemented');
                                         break;
 
@@ -786,35 +790,18 @@ function refreshViz(options) {
         // N.B. jQuery event delegation doesn't seem to work with SVG elements!
         var $scrollingViewport = $("#viz-outer-frame").find('div.vega');
         //$scrollingViewport.delegate(".tree-hotspot", "click hover mouseover mouseout mouseenter mouseleave", function ...
-        $scrollingViewport.find('.handles')
+        $scrollingViewport.find('g.handles')
             .off('.hotspot')  // remove any prior bindings
             .on("mouseenter.hotspot", function ( event ) {
-                // Show this element's handles
-                var $hotspot = $(this).find('.tree-hotspot path');
-                $hotspot.css({
-                    'fillOpacity': "0.2",
-                    'strokeOpacity': "0.6"
-                });
-                var $handles = $(this).find('.vertex-handle path');
-                $handles.css({
-                    'fillOpacity': "1.0",
-                });
+                if (!dragElement) {
+                    var el = getIllustrationElementFromHandle(this);
+                    showElementHandles(el);
+                }
             })
             .on("mouseleave.hotspot", function ( event ) {
-                var $hotspot = $(this).find('.tree-hotspot path');
-                var hospotEl = $hotspot[0];
-                if (dragHandle === hospotEl) {
-                    //console.log(">> treeID: "+ treeID +", MOUSEOUT BUT STILL DRAGGING...");
-                } else {
-                    //console.log(">> treeID: "+ treeID +", MOUSEOUT AND DONE!");
-                    $hotspot.css({
-                        'fill-opacity': "0",
-                        'stroke-opacity': "0"
-                    });
-                    var $handles = $(this).find('.vertex-handle path');
-                    $handles.css({
-                        'fillOpacity': "0",
-                    });
+                var el = getIllustrationElementFromHandle(this);
+                if (dragElement !== el) {
+                    hideElementHandles(el);
                 }
             });
 
@@ -854,6 +841,46 @@ function refreshViz(options) {
     });
     console.warn("refreshViz() took "+ (new Date() - startTime) +" ms to complete");
 }
+function getIllustrationElementFromHandle( handle ) {
+    // Should this use assigned datum instead?
+    var $elementGroup = $(handle).closest('g.mark-group[class*=tree-], g.mark-group[class*=dataset-], g.mark-group[class*=ornament-]');
+    var elementID = $elementGroup.attr('class').split(/\s+/)[1];
+    // ASSUMES a predictable class attribute, e.g. 'group-marks tree-3'
+    return stylist.ill.getElementByID( elementID );
+}
+function getElementHandlesGroup( illElement ) {
+    // Find the SVG group holding all handles for a given IllustratedTree/etc.
+    var $elementGroup = $('div.vega svg g.illustration-elements g.mark-group[class*='+ illElement.id() +']');
+    var $handlesGroup = $elementGroup.find('g.mark-group.handles');
+    return $handlesGroup;
+}
+function showElementHandles( illElement ) {
+    // Show all handles for a given IllustratedTree/etc.
+    var $handlesGroup = getElementHandlesGroup( illElement );
+    var $hotspot = $handlesGroup.find('.tree-hotspot path');
+    $hotspot.css({
+        'fillOpacity': "0.2",
+        'strokeOpacity': "0.6"
+    });
+    var $handles = $handlesGroup.find('.vertex-handle path');
+    $handles.css({
+        'fillOpacity': "1.0",
+    });
+}
+function hideElementHandles( illElement ) {
+    // Hide all handles for a given IllustratedTree/etc.
+    var $handlesGroup = getElementHandlesGroup( illElement );
+    var $hotspot = $handlesGroup.find('.tree-hotspot path');
+    $hotspot.css({
+        'fillOpacity': "0",
+        'strokeOpacity': "0"
+    });
+    var $handles = $handlesGroup.find('.vertex-handle path');
+    $handles.css({
+        'fillOpacity': "0",
+    });
+}
+
 
 var ill;  
 
