@@ -659,7 +659,34 @@ $(document).ready(function() {
                                         var yDistance = Math.abs( mouseLoc.y - dragStartElementProps.rootY );
                                         var hypotenuse = Math.sqrt( Math.pow(xDistance, 2) + Math.pow(yDistance, 2) );
                                         dragElement.radius( hypotenuse );
-                                        // TODO: Update hotspot and handle positions!
+                                        /* Update hotspot and handle positions */
+                                        // Scale the main hotspot to match the ratio of old vs. new...
+                                        var oldRadius = dragStartElementProps.radius,
+                                            pendingRadius = dragElement.radius(),  // reflect active constraints!
+                                            sizeChangeRatio = pendingRadius / oldRadius;
+                                        var $hotspot = $handlesGroup.find('.tree-hotspot path');
+                                        $hotspot.attr('transform', "scale("+ sizeChangeRatio +")");
+                                        $hotspot.css('stroke-opacity', '0');
+                                        // ... and move the vertex handles to match ("push" from origin) by 
+                                        // modifying the datum for each, then *carefully* updating its transforms.
+                                        var $vertexHandles = $handlesGroup.find('.vertex-handle path');
+                                        $vertexHandles.each(function(i, path) {
+                                            var d3el = d3.select(path);
+                                            var itsDatum = d3el.datum().datum;
+                                            if (!('old_x' in itsDatum)) {
+                                                // stash original value (once only)
+                                                itsDatum.old_x = itsDatum.x || 0;
+                                                itsDatum.old_y = itsDatum.y || 0;
+                                            }
+                                            itsDatum.x = itsDatum.old_x * sizeChangeRatio;
+                                            itsDatum.y = itsDatum.old_y * sizeChangeRatio;
+                                        });
+                                        resetActualSizeElements();
+                                        break;
+
+                                    case 'start-angle':
+                                    case 'end-angle':
+                                        console.warn('TODO: handle ['+ dragHandleName +'] is not yet implemented');
                                         break;
 
                                     default:
@@ -1081,14 +1108,7 @@ function initTreeIllustratorWindow() {
     // adjust viewport/viewbox to reflect current magnification (display_ppi)
     updateViewportViewbox( $scrollingViewport );
 
-    /* Resize any actual-sizes elements (e.g. manipulation handles) in the viewport.
-     * N.B. We do this by inverting the current viewport magnification. Sneaky!
-     */
-    var actualSizeElements = d3.selectAll('#viz-outer-frame .actual-size path');
-    actualSizeElements.attr("transform", function(d) {
-        // We use the datum from phylogram model, e.g. vertexHandles[0]
-        return "translate("+ (d.datum.x || 0) +","+ (d.datum.y || 0) +") scale("+ (1 / viewportMagnification) +")";
-    });
+    resetActualSizeElements();
 
     // sync scrolling of rulers to viewport
     //TODO: delegate these for one-time call!
@@ -1130,6 +1150,17 @@ function initTreeIllustratorWindow() {
     drawRuler(leftRuler, 'VERTICAL', ill.style.printSize.units(), leftRulerScale);
 
     enableViewportMask();
+}
+
+function resetActualSizeElements() {
+    /* Resize any actual-sizes elements (e.g. manipulation handles) in the viewport.
+     * N.B. We do this by inverting the current viewport magnification. Sneaky!
+     */
+    var actualSizeElements = d3.selectAll('#viz-outer-frame .actual-size path');
+    actualSizeElements.attr("transform", function(d) {
+        // We use the datum from phylogram model, e.g. vertexHandles[0]
+        return "translate("+ (d.datum.x || 0) +","+ (d.datum.y || 0) +") scale("+ (1 / viewportMagnification) +")";
+    });
 }
 
 function roundToNearest( interval, input ) {
