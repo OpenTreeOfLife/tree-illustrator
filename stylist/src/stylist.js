@@ -735,6 +735,7 @@ function getIllustrationMouseLoc(event, $scrollingViewport) {
  * (re)loading the illustration?
  */
 var vegaSpec;
+var view; // a Vega ViewComponent (use to set signals, updates, etc.)
 function refreshViz(options) {
     var startTime = new Date();
     console.warn('refreshViz() STARTING');
@@ -743,7 +744,9 @@ function refreshViz(options) {
     ill.updateVegaSpec();  // TODO: trigger updates on a more sensible basis
 
     vg.parse.spec(ill.vegaSpec, function(chart) {
-        var view = chart({el:"#viz-outer-frame", renderer:"svg"});
+        view = chart({el:"#viz-outer-frame", renderer:"svg"});
+        // export the new view
+        exports.view = view;
         view.update();
 
         if (options.SHOW_ALL) {
@@ -2012,7 +2015,8 @@ var api = [
     'applyChosenStyleGuide',
     'enterFullScreen',
     'exitFullScreen',
-    'ill'
+    'ill',
+    'view'
 ];
 $.each(api, function(i, methodName) {
     // populate the default 'module.exports' object
