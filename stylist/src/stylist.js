@@ -11,6 +11,7 @@ var $ = require('jquery'),
     pluckTransform = require('./vg.data.pluck.js');
     nexsonTransform = require('./vg.data.nexson.js');
     phylogramTransform = require('./vg.data.phylogram.js');
+    assert = require('assert');
 
 // expose TreeIllustrator to JS in the main UI 
 global.TreeIllustrator = TreeIllustrator;
@@ -527,6 +528,289 @@ function showStyleGuidePicker() {
     });
 }
 
+/* General support for direct-manipulation ops (esp. to track dragging with the mouse) */
+var dragHandle = null,  // the handle (HTML/SVG element) being dragged, if any
+    dragHandleName = null;
+    dragStartHandleLoc = null,  // replace with {x:<Number>, y:<Number>}, in screen px; reset to null when done
+    dragElement = null, // the Illustration element (eg, IllustratedTree) affected, if any
+    dragStartElementProps = null, // related properties of the target element (XY coords, angles, etc.)
+    dragCurrentHandleDelta = null;  // cumulative change in X/Y, in screen px; same format as dragStartHandleLoc above
+
+function startDragging( event ) {
+    /* Initiate sensible dragging behavior for the current handle and target
+     * element.  See *which* hotspot this is to determine correct behavior with
+     * the current tree. Key decisions will persist in the vars defined above.
+     */
+    var $hotspot = $(this).is('path') ? $(this) : $(this).find('path');
+    dragHandle = $hotspot[0];
+    dragHandleName = $(this).is('.tree-hotspot') ? 'hotspot' : d3.select(this).datum().name;
+    // Fetch and examine the related illustration element
+    var $elementGroup = $hotspot.closest('g.mark-group[class*=tree-], g.mark-group[class*=dataset-], g.mark-group[class*=ornament-]');
+    var elementID = $elementGroup.attr('class').split(/\s+/)[1];
+    showAccordionPanelForElement( elementID );
+    dragElement = stylist.ill.getElementByID( elementID );
+    // On the first mousemove, we'll stash the element's starting properties (in illustration units)
+    ///console.log(">> START DRAGGING handle ["+ dragHandleName +"]...");
+    // Track locations *relative* to the viewport, so we can drag *and* scroll as needed.
+    var $scrollingViewport = $("#viz-outer-frame").find('div.vega');
+    dragStartHandleLoc = getIllustrationMouseLoc(event, $scrollingViewport);
+
+    /* TEST updating handles from stored generators
+    if (dragHandle) {
+        if (dragHandleName === 'hotspot') {
+            // update the entire hotspot shape
+            console.log("hotspot d BEFORE:"+ d3.select(dragHandle).attr('d'));
+            d3.select(dragHandle).attr('d', phylogramTransform.hotspotGenerator());
+            console.log("hotspot d AFTER:"+ d3.select(dragHandle).attr('d'));
+        } else {
+            // update just the positions of all 
+        }
+    } else {
+        console.error("No dragHandle found! How can this be?");
+        debugger;
+    }
+     */
+}
+
+function stopDragging( callback ) {
+    console.warn("<<<< stopDragging");
+    if (typeof(callback) === 'function') {
+        //callback(dragHandle, dragElement, ... );
+        callback();
+    }
+    dragHandle = null;
+    dragHandleName = null;
+    dragElement = null;
+    dragStartHandleLoc = null;
+    dragStartElementProps = null;
+    dragCurrentHandleDelta = null;
+}
+
+$(document).ready(function() {
+    $('body').on("mouseup click mouseleave", function ( event ) {
+        if (dragHandle) {
+            stopDragging(refreshViz);
+        }
+    });
+    $('body').on("mousemove", function ( event ) {
+        if (dragHandle) {
+            /* Check target element's type and sub-type (eg, a circular tree) and
+             * the active handle name. These will dictate the dragging behavior
+             * and initialize dragStartElementProps if it's null or empty.
+             */
+            var $handle = $(dragHandle);
+            var $handlesGroup = $handle.closest('g.mark-group.handles');
+            // Track locations *relative* to the viewport, so we can drag *and* scroll as needed.
+            var $scrollingViewport = $("#viz-outer-frame").find('div.vega');
+            var mouseLoc = getIllustrationMouseLoc(event, $scrollingViewport);
+            dragCurrentHandleDelta = {
+                x: (mouseLoc.x - dragStartHandleLoc.x),
+                y: (mouseLoc.y - dragStartHandleLoc.y)
+            }
+
+            if (dragElement instanceof TreeIllustrator.IllustratedTree) {
+                // determine behavior by specific handles and (perhaps) tree layouts
+                switch(dragHandleName) {
+                    case 'center':
+                    case 'hotspot':
+                        // drag to move (translate) the entire tree on the page
+                        if (!dragStartElementProps) {
+                            dragStartElementProps = { x: dragElement.rootX(), y: dragElement.rootY() };
+                        }
+                        /* Update the element's rootX and rootY properties.
+                         * N.B. this will update the visible UI, but not the viewport!
+                         *
+                         * For now, this is a direct translation of handle motion to element motion.
+                         * TODO: Use constraints to enforce min. sizes, etc. (by tweaking its physicalRootX/Y instead?)
+                         */
+                        var dragElementToX = dragStartElementProps.x + dragCurrentHandleDelta.x;
+                        var dragElementToY = dragStartElementProps.y + dragCurrentHandleDelta.y;
+                        //var physicalX = stylist.pixelsToPhysicalUnits(dragToX, stylist.display_ppi);
+                        dragElement.rootX( dragElementToX );
+                        dragElement.rootY( dragElementToY );
+                        // Move *all* handles, not just the main hotspot (no need to redraw or further adjust these)
+                        $handlesGroup.attr('transform', "translate("+ dragCurrentHandleDelta.x +","+ dragCurrentHandleDelta.y +")");
+                        break;
+
+                    default:
+                        // other handles have different behavior based on tree layout
+                        switch(dragElement.layout()) {
+                            case TreeIllustrator.treeLayouts.TRIANGLE:
+                            case TreeIllustrator.treeLayouts.RECTANGLE:
+                                /* All vertex handles scale the tree (relative to the root node)
+                                 * N.B. that we pay close attention to the *current* extents in the
+                                 * viewport, since the rectangular layout has a bounding box that
+                                 * depends on the structure and branching patterns of each tree
+                                 */
+                                if (!dragStartElementProps) {
+                                    dragStartElementProps = { rootX: dragElement.rootX(), rootY: dragElement.rootY(),
+                                                              width: dragElement.width(), height: dragElement.height() };
+                                }
+                                // Reckon new width and height as a ratio vs. the original.
+                                var newWidth,
+                                    oldWidth,
+                                    xScale,
+                                    newHeight,
+                                    oldHeight,
+                                    yscale;
+                                newWidth = Math.abs(mouseLoc.x - dragStartElementProps.rootX);
+                                oldWidth = Math.abs(dragStartHandleLoc.x - dragStartElementProps.rootX);
+                                xScale = newWidth / oldWidth;
+
+                                // reckon proportional share of width for this handle
+                                newHeight = Math.abs(mouseLoc.y - dragStartElementProps.rootY);
+                                oldHeight = Math.abs(dragStartHandleLoc.y - dragStartElementProps.rootY);
+                                yScale = newHeight / oldHeight;
+
+                                /* TODO: Restrict to min. dimensions, OR handle crossing the origin by
+                                 *      - if they swap the two vertex handles, they should switch proportions
+                                 *      - if they pass the root node, "flip" the tree's tipsAlignment
+                                 *
+                                console.warn(">>> tips on the "+ dragElement.tipsAlignment());
+                                switch(dragElement.tipsAlignment) {
+                                    case 'TOP':
+                                        break;
+                                    case 'RIGHT':
+                                        break;
+                                    case 'BOTTOM':
+                                        break;
+                                    case 'LEFT':
+                                        break;
+                                }
+                                */
+
+                                dragElement.width( dragStartElementProps.width * xScale );
+                                console.log("yScale: "+ yScale);
+                                dragElement.height( dragStartElementProps.height * yScale );
+
+                                /* Update hotspot and handle positions */
+                                // Scale the main hotspot to match the ratios of old vs. new...
+                                var $hotspot = $handlesGroup.find('.tree-hotspot path');
+                                $hotspot.attr('transform', "scale("+ xScale +","+ yScale +")");
+                                // ... hide its border (beause scaling stroke-width is ugly)
+                                $hotspot.css('stroke-opacity', '0');
+                                // ... and move the vertex handles to match ("push" from origin) by 
+                                // modifying the datum for each, then *carefully* updating its transforms.
+                                var $vertexHandles = $handlesGroup.find('.vertex-handle path');
+                                $vertexHandles.each(function(i, path) {
+                                    var d3el = d3.select(path);
+                                    var itsDatum = d3el.datum().datum;
+                                    if (!('old_x' in itsDatum)) {
+                                        // stash original value (once only)
+                                        itsDatum.old_x = itsDatum.x || 0;
+                                        itsDatum.old_y = itsDatum.y || 0;
+                                    }
+                                    itsDatum.x = itsDatum.old_x * xScale;
+                                    itsDatum.y = itsDatum.old_y * yScale;
+                                });
+                                resetActualSizeElements();
+
+                                break;
+
+                            case TreeIllustrator.treeLayouts.CIRCLE:
+                                switch(dragHandleName) {
+                                    case 'radius':
+                                        // track original and new radius
+                                        if (!dragStartElementProps) {
+                                            dragStartElementProps = { rootX: dragElement.rootX(), rootY: dragElement.rootY(), radius: dragElement.radius() };
+                                        }
+                                        /* Ignore dragCurrentHandleDelta; just reckon current mouseLoc in viewport
+                                         * (illustration) coordinates and measure the distance from the root node.
+                                         */
+                                        var xDistance = Math.abs( mouseLoc.x - dragStartElementProps.rootX );
+                                        var yDistance = Math.abs( mouseLoc.y - dragStartElementProps.rootY );
+                                        var hypotenuse = Math.sqrt( Math.pow(xDistance, 2) + Math.pow(yDistance, 2) );
+                                        dragElement.radius( hypotenuse );
+
+                                        /* Update hotspot and handle positions */
+                                        // Scale the main hotspot to match the ratio of old vs. new...
+                                        var oldRadius = dragStartElementProps.radius,
+                                            pendingRadius = dragElement.radius(),  // reflect active constraints!
+                                            sizeChangeRatio = pendingRadius / oldRadius;
+                                        var $hotspot = $handlesGroup.find('.tree-hotspot path');
+                                        $hotspot.attr('transform', "scale("+ sizeChangeRatio +")");
+                                        // ... hide its border (beause scaling stroke-width is ugly)
+                                        $hotspot.css('stroke-opacity', '0');
+                                        // ... and move the vertex handles to match ("push" from origin) by 
+                                        // modifying the datum for each, then *carefully* updating its transforms.
+                                        var $vertexHandles = $handlesGroup.find('.vertex-handle path');
+                                        $vertexHandles.each(function(i, path) {
+                                            var d3el = d3.select(path);
+                                            var itsDatum = d3el.datum().datum;
+                                            if (!('old_x' in itsDatum)) {
+                                                // stash original value (once only)
+                                                itsDatum.old_x = itsDatum.x || 0;
+                                                itsDatum.old_y = itsDatum.y || 0;
+                                            }
+                                            itsDatum.x = itsDatum.old_x * sizeChangeRatio;
+                                            itsDatum.y = itsDatum.old_y * sizeChangeRatio;
+                                        });
+                                        resetActualSizeElements();
+
+                                        break;
+
+                                    case 'start-angle':
+                                    case 'end-angle':
+                                        // These should change radius *and* arc angles
+                                        console.warn('TODO: handle ['+ dragHandleName +'] is not yet implemented');
+                                        break;
+
+                                    default:
+                                        console.error('Unknown drag handle ['+ dragHandleName +']');
+                                        return;
+                                }
+                                break;
+                        }
+                }
+            /*
+            ... else if (dragElement instanceof TreeIllustrator.SupportingDataset) {
+                // TODO
+            } else if (dragElement instanceof TreeIllustrator.Ornament) {
+                // TODO
+            */
+            } else {
+                console.error("drag logic: unexpected element type: '"+ dragElement.metadata.type() +"'!");
+                return;
+            }
+
+        }
+    });
+});
+
+function getViewportMouseLoc(event, $scrollingViewport) {
+    // Reckon mouse position as display px, relative to the SVG viewport
+    var vpOffset = $scrollingViewport.offset();
+    return {
+        x: (event.pageX - vpOffset.left + $scrollingViewport.scrollLeft()),
+        y: (event.pageY - vpOffset.top + $scrollingViewport.scrollTop())
+    };
+}
+function getIllustrationMouseLoc(event, $scrollingViewport) {
+    /* Reckon mouse position in the illustration's SVG coordinates.
+     * N.B. that d3 provides an easy method for this, but it can't be called
+     * except within a (d3) event handler on the SVG element itself.
+     *   https://github.com/mbostock/d3/blob/master/src/event/mouse.js
+     *   http://stackoverflow.com/a/27434285
+     * FAILS HERE: console.error( d3.mouse(d3.select('div.vega > svg')) );
+     */
+    /* This code invokes the d3 location test, but can't return a value directly.
+       To see it in action, uncomment both blocks marked D3_MOUSE_SENSING
+    var evt = document.createEvent ("MouseEvent");
+    evt.initMouseEvent("mousetest", true, true, window, 0,
+                       event.screenX, event.screenY, event.clientX, event.clientY,
+                       event.ctrlKey, event.altKey, event.shiftKey, event.metaKey,
+                       0, null);
+    $('div.vega > svg')[0].dispatchEvent(evt);
+    */
+
+    var viewportLoc = getViewportMouseLoc(event, $scrollingViewport);
+    // Reverse the current magnification and allow for padded viewport
+    return {
+        x: (viewportLoc.x / viewportMagnification) + viewbox.x,
+        y: (viewportLoc.y / viewportMagnification) + viewbox.y
+    };
+}
+
 /* The current Vega spec is generated using the chosen style (above) and 
  * the illustration source and decisions made in the web UI. When the
  * illustration is saved, the latest can also be embedded. Or perhaps we should
@@ -534,14 +818,18 @@ function showStyleGuidePicker() {
  * (re)loading the illustration?
  */
 var vegaSpec;
+var view; // a Vega ViewComponent (use to set signals, updates, etc.)
 function refreshViz(options) {
-console.warn('refreshViz() STARTING');
+    var startTime = new Date();
+    console.warn('refreshViz() STARTING');
     if (!options) options = {}; 
 
     ill.updateVegaSpec();  // TODO: trigger updates on a more sensible basis
 
     vg.parse.spec(ill.vegaSpec, function(chart) {
-        var view = chart({el:"#viz-outer-frame", renderer:"svg"});
+        view = chart({el:"#viz-outer-frame", renderer:"svg"});
+        // export the new view
+        exports.view = view;
         view.update();
 
         if (options.SHOW_ALL) {
@@ -554,34 +842,97 @@ console.warn('refreshViz() STARTING');
         // N.B. jQuery event delegation doesn't seem to work with SVG elements!
         var $scrollingViewport = $("#viz-outer-frame").find('div.vega');
         //$scrollingViewport.delegate(".tree-hotspot", "click hover mouseover mouseout mouseenter mouseleave", function ...
-        $scrollingViewport.find('.tree-hotspot')
+        $scrollingViewport.find('g.handles')
             .off('.hotspot')  // remove any prior bindings
-            .on("mouseenter.hotspot mouseleave.hotspot click.hotspot", function ( event ) {
-                var $hotspot = $(this).find('path');
-                var $treeGroup = $hotspot.closest('g.mark-group[class*=tree-]');
-                var treeID = $treeGroup.attr('class').split(/\s+/)[1];
-                console.log(">> treeID: "+ treeID +", event: "+ event.type);
-                //TODO: var treeElement = 
-                switch(event.type) {
-                    case 'click':
-                        break;
-                    case 'mouseenter':
-                        $hotspot.css({
-                            'fillOpacity': "0.2",
-                            'strokeOpacity': "0.6"
-                        });
-                        break;
-                    case 'mouseleave':
-                        $hotspot.css({
-                            'fill-opacity': "0", 
-                            'stroke-opacity': "0"
-                        });
-                        break;
+            .on("mouseenter.hotspot", function ( event ) {
+                if (!dragElement) {
+                    var el = getIllustrationElementFromHandle(this);
+                    showElementHandles(el);
                 }
             })
+            .on("mouseleave.hotspot", function ( event ) {
+                var el = getIllustrationElementFromHandle(this);
+                if (dragElement !== el) {
+                    hideElementHandles(el);
+                }
+            });
+
+        // We can't add proper IDs for vertex handles, but startDragging will adapt
+        var allHandles = $scrollingViewport.find('.tree-hotspot, .handles .vertex-handle path')
+            .css('cursor','move')
+            .off('.hotspot')  // remove any prior bindings
+            //.on("mouseenter.hotspot mouseleave.hotspot mousedown.hotspot mouseup.hotspot click.hotspot mousemove.hotspot", function ( event ) {
+            .on("mousedown.hotspot", startDragging);
+
+        // Add SVG 'title' elements to provide tool-tips for all hotspots
+        $.each(allHandles, function(i, h) {
+            // extract and display its description as a tooltip
+            var $handle = $(this);
+            var d3handle = d3.select(this);
+            var tooltip = "TODO: Add a tooltip for this handle!";
+            if (d3handle.datum()) {
+                tooltip = d3handle.datum().tooltip;
+            } else {
+                // Some handles (esp. hotspots) don't have data
+                if ($handle.is('.tree-hotspot')) {
+                    tooltip = "Drag to move this tree on the page.";
+                }
+            }
+            d3handle.append("svg:title")
+                    .text(tooltip);
+        });
+
+    /* This code activates a d3 location test in response to a custom event,
+     * but it can't return a value directly. To see this in action, uncomment
+     * both blocks marked D3_MOUSE_SENSING
+        d3.select('div.vega > svg').on('mousetest', function () {
+            console.warn( d3.mouse(this) );
+        });
+     */
 
     });
+    console.warn("refreshViz() took "+ (new Date() - startTime) +" ms to complete");
 }
+function getIllustrationElementFromHandle( handle ) {
+    // Should this use assigned datum instead?
+    var $elementGroup = $(handle).closest('g.mark-group[class*=tree-], g.mark-group[class*=dataset-], g.mark-group[class*=ornament-]');
+    var elementID = $elementGroup.attr('class').split(/\s+/)[1];
+    // ASSUMES a predictable class attribute, e.g. 'group-marks tree-3'
+    return stylist.ill.getElementByID( elementID );
+}
+function getElementHandlesGroup( illElement ) {
+    // Find the SVG group holding all handles for a given IllustratedTree/etc.
+    var $elementGroup = $('div.vega svg g.illustration-elements g.mark-group[class*='+ illElement.id() +']');
+    var $handlesGroup = $elementGroup.find('g.mark-group.handles');
+    return $handlesGroup;
+}
+function showElementHandles( illElement ) {
+    // Show all handles for a given IllustratedTree/etc.
+    var $handlesGroup = getElementHandlesGroup( illElement );
+    var $hotspot = $handlesGroup.find('.tree-hotspot path');
+    $hotspot.css({
+        'fillOpacity': "0.2",
+        'strokeOpacity': "0.6"
+    });
+    var $handles = $handlesGroup.find('.vertex-handle path');
+    $handles.css({
+        'fillOpacity': "1.0",
+    });
+}
+function hideElementHandles( illElement ) {
+    // Hide all handles for a given IllustratedTree/etc.
+    var $handlesGroup = getElementHandlesGroup( illElement );
+    var $hotspot = $handlesGroup.find('.tree-hotspot path');
+    $hotspot.css({
+        'fillOpacity': "0",
+        'strokeOpacity': "0"
+    });
+    var $handles = $handlesGroup.find('.vertex-handle path');
+    $handles.css({
+        'fillOpacity': "0",
+    });
+}
+
 
 var ill;  
 
@@ -836,6 +1187,8 @@ function initTreeIllustratorWindow() {
     // adjust viewport/viewbox to reflect current magnification (display_ppi)
     updateViewportViewbox( $scrollingViewport );
 
+    resetActualSizeElements();
+
     // sync scrolling of rulers to viewport
     //TODO: delegate these for one-time call!
     $scrollingViewport.off('scroll').on('scroll', function() {
@@ -874,8 +1227,19 @@ function initTreeIllustratorWindow() {
         .attr("width", rulerWidth+"px")
         .attr("height", viewportHeight+"px");
     drawRuler(leftRuler, 'VERTICAL', ill.style.printSize.units(), leftRulerScale);
-    
+
     enableViewportMask();
+}
+
+function resetActualSizeElements() {
+    /* Resize any actual-sizes elements (e.g. manipulation handles) in the viewport.
+     * N.B. We do this by inverting the current viewport magnification. Sneaky!
+     */
+    var actualSizeElements = d3.selectAll('#viz-outer-frame .actual-size path');
+    actualSizeElements.attr("transform", function(d) {
+        // We use the datum from phylogram model, e.g. vertexHandles[0]
+        return "translate("+ (d.datum.x || 0) +","+ (d.datum.y || 0) +") scale("+ (1 / viewportMagnification) +")";
+    });
 }
 
 function roundToNearest( interval, input ) {
@@ -1030,6 +1394,52 @@ function zoomViewport( directionOrZoomLevel ) {
     // TODO: update scrollTop, scrollLeft to stay in place?
 
     initTreeIllustratorWindow();
+}
+
+/* Manage handles (embed/remove SVG) for direct manipulation of trees, etc.
+ * CURRENTLY UNUSED! in favor of "inline" handles for each element.
+ */
+function addElementHandles() {
+    // CURRENTLY UNUSED
+    var viewportSVG = d3.selectAll("#viz-outer-frame div.vega svg");
+    if (viewportSVG.empty()) {
+        console.warn("addElementHandles(): viewport SVG not found!");
+        return null;
+    }
+    if (viewportSVG.selectAll("#handles").empty()) {
+        // create a linked instance of handles
+        viewportSVG.insert('use', 'svg > g')
+                .attr('id', 'handles')
+                .attr('xlink:href', '#manipulation-handles');
+    }
+    // TODO: clear and (re)build handles for all active elements?
+}
+function removeElementHandles() {
+    // CURRENTLY UNUSED
+    var viewportSVG = d3.selectAll("#viz-outer-frame div.vega svg");
+    viewportSVG.selectAll("#handles").remove();
+}
+
+/* Convert between internal viewport coordinates and handle overlay (a second
+ * SVG with UI for direct manipulation of trees, etc.)
+ */
+function internalUnitsToOverlayPixels( coords ) {
+    console.log("display_ppi: "+ display_ppi);
+    assert((('x' in coords) && ('y' in coords)),
+           "Incoming object should include 'x' and 'y' properties.");
+    return {
+        x: coords.x * display_ppi,
+        y: coords.y * display_ppi 
+    };
+}
+function overlayPixelsToInternalUnits(coords) {
+    console.log("display_ppi: "+ display_ppi);
+    assert((('x' in coords) && ('y' in coords)),
+           "Incoming object should include 'x' and 'y' properties.");
+    return {
+        x: coords.x / display_ppi,
+        y: coords.y / display_ppi 
+    };
 }
 
 function resizeViewportToShowAll() {
@@ -1498,6 +1908,31 @@ function hideAccordionHint(e) {
         .find("i.help-rollover")
         .hide();
 }
+function showAccordionPanel( panelID ) {
+    /* Drive the sidebar UI to show a particular section on demand, 
+     * e.g. show a tree's properties when user clicks on it in viz.
+     */
+    var $chosenPanel = $(panelID);
+    if ($chosenPanel.length === 0) {
+        console.error('showAccordionPanel(): No such panel as '+ panelID);
+        return;
+    }
+    if ($chosenPanel.hasClass('in')) {
+        // It's already open; don't toggle it shut!
+    } else {
+        // Toggle to show this panel; use API vs. a simulated click, which can stop dragging!
+        // Close other panels (these are "sticky" for some reason)
+        $chosenPanel.closest('.accordion').find('.collapse.in')
+            .collapse('hide');
+        $chosenPanel.collapse('show');
+    }
+    // TODO: show sidecar in all cases?
+}
+function showAccordionPanelForElement( elementID ) {
+    var panelID = '#ti-panel-'+ elementID;
+    showAccordionPanel( panelID );
+}
+
 $(document).ready(function() {
     $('#ti-main-accordion .panel-body').on('shown', accordionPanelShown);
     $('#ti-main-accordion .panel-body').on('hidden', accordionPanelHidden);
@@ -1677,16 +2112,21 @@ var api = [
     'browser_ppi',
     'internal_ppi',
     'display_ppi',
+    'internalUnitsToOverlayPixels',
+    'overlayPixelsToInternalUnits',
     'availableTrees',
     'zoomViewport',
     'printIllustration',
     'resizeViewportToShowAll',
     'availableStyleGuides',
     'showStyleGuidePicker',
+    'showAccordionPanel',
+    'showAccordionPanelForElement',
     'applyChosenStyleGuide',
     'enterFullScreen',
     'exitFullScreen',
-    'ill'
+    'ill',
+    'view'
 ];
 $.each(api, function(i, methodName) {
     // populate the default 'module.exports' object

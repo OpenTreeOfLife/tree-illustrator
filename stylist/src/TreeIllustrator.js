@@ -371,6 +371,18 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
 
         /* define PUBLIC variables (and privileged methods) with 'self' */
 
+        self.getElementByID = function( elementID ) {
+            // return an element (eg, an IllustratedTree), or null if not found
+            var foundElement = null;
+            $.each(self.elements(), function(i, el) {
+                if (el.id() === elementID) {
+                    foundElement = el;
+                    return false;
+                }
+            });
+            return foundElement;
+        }
+
         self.getNextAvailableID = function( elementType ) {
             // creates a serial ID like 'dataset-4' or 'tree-12'
             var readyID = nextAvailableID[ elementType ];
@@ -587,7 +599,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     self.removeOrnament(el);
                 }
             } else {
-                console.error("confirmRemoveElement(): unexpeced element type: '"+ el.metadata.type() +"'!");
+                console.error("confirmRemoveElement(): unexpected element type: '"+ el.metadata.type() +"'!");
                 return;
             }
         }
@@ -1102,28 +1114,64 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                                 ]
                             } /* end of grouped node+label */ 
                             ,
-                            {  /* hotspot for direct manipulation of the tree */
-                                "name": "tree-hotspot",
-                                "type": "path",
-                                "from": {
-                                    "data": dataSourceName,
-                                    "transform": [
-                                        {"type":"pluck", "field":"hotspot" }
-                                    ]
-                                },
-                                "properties": {
-                                    "update": {
-                                        "path": {"field": "path"},
-                                        "stroke": {"value": "#0f0"},
-                                        "strokeWidth": {"value": "1px"},
-                                        "strokeOpacity": {"value": "0.0"},
-                                        "fill": {"value": "#0f0"},
-                                        "fillOpacity": {"value": "0.0"}
+                            {   /* group tree hotspot and handles */
+                                "type":"group",
+                                "name": "handles",
+                                "marks":[
+                                    {  /* hotspot for direct manipulation of the tree */
+                                        "name": "tree-hotspot",
+                                        "type": "path",
+                                        "from": {
+                                            "data": dataSourceName,
+                                            "transform": [
+                                                {"type":"pluck", "field":"hotspot" }
+                                            ]
+                                        },
+                                        "properties": {
+                                            "update": {
+                                                "path": {"field": "path"},  // TODO: Can we make this dynamic, perhaps a callable?
+                                                "stroke": {"value": "#0f0"},
+                                                "strokeWidth": {"value": "1px"},
+                                                "strokeOpacity": {"value": "0.0"},
+                                                "fill": {"value": "#0f0"},
+                                                "fillOpacity": {"value": "0.0"}
+                                            },
+                                            "hover": {
+                                                //"opacity": {"value": "0.1"}
+                                            }
+                                        }
                                     },
-                                    "hover": {
-                                        //"opacity": {"value": "0.1"}
+                                    {  /* corner handles for size and angle adjustments */
+                                        "name": "vertex-handle actual-size",
+                                        "type": "symbol",
+                                        "from": {
+                                            "data": dataSourceName,
+                                            "transform": [
+                                              {"type":"pluck", "field":"vertexHandles" }
+                                            ]
+                                        },
+                                        "properties": {
+                                            "enter": {
+                                                "name": {"field":"name"},  /* assigned to datum, not to mark! */
+                                                "tooltip": {"field":"tooltip"},  /* assigned to datum, not to mark! */
+                                                "shape": {"field": "shape"}, /* default shape is "circle" */
+                                                "size": {"field": "size"},
+                                                "fill": {"value": "#0c0"},
+                                                "fillOpacity": {"value": "0.0"},
+                                                "stroke": {"value": "#f00"},
+                                                "strokeWidth": {"value": "6"},  /* hidden hit area */
+                                                "strokeOpacity": {"value": "0.0"}
+                                            },
+                                            "update": {
+                                                "x": {"field": "x"},
+                                                "y": {"field": "y"},
+                                            },
+                                            "hover": {
+                                                //"opacity": {"value": "0.1"}
+                                            }
+                                        }
                                     }
-                                }
+                                 ]
                             }
                         ] /* end of inner group marks */
                     }; /* end of inner group */
@@ -1137,7 +1185,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     console.log("updateVegaSpec(): ignoring ornaments for now");
 
                 } else {
-                    console.error("updateVegaSpec(): unexpeced element type: '"+ el.metadata.type() +"'!");
+                    console.error("updateVegaSpec(): unexpected element type: '"+ el.metadata.type() +"'!");
                 }
             });
 
@@ -1188,6 +1236,9 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
 
         // Add validation for fields that need it
         self.metadata.name.extend({required: true});
+
+        // capture hotspot and handle logic?
+        self.hotspot = data.hotspot;
 
         // TODO: Based on the element type, offer appropriate styles and constraints
         // TODO: Include options to map selected data to visual style

@@ -91,12 +91,20 @@ body {
     overflow: visible; /* don't hide viewport scrollbars */
     height: 85%; /* JS will adjust this on resize */
 }
-#viz-outer-frame div.vega {
+#viz-outer-frame #handles {
+    /* this should match the size+position of the main viz-frame */
+    position: absolute;
+    z-index: 1000;
     width: 100%;
+    height: 100%;
+    background-color: rgba(255,0,0,0.05);
+}
+#viz-outer-frame div.vega {
+    float: left;
+    width: 100%;
+    height: 100%;
     border: 1px solid #ddd;
     margin: -1px;
-    float: left;
-    height: 100%;
     overflow: scroll;
     /* initial styles */
     margin-right: -16px;
@@ -131,7 +139,6 @@ body {
 #viz-outer-frame.hide-rulers #fixed-ruler-left {
     display: none;
 }
-
 #fixed-ruler-top {
     width: 100%;
     float: left; 
@@ -173,6 +180,18 @@ g.outer-axis text {
     overflow: auto;
     margin-right: -35px;
     margin-bottom: -35px;
+}
+
+/* Block text selection, e.g. in SVG viewport */
+svg, 
+.noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none;   /* Chrome/Safari/Opera */
+  -khtml-user-select: none;    /* Konqueror */
+  -moz-user-select: none;      /* Firefox */
+  -ms-user-select: none;       /* IE/Edge */
+  user-select: none;           /* non-prefixed version, currently
+                                  not supported by any browser */
 }
 
 /*  

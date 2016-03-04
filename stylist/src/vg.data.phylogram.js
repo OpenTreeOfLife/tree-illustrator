@@ -378,12 +378,87 @@ prototype.buildPhylogram = function(data) {
                   return "M -50,-50 L -50,50, L 50,50, L 50,-50 Z";
           }
       }
+      /* Generate a series of vertex handles based on layout and dimensions.
+       * (These are also used to respond to mouse actions, etc. while editing.)
+       */
+      var handleGenerator = function() {
+          var handles = [ ];
+          var moveHandleTip = "Drag to move this tree on the page.";
+          var resizeHandleTip = "Drag to change width and height";
+          switch(layout) {
+              case 'cartesian':
+              case 'cladogram':
+                  // These use just two handles on "opposite" corners from the root node.
+                  handles.push({ name: 'center', x: 0, y: 0, shape: 'diamond', size: 120,
+                                 tooltip: moveHandleTip });
+                  var extents = getBoundingBoxFromPoints( data.phyloNodes );
+                  switch(tipsAlignment) {
+                    case 'TOP':
+                      handles.push({ name: 'top-left', x: extents.minX, y: extents.minY,
+                                     tooltip: resizeHandleTip });
+                      handles.push({ name: 'top-right', x: extents.maxX, y: extents.minY,
+                                     tooltip: resizeHandleTip });
+                      break;
+                    case 'RIGHT':
+                      handles.push({ name: 'top-right', x: extents.maxX, y: extents.minY,
+                                     tooltip: resizeHandleTip });
+                      handles.push({ name: 'bottom-right', x: extents.maxX, y: extents.maxY,
+                                     tooltip: resizeHandleTip });
+
+                      break;
+                    case 'BOTTOM':
+                      handles.push({ name: 'bottom-left', x: extents.minX, y: extents.maxY,
+                                     tooltip: resizeHandleTip });
+                      handles.push({ name: 'bottom-right', x: extents.maxX, y: extents.maxY,
+                                     tooltip: resizeHandleTip });
+                      break;
+                    case 'LEFT':
+                      handles.push({ name: 'top-left', x: extents.minX, y: extents.minY,
+                                     tooltip: resizeHandleTip });
+                      handles.push({ name: 'bottom-left', x: extents.minX, y: extents.maxY,
+                                     tooltip: resizeHandleTip });
+                      break;
+                  }
+                  break;
+
+              case 'radial':
+                  handles.push({ name: 'center', x: 0, y: 0, shape: 'diamond', size: 120,
+                                 tooltip: moveHandleTip });
+                  // Reckon three handle positions (on perimeter) in Cartesian coordinates...
+                  var extents = getBoundingBoxFromPoints( data.phyloNodes, {useCoordinates: 'CARTESIAN'} );
+                  var startPoint = {x: extents.maxX, y: extents.minY},
+                      midPoint = {x: extents.maxX, y: (extents.maxY + extents.minY) / 2},
+                      endPoint = {x: extents.maxX, y: extents.maxY};
+                  // ... then convert to polar coordinates (simple arrays)
+                  startPoint = cartesianToPolarProjection( startPoint, {returnType: 'POLAR_COORDS'} );
+                  endPoint = cartesianToPolarProjection( endPoint, {returnType: 'POLAR_COORDS'} );
+                  midPoint = cartesianToPolarProjection( midPoint, {returnType: 'POLAR_COORDS'} );
+
+                  // pass all polar properties (angle, radius, theta) plus a descriptive name
+                  /* TODO: Restore these handles once we have their properties working correctly!
+                   *
+                  handles.push( $.extend(startPoint, {name: 'start-angle',
+                                                      tooltip: "Drag to change radius and starting angle"}) );
+                  handles.push( $.extend(endPoint, {name: 'end-angle',
+                                                    tooltip: "Drag to change radius and ending angle"}) );
+                  */
+                  handles.push( $.extend(midPoint, {name: 'radius',
+                                                    tooltip: "Drag to change this tree's radius" }) );
+                  break;
+          }
+          // merge in default properties as needed
+          $.each(handles, function(i,h) {
+              handles[i] = $.extend({ shape:'circle', size:80, rotate:0 }, handles[i]);
+          });
+          return handles;
+      }
 
       data.hotspot = [  // emulate a tuple
           {
-              "path": hotspotGenerator() 
+              "path": hotspotGenerator()
           }
       ];
+      data.vertexHandles = handleGenerator(); // returns an array
 
       // copy layout properties to the phylotree, for possible use downstream
       data.layout = layout;
@@ -397,6 +472,12 @@ prototype.buildPhylogram = function(data) {
       data.branchLengths = branchLengths;
       data.nodeLabelSource = nodeLabelSource;
       data.showFallbackLabels = showFallbackLabels;
+
+      // copy generators for hotspot and other handles
+      //data.hotspotGenerator = hotspotGenerator;
+      //data.handleGenerator = handleGenerator;
+      Phylogram.hotspotGenerator = hotspotGenerator;
+      Phylogram.handleGenerator = handleGenerator;
 
       return data;
     }

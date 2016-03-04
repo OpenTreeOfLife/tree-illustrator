@@ -3,7 +3,8 @@
   <head>
     <title>Tree Illustrator</title/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="//d3js.org/d3.v3.js"></script>
+    <!-- <script src="//d3js.org/d3.v3.js"></script> -->
+    <script src="d3.v3.min.js"></script>
     <script src="knockout-2.3.0.js"></script>
     <script src="knockout.mapping-latest.debug.js"></script>
     <script src="knockout.validation.js"></script>
@@ -79,6 +80,9 @@
             <div id="fixed-ruler-units" class="viz-fixed-ruler">&nbsp;</div>
             <div id="fixed-ruler-top"   class="viz-fixed-ruler"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg></div>
             <div id="fixed-ruler-left"  class="viz-fixed-ruler"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg></div>
+            <!--
+            <div id="handles" class="viz-handles"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg></div>
+            -->
         </div>
 
     </div><!-- #stick-viewer-frame -->
@@ -438,6 +442,7 @@
     </div>
   </div>
 
+<!-- DOES THIS interfere with proper accordion toggling? -->
 <div class="help-text">
     You can add elements to the illustration here. (These will display back to front.)
 </div>
@@ -845,7 +850,7 @@
 
     <div class="button-bar" style="margin-bottom: 0.4em;">
         <button class="btn btn-small" 
-                onclick="stylist.ill.addIllustratedTree(); return false;"
+                onclick="var tree = stylist.ill.addIllustratedTree(); stylist.showAccordionPanelForElement( tree.id() ); return false;"
         >Add tree...</button>
         <button class="btn btn-small" 
                 onclick="stylist.ill.addSupportingDataset(); return false;"
@@ -997,6 +1002,11 @@
             <line x1="0" y1="-15" x2="0" y2="-20" stroke="#000" stroke-width="0.25pt" stroke-linecap="square" />
             <line x1="0" y1="0"   x2="0"  y2="-5" stroke="#000" stroke-width="0.25pt" stroke-linecap="square" />
         </g>
+        <!-- CURRENTLY UNUSED! in favor of "inline" handles for each element
+        <g id="manipulation-handles">
+            <text style="font-family: sans-serif; font-size: 1.0em; font-weight: bolder; color: red;" x="20" y="20">HANDLES</text>
+        </g>
+        -->
       </defs>
     </svg>
 
