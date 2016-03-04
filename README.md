@@ -1,6 +1,8 @@
 Tree Illustrator
 ================
 
+[![Join the chat at https://gitter.im/OpenTreeOfLife/tree-illustrator](https://badges.gitter.im/OpenTreeOfLife/tree-illustrator.svg)](https://gitter.im/OpenTreeOfLife/tree-illustrator?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 **Generate repeatable, data-driven, publication quality figures of trees.**
 
 In our current roadmap, the Tree Illustrator will be integrated with the main
