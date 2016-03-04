@@ -635,16 +635,78 @@ $(document).ready(function() {
                     default:
                         // other handles have different behavior based on tree layout
                         switch(dragElement.layout()) {
+                            case TreeIllustrator.treeLayouts.TRIANGLE:
                             case TreeIllustrator.treeLayouts.RECTANGLE:
-                                switch(dragHandleName) {
-                                    case 'blah':
-                                        // do something else
-                                        break;
-                                    default:
-                                        console.error('Unknown drag handle ['+ dragHandleName +']');
-                                        return;
+                                /* All vertex handles scale the tree (relative to the root node)
+                                 * N.B. that we pay close attention to the *current* extents in the
+                                 * viewport, since the rectangular layout has a bounding box that
+                                 * depends on the structure and branching patterns of each tree
+                                 */
+                                if (!dragStartElementProps) {
+                                    dragStartElementProps = { rootX: dragElement.rootX(), rootY: dragElement.rootY(),
+                                                              width: dragElement.width(), height: dragElement.height() };
                                 }
+                                // Reckon new width and height as a ratio vs. the original.
+                                var newWidth,
+                                    oldWidth,
+                                    xScale,
+                                    newHeight,
+                                    oldHeight,
+                                    yscale;
+                                newWidth = Math.abs(mouseLoc.x - dragStartElementProps.rootX);
+                                oldWidth = Math.abs(dragStartHandleLoc.x - dragStartElementProps.rootX);
+                                xScale = newWidth / oldWidth;
+
+                                // reckon proportional share of width for this handle
+                                newHeight = Math.abs(mouseLoc.y - dragStartElementProps.rootY);
+                                oldHeight = Math.abs(dragStartHandleLoc.y - dragStartElementProps.rootY);
+                                yScale = newHeight / oldHeight;
+
+                                /* TODO: Restrict to min. dimensions, OR handle crossing the origin by
+                                 *      - if they swap the two vertex handles, they should switch proportions
+                                 *      - if they pass the root node, "flip" the tree's tipsAlignment
+                                 *
+                                console.warn(">>> tips on the "+ dragElement.tipsAlignment());
+                                switch(dragElement.tipsAlignment) {
+                                    case 'TOP':
+                                        break;
+                                    case 'RIGHT':
+                                        break;
+                                    case 'BOTTOM':
+                                        break;
+                                    case 'LEFT':
+                                        break;
+                                }
+                                */
+
+                                dragElement.width( dragStartElementProps.width * xScale );
+                                console.log("yScale: "+ yScale);
+                                dragElement.height( dragStartElementProps.height * yScale );
+
+                                /* Update hotspot and handle positions */
+                                // Scale the main hotspot to match the ratios of old vs. new...
+                                var $hotspot = $handlesGroup.find('.tree-hotspot path');
+                                $hotspot.attr('transform', "scale("+ xScale +","+ yScale +")");
+                                // ... hide its border (beause scaling stroke-width is ugly)
+                                $hotspot.css('stroke-opacity', '0');
+                                // ... and move the vertex handles to match ("push" from origin) by 
+                                // modifying the datum for each, then *carefully* updating its transforms.
+                                var $vertexHandles = $handlesGroup.find('.vertex-handle path');
+                                $vertexHandles.each(function(i, path) {
+                                    var d3el = d3.select(path);
+                                    var itsDatum = d3el.datum().datum;
+                                    if (!('old_x' in itsDatum)) {
+                                        // stash original value (once only)
+                                        itsDatum.old_x = itsDatum.x || 0;
+                                        itsDatum.old_y = itsDatum.y || 0;
+                                    }
+                                    itsDatum.x = itsDatum.old_x * xScale;
+                                    itsDatum.y = itsDatum.old_y * yScale;
+                                });
+                                resetActualSizeElements();
+
                                 break;
+
                             case TreeIllustrator.treeLayouts.CIRCLE:
                                 switch(dragHandleName) {
                                     case 'radius':
@@ -693,16 +755,6 @@ $(document).ready(function() {
                                         console.warn('TODO: handle ['+ dragHandleName +'] is not yet implemented');
                                         break;
 
-                                    default:
-                                        console.error('Unknown drag handle ['+ dragHandleName +']');
-                                        return;
-                                }
-                                break;
-                            case TreeIllustrator.treeLayouts.TRIANGLE:
-                                switch(dragHandleName) {
-                                    case 'blah':
-                                        // do something else
-                                        break;
                                     default:
                                         console.error('Unknown drag handle ['+ dragHandleName +']');
                                         return;

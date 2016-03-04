@@ -387,27 +387,8 @@ prototype.buildPhylogram = function(data) {
           var resizeHandleTip = "Drag to change width and height";
           switch(layout) {
               case 'cartesian':
-                  // Grab the center to move, or any corner to resize
-                  var extents = getBoundingBoxFromPoints( data.phyloNodes );
-                  // rename for clarity
-                  var top =     extents.minY,
-                      right =   extents.maxX,
-                      bottom =  extents.maxY,
-                      left =    extents.minX;
-
-                  handles.push({ name: 'center', x: 0, y: 0, shape: 'diamond', rotate: 45, size: 120,
-                                 tooltip: moveHandleTip });
-                  handles.push({ name: 'top-left', x: left, y: top,
-                                 tooltip: resizeHandleTip });
-                  handles.push({ name: 'top-right', x: right, y: top,
-                                 tooltip: resizeHandleTip });
-                  handles.push({ name: 'bottom-right', x: right, y: bottom,
-                                 tooltip: resizeHandleTip });
-                  handles.push({ name: 'bottom-left', x: left, y: bottom,
-                                 tooltip: resizeHandleTip });
-                  break;
-
               case 'cladogram':
+                  // These use just two handles on "opposite" corners from the root node.
                   handles.push({ name: 'center', x: 0, y: 0, shape: 'diamond', size: 120,
                                  tooltip: moveHandleTip });
                   var extents = getBoundingBoxFromPoints( data.phyloNodes );
