@@ -435,8 +435,7 @@ prototype.buildPhylogram = function(data) {
                   midPoint = cartesianToPolarProjection( midPoint, {returnType: 'POLAR_COORDS'} );
 
                   // pass all polar properties (angle, radius, theta) plus a descriptive name
-                  /* TODO: Restore these handles once we have their properties working correctly!
-                   *
+                  /*
                   handles.push( $.extend(startPoint, {name: 'start-angle',
                                                       tooltip: "Drag to change radius and starting angle"}) );
                   handles.push( $.extend(endPoint, {name: 'end-angle',

@@ -45,6 +45,10 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         LEFT: 'LEFT',
         CENTER: 'CENTER'
     };
+    var sweepDirections = {
+        CLOCKWISE: 'CLOCKWISE',
+        COUNTERCLOCKWISE: 'COUNTERCLOCKWISE'
+    };
     var dataSourceTypes = {
         BUILT_IN: 'BUILT_IN',
         URL: 'URL',
@@ -246,6 +250,8 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             'width': landmarks.width * 0.4,
             'height': landmarks.height * 0.4,
             'radius': Math.min(landmarks.height, landmarks.width) * 0.3,
+            'radialArc': [0, 360],
+            'radialSweep': sweepDirections.CLOCKWISE,
             'tipsAlignment': alignments.RIGHT,
             'rootX': landmarks.centerX + utils.jiggle(5),   // TODO: use a bounding box instead?
             'rootY': landmarks.centerY + utils.jiggle(5),
@@ -938,10 +944,9 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     var phylogramTransform = { 
                         "type": "phylogram", 
                         //"layout": "cartesian",
-                        //"radialArc": [90, 270],
-                        //"radialSweep": 'CLOCKWISE',
-                        "radialSweep": 'COUNTERCLOCKWISE',
                         //"branchStyle": "diagonal",  // other options here?
+                        "radialArc": el.radialArc(),
+                        "radialSweep": el.radialSweep(),
                         "branchLengths": "",  // empty/false, or a property name to compare?
                         "width": el.width(),
                         "height": el.height(), 
@@ -1234,6 +1239,30 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
 
         ko.mapping.fromJS(data, Illustration.mappingOptions, self);
 
+        // (Un)bundle 'startAngle' and 'endAngle' values used in radialArc
+        self.startAngle = ko.computed({
+            read: function() {
+                return self.radialArc()[0];
+            },
+            write: function(value) {
+                var arc = self.radialArc();
+                arc[0] = Number(value);
+                self.radialArc(arc);
+            },
+            deferEvaluation: true
+        });
+        self.endAngle = ko.computed({
+            read: function() {
+                return self.radialArc()[1];
+            },
+            write: function(value) {
+                var arc = self.radialArc();
+                arc[1] = Number(value);
+                self.radialArc(arc);
+            },
+            deferEvaluation: true
+        });
+
         // Add validation for fields that need it
         self.metadata.name.extend({required: true});
 
@@ -1495,11 +1524,20 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             if (newValue in alignments) {
                 self.tipsAlignment(newValue);
             } else {
-                console.error("useChosenTipsAlignment(): Unknown tree layout '"+ newValue +"'!"); 
+                console.error("useChosenTipsAlignment(): Unknown tips alignment '"+ newValue +"'!");
             }
             stylist.refreshViz();
         }
-
+        ,
+        useChosenRadialSweep: function(newValue) {
+            var self = this;
+            if (newValue in sweepDirections) {
+                self.radialSweep(newValue);
+            } else {
+                console.error("useChosenRadialSweep(): Unknown sweep direction '"+ newValue +"'!");
+            }
+            stylist.refreshViz();
+        }
     };
 
     var SupportingDataset = function(illustration, data) {
@@ -1620,6 +1658,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         colorDepths: colorDepths,
         treeLayouts: treeLayouts,
         alignments: alignments,
+        sweepDirections: sweepDirections,
         dataSourceTypes: dataSourceTypes,
         versionTypes: versionTypes,
         hostApplications: hostApplications,

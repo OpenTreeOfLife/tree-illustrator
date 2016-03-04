@@ -708,20 +708,23 @@ $(document).ready(function() {
                                 break;
 
                             case TreeIllustrator.treeLayouts.CIRCLE:
+                                // Track the same properties for all remaining handles
+                                if (!dragStartElementProps) {
+                                    dragStartElementProps = { rootX: dragElement.rootX(), rootY: dragElement.rootY(), 
+                                                              radius: dragElement.radius(),
+                                                              startAngle: dragElement.startAngle(), endAngle: dragElement.endAngle() };
+                                }
+                                // Track original and new radius
+                                /* Ignore dragCurrentHandleDelta; just reckon current mouseLoc in viewport
+                                 * (illustration) coordinates and measure the distance from the root node.
+                                 */
+                                var xDistance = Math.abs( mouseLoc.x - dragStartElementProps.rootX );
+                                var yDistance = Math.abs( mouseLoc.y - dragStartElementProps.rootY );
+                                var hypotenuse = Math.sqrt( Math.pow(xDistance, 2) + Math.pow(yDistance, 2) );
+                                dragElement.radius( hypotenuse );
+
                                 switch(dragHandleName) {
                                     case 'radius':
-                                        // track original and new radius
-                                        if (!dragStartElementProps) {
-                                            dragStartElementProps = { rootX: dragElement.rootX(), rootY: dragElement.rootY(), radius: dragElement.radius() };
-                                        }
-                                        /* Ignore dragCurrentHandleDelta; just reckon current mouseLoc in viewport
-                                         * (illustration) coordinates and measure the distance from the root node.
-                                         */
-                                        var xDistance = Math.abs( mouseLoc.x - dragStartElementProps.rootX );
-                                        var yDistance = Math.abs( mouseLoc.y - dragStartElementProps.rootY );
-                                        var hypotenuse = Math.sqrt( Math.pow(xDistance, 2) + Math.pow(yDistance, 2) );
-                                        dragElement.radius( hypotenuse );
-
                                         /* Update hotspot and handle positions */
                                         // Scale the main hotspot to match the ratio of old vs. new...
                                         var oldRadius = dragStartElementProps.radius,
@@ -752,7 +755,13 @@ $(document).ready(function() {
                                     case 'start-angle':
                                     case 'end-angle':
                                         // These should change radius *and* arc angles
-                                        console.warn('TODO: handle ['+ dragHandleName +'] is not yet implemented');
+                                        /*
+                                        var handleInfo = d3.select(dragHandle).datum().datum; // includes .angle, .theta, etc
+                                        console.log(handleInfo);
+                                        */
+                                        var newAngle = Math.tan( yDistance / xDistance );
+                                        newAngle /= (Math.PI/180);    // convert from radians to degrees
+                                        //dragElement[ dragHandleName === 'start-angle' ? 'startAngle' : 'endAngle' ]( newAngle );
                                         break;
 
                                     default:

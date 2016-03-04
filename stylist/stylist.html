@@ -573,7 +573,7 @@
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label" for="">Tree layout</label> 
+                    <label class="control-label" for="">Tree layout</label>
                     <div class="controls">
                         <!-- button triplet, loosely bound via click handlers -->
                         <div class="btn-group">
@@ -585,7 +585,7 @@
                             <button class="btn CIRCLE-button"
                                     data-bind="css: { active: layout() === TreeIllustrator.treeLayouts.CIRCLE },
                                                click: useChosenLayout.bind($data, TreeIllustrator.treeLayouts.CIRCLE),
-                                               event: {keyup: stylist.refreshViz, change: stylist.refreshViz}"> 
+                                               event: {keyup: stylist.refreshViz, change: stylist.refreshViz}">
                                 Circle </button>
                             <button class="btn TRIANGLE-button"
                                     data-bind="css: { active: layout() === TreeIllustrator.treeLayouts.TRIANGLE },
@@ -596,14 +596,14 @@
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label" for="">Tree size</label> 
+                    <label class="control-label" for="">Tree size</label>
                     <div class="controls mini-form"
                          style="margin-top: 0.25em;"
                          data-bind="attr: {id: id() +'-layout-options'}">
 
                         <!-- Marker classes "{LAYOUT}-option" hide/show these widgets based on chosen layout -->
                         <label data-bind="attr: {for: '#'+ id() +'-width-field'},
-                                          visible: layout() !== TreeIllustrator.treeLayouts.CIRCLE">width</label> 
+                                          visible: layout() !== TreeIllustrator.treeLayouts.CIRCLE">width</label>
                         <input type="text" value="?"
                                style="width: 3.0em; margin-right: 0.5em;"
                                data-bind="value: physicalWidth,
@@ -613,7 +613,7 @@
                                           visible: layout() !== TreeIllustrator.treeLayouts.CIRCLE" />
 
                         <label data-bind="attr: {for: '#'+ id() +'-height-field'},
-                                          visible: layout() !== TreeIllustrator.treeLayouts.CIRCLE">height</label> 
+                                          visible: layout() !== TreeIllustrator.treeLayouts.CIRCLE">height</label>
                         <input type="text" value="?"
                                style="width: 3.0em; margin-right: 0.5em;"
                                data-bind="value: physicalHeight,
@@ -631,8 +631,46 @@
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {keyup: stylist.refreshViz, change: stylist.refreshViz},
                                           visible: layout() === TreeIllustrator.treeLayouts.CIRCLE" />
-
                         (<span data-bind="text: $root.unitsDisplayAbbreviation()">cm</span>)
+                    </div>
+                </div>
+                <div class="control-group" data-bind="visible: layout() === TreeIllustrator.treeLayouts.CIRCLE">
+                    <label class="control-label" for="" data-bind="attr: {for: '#'+ id() +'-startangle-field'}">Place nodes from</label> 
+                    <div class="controls mini-form">
+                        <input type="text" value="?"
+                               style="width: 3.0em; margin-right: 0.5em;"
+                               data-bind="value: startAngle,
+                                          attr: {id: id() +'-startangle-field'},
+                                          valueUpdate: ['afterkeydown','input'],
+                                          event: {keyup: stylist.refreshViz, change: stylist.refreshViz},
+                                          visible: layout() === TreeIllustrator.treeLayouts.CIRCLE" />
+                        <label>to</label>
+                        <input type="text" value="?"
+                               style="width: 3.0em; margin-right: 0.5em;"
+                               data-bind="value: endAngle,
+                                          attr: {id: id() +'-endangle-field'},
+                                          valueUpdate: ['afterkeydown','input'],
+                                          event: {keyup: stylist.refreshViz, change: stylist.refreshViz},
+                                          visible: layout() === TreeIllustrator.treeLayouts.CIRCLE" />
+                        <label>degrees (from top)</label>
+                    </div>
+                </div>
+                <div class="control-group" data-bind="visible: layout() === TreeIllustrator.treeLayouts.CIRCLE">
+                    <label class="control-label" for="" data-bind="attr: {for: '#'+ id() +'-radialsweep-field'}">Sweep direction</label>
+                    <div class="controls mini-form">
+                        <!- - button triplet, loosely bound via click handlers - ->
+                        <div class="btn-group">
+                            <button class="btn"
+                                    data-bind="css: { active: radialSweep() === TreeIllustrator.sweepDirections.CLOCKWISE },
+                                               click: useChosenRadialSweep.bind($data, TreeIllustrator.sweepDirections.CLOCKWISE),
+                                               event: {keyup: stylist.refreshViz, change: stylist.refreshViz}">
+                                Clockwise </button>
+                            <button class="btn"
+                                    data-bind="css: { active: radialSweep() === TreeIllustrator.sweepDirections.COUNTERCLOCKWISE },
+                                               click: useChosenRadialSweep.bind($data, TreeIllustrator.sweepDirections.COUNTERCLOCKWISE),
+                                               event: {keyup: stylist.refreshViz, change: stylist.refreshViz}">
+                                Counter-clockwise </button>
+                        </div>
                     </div>
                 </div>
 
