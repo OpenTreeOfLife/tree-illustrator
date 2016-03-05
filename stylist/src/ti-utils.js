@@ -79,13 +79,29 @@ function isProbablyNeXML(data) {
     return true;
 }
 
+/* Copied from vg.data.phylogram.js, for wider use (but keeping the code in
+ * both places, to minimize dependencies in the Vega transform).
+ */
+function radiansToDegrees(r) {
+    return (r * 180 / Math.PI);
+}
+function degreesToRadians(d) {
+    return (d * Math.PI / 180);
+}
+function normalizeDegrees(d) {
+    // convert to positive integer, e.g. -90 ==> 270
+    return (d + (360 * 3)) % 360;
+}
 
 // export some members as a simple API
 var api = [
     'jiggle',
     'isProbablyNewick',
     'isProbablyNEXUS',
-    'isProbablyNeXML'
+    'isProbablyNeXML',
+    'radiansToDegrees',
+    'degreesToRadians',
+    'normalizeDegrees'
 ];
 $.each(api, function(i, methodName) {
     // populate the default 'module.exports' object

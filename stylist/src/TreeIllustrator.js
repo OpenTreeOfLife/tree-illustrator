@@ -250,7 +250,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             'width': landmarks.width * 0.4,
             'height': landmarks.height * 0.4,
             'radius': Math.min(landmarks.height, landmarks.width) * 0.3,
-            'radialArc': [0, 360],
+            'radialArc': [0, 350],
             'radialSweep': sweepDirections.CLOCKWISE,
             'tipsAlignment': alignments.RIGHT,
             'rootX': landmarks.centerX + utils.jiggle(5),   // TODO: use a bounding box instead?

@@ -5,6 +5,7 @@
  */
 
 var $ = require('jquery'),
+    utils = require('./ti-utils'),
     vg = require('vega'),
     TreeIllustrator = require('./TreeIllustrator.js'),
     stashTransform = require('./vg.data.stash.js');
@@ -718,8 +719,8 @@ $(document).ready(function() {
                                 /* Ignore dragCurrentHandleDelta; just reckon current mouseLoc in viewport
                                  * (illustration) coordinates and measure the distance from the root node.
                                  */
-                                var xDistance = Math.abs( mouseLoc.x - dragStartElementProps.rootX );
-                                var yDistance = Math.abs( mouseLoc.y - dragStartElementProps.rootY );
+                                var xDistance = mouseLoc.x - dragStartElementProps.rootX;
+                                var yDistance = mouseLoc.y - dragStartElementProps.rootY;
                                 var hypotenuse = Math.sqrt( Math.pow(xDistance, 2) + Math.pow(yDistance, 2) );
                                 dragElement.radius( hypotenuse );
 
@@ -755,13 +756,12 @@ $(document).ready(function() {
                                     case 'start-angle':
                                     case 'end-angle':
                                         // These should change radius *and* arc angles
-                                        /*
                                         var handleInfo = d3.select(dragHandle).datum().datum; // includes .angle, .theta, etc
-                                        console.log(handleInfo);
-                                        */
-                                        var newAngle = Math.tan( yDistance / xDistance );
-                                        newAngle /= (Math.PI/180);    // convert from radians to degrees
-                                        //dragElement[ dragHandleName === 'start-angle' ? 'startAngle' : 'endAngle' ]( newAngle );
+                                        ///console.log(handleInfo);
+                                        var newAngleInRadians = Math.atan2( yDistance, xDistance );
+                                        // convert from radians to degrees and force to range from 0-360
+                                        var newAngleInDegrees = utils.normalizeDegrees( utils.radiansToDegrees( newAngleInRadians ) );
+                                        dragElement[ dragHandleName === 'start-angle' ? 'startAngle' : 'endAngle' ]( newAngleInDegrees );
                                         break;
 
                                     default:

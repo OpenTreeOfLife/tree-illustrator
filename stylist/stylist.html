@@ -636,23 +636,23 @@
                 </div>
                 <div class="control-group" data-bind="visible: layout() === TreeIllustrator.treeLayouts.CIRCLE">
                     <label class="control-label" for="" data-bind="attr: {for: '#'+ id() +'-startangle-field'}">Place nodes from</label> 
-                    <div class="controls mini-form">
+                    <div class="controls mini-form" style="padding-left: 0;">
                         <input type="text" value="?"
-                               style="width: 3.0em; margin-right: 0.5em;"
+                               style="width: 3.0em; margin-right: 0.3em;"
                                data-bind="value: startAngle,
                                           attr: {id: id() +'-startangle-field'},
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {keyup: stylist.refreshViz, change: stylist.refreshViz},
-                                          visible: layout() === TreeIllustrator.treeLayouts.CIRCLE" />
-                        <label>to</label>
+                                          visible: layout() === TreeIllustrator.treeLayouts.CIRCLE"
+                      /><label>to</label>
                         <input type="text" value="?"
-                               style="width: 3.0em; margin-right: 0.5em;"
+                               style="width: 3.0em; margin-right: 0.3em;"
                                data-bind="value: endAngle,
                                           attr: {id: id() +'-endangle-field'},
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {keyup: stylist.refreshViz, change: stylist.refreshViz},
-                                          visible: layout() === TreeIllustrator.treeLayouts.CIRCLE" />
-                        <label>degrees (from top)</label>
+                                          visible: layout() === TreeIllustrator.treeLayouts.CIRCLE"
+                      /><label>degrees (0&deg;&rarr;, 90&deg;&darr;)</label>
                     </div>
                 </div>
                 <div class="control-group" data-bind="visible: layout() === TreeIllustrator.treeLayouts.CIRCLE">

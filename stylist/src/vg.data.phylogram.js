@@ -85,7 +85,7 @@ function Phylogram(graph) {
     height: {type: 'value', default: 1.0},
     // some are only used in radial layout, ignored in others
     radius: {type: 'value', default: 0.5},
-    radialArc: {type: 'array<value>', default: [0, 360]},
+    radialArc: {type: 'array<value>', default: [0, 350]},
     radialSweep: {type: 'value', default: 'CLOCKWISE'},  // 'CLOCKWISE' | 'COUNTERCLOCKWISE'
     // others are used only in non-radial layouts
     tipsAlignment: {type: 'value', default: 'RIGHT'},
@@ -280,33 +280,6 @@ prototype.buildPhylogram = function(data) {
         d.path = pathGenerator(d);
       });
 
-      var getBoundingBoxFromPoints = function( points, options ) {
-          // get X/Y bounds from a list of point-like objects
-          options = options || {useCoordinates: 'DISPLAY'};
-          var extents = {
-              minX:  Number.MAX_VALUE,
-              maxX: -Number.MAX_VALUE,
-              minY:  Number.MAX_VALUE,
-              maxY: -Number.MAX_VALUE
-          };
-          if (options.useCoordinates === 'CARTESIAN') {
-              points.map(function(n) {
-                  extents.minX = Math.min(n.cartesian_x, extents.minX);
-                  extents.minY = Math.min(n.cartesian_y, extents.minY);
-                  extents.maxX = Math.max(n.cartesian_x, extents.maxX);
-                  extents.maxY = Math.max(n.cartesian_y, extents.maxY);
-              });
-          } else {
-              points.map(function(n) {
-                  extents.minX = Math.min(n.x, extents.minX);
-                  extents.minY = Math.min(n.y, extents.minY);
-                  extents.maxX = Math.max(n.x, extents.maxX);
-                  extents.maxY = Math.max(n.y, extents.maxY);
-              });
-          }
-          return extents;
-      }
-
       /* Generate a "hotspot" path based on layout and dimensions. 
        * (This is used to respond to mouse actions, etc. while editing.) 
        */
@@ -435,12 +408,10 @@ prototype.buildPhylogram = function(data) {
                   midPoint = cartesianToPolarProjection( midPoint, {returnType: 'POLAR_COORDS'} );
 
                   // pass all polar properties (angle, radius, theta) plus a descriptive name
-                  /*
                   handles.push( $.extend(startPoint, {name: 'start-angle',
                                                       tooltip: "Drag to change radius and starting angle"}) );
                   handles.push( $.extend(endPoint, {name: 'end-angle',
                                                     tooltip: "Drag to change radius and ending angle"}) );
-                  */
                   handles.push( $.extend(midPoint, {name: 'radius',
                                                     tooltip: "Drag to change this tree's radius" }) );
                   break;
@@ -680,40 +651,27 @@ prototype.buildPhylogram = function(data) {
     // radius is simply the x coordinate
     var r = d.x;
 
-    ///var a = (d.y - 0) / 180 * Math.PI;
-    // a = angle? or something else?
-
     // Angle is influenced by the specified size, arc and sweep.
     // map Y coordinate to total specified width
     var totalArcDegrees;
     // force both angles to positive numbers
-    var startAngle = (radialArc[0] + 360) % 360;
-    var endAngle = (radialArc[1] + 360) % 360;
+    var startAngle = normalizeDegrees(radialArc[0]);
+    var endAngle = normalizeDegrees(radialArc[1]);
     // check for arcs that cross the zero line
-    var shiftAngle;
-    if (radialSweep === 'COUNTERCLOCKWISE') {
-        if (endAngle > startAngle) {
-            totalArcDegrees = endAngle - startAngle;
-        } else {
-            totalArcDegrees = (endAngle+360) - startAngle;
-        }
+    var shiftAngle;  // plot the active arc starting here
+    if (radialSweep === 'CLOCKWISE') {
+        totalArcDegrees = normalizeDegrees(endAngle - startAngle);
         shiftAngle = startAngle;
-    } else { // assumes 'CLOCKWISE')
-        if (startAngle > endAngle) {
-            totalArcDegrees = startAngle - endAngle;
-        } else {
-            totalArcDegrees = (startAngle+360) - endAngle;
-        }
+    } else { // assumes 'COUNTERCLOCKWISE')
+        totalArcDegrees = normalizeDegrees(startAngle - endAngle);
         shiftAngle = endAngle;
     }
-    var proportionalY = ((d.y / getOuterDimensionForX()) * totalArcDegrees);
-    // shift angle 90 degrees (from 0=down to 0=right)
-    ///proportionalY -= 90;
+    // Remap Y to the tree's bounding dimension to plot its angle correctly 
+    var angleWithinArc = ((d.y / getOuterDimensionForX()) * totalArcDegrees);
+    // This gives us the angle starting from one end of the arc; place this!
+    var angleFromOrigin = normalizeDegrees(angleWithinArc + shiftAngle);
 
-    // OR rotate angle to the start or end angle?
-    ///proportionalY = (proportionalY + shiftAngle + 360) % 360;
-
-    var a = proportionalY / 180 * Math.PI;
+    var a = degreesToRadians( angleFromOrigin);  ///  / 180 * Math.PI;
     // remap angle to the specified arc, in the sweep direction
 
     // TODO: reckon angle based on height/width and sweep
@@ -732,7 +690,7 @@ prototype.buildPhylogram = function(data) {
             // left-side labels should be flipped and aligned right
             labelAlignment = 'right';
             labelAngle = normalizeDegrees(labelAngle + 180);
-            nudgeTheta =  -(nudgeTheta)
+            nudgeTheta = -(nudgeTheta);
         }
         var nodeAndLabelProperties = {
             // X, Y coordinates for the node itself
@@ -814,18 +772,57 @@ prototype.buildPhylogram = function(data) {
         data.phyloNodes.map(alignPointsToOrigin);
     }
 
+    var getBoundingBoxFromPoints = function( points, options ) {
+        // get X/Y bounds from a list of point-like objects
+        options = options || {useCoordinates: 'DISPLAY'};
+        var extents = {
+            minX:  Number.MAX_VALUE,
+            maxX: -Number.MAX_VALUE,
+            minY:  Number.MAX_VALUE,
+            maxY: -Number.MAX_VALUE
+        };
+        if (options.useCoordinates === 'CARTESIAN') {
+            points.map(function(n) {
+                extents.minX = Math.min(n.cartesian_x, extents.minX);
+                extents.minY = Math.min(n.cartesian_y, extents.minY);
+                extents.maxX = Math.max(n.cartesian_x, extents.maxX);
+                extents.maxY = Math.max(n.cartesian_y, extents.maxY);
+            });
+        } else {
+            points.map(function(n) {
+                extents.minX = Math.min(n.x, extents.minX);
+                extents.minY = Math.min(n.y, extents.minY);
+                extents.maxX = Math.max(n.x, extents.maxX);
+                extents.maxY = Math.max(n.y, extents.maxY);
+            });
+        }
+        return extents;
+    }
+
     var radialLayout = function(data) {
         // place all nodes for the radial layout
-        // project points (nodes) to radiate out from center
+
+        // Project points (nodes) to radiate out from center.
         moveRootToOrigin(data);
         
+        /* Adjust the layout to place Y coordinates from 1.0 to 1.0,
+         * otherwise the tree will "bend over backwards" and its gap
+         * will appear randomly on the circumference.
+         */
+        var extents = getBoundingBoxFromPoints( data.phyloNodes );
+        var yOffset = extents.minY;
+        if (yOffset !== 0) {
+            $.each( data.phyloNodes, function( i, node ) {
+                node.y -= yOffset;   // undo the offset
+            });
+        }
+
         var preserveCartesianCoordinates = function(point) {
             point.cartesian_x = point.x;
             point.cartesian_y = point.y;
         }
         data.phyloNodes.map(preserveCartesianCoordinates);
 
-        ///data.phyloNodes.map(rotatePointByY);
         data.phyloNodes.map(function(d) {
             pcoords = cartesianToPolarProjection(d, {returnType:'POLAR_COORDS'});
             d.radius  = pcoords.radius;
@@ -1399,7 +1396,7 @@ Phylogram.schema = {
           },
           {"$ref": "#/refs/signal"}
       ],
-      "default": [0, 360]
+      "default": [0, 350]
     },
     "radialSweep": {
       "description": "Direction of arc, CLOCKWISE or COUNTERCLOCKWISE.",
