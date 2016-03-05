@@ -284,7 +284,16 @@ prototype.transform = function(input) {
     nexml = fullNexson.data.nexml;
 
     var layout = d3.layout.cluster()  // or tree (seems most basic)
-                   .children(getNexsonChildren),  // below
+                          .size([1.0, 1.0])  // just making the default size explicit
+                          .separation(function(a,b) {
+                               /* We want all tips (leaves) to be evenly spaced, whether or
+                                * not they are siblings:
+                                *   https://github.com/mbostock/d3/wiki/Cluster-Layout#separation
+                                */
+                               // return (a.parent == b.parent) ? 1 : 2;
+                               return 1;
+                           })
+                           .children(getNexsonChildren),  // below
         params = [ 'size' ],  // ["round", "sticky", "ratio", "padding"],
         output = {
           //"x": "x",
@@ -311,6 +320,27 @@ prototype.transform = function(input) {
       //.size(vg.data.size(size, group))
       //.value(value)
         .nodes(rootNode);
+
+    /* Normalize the node locations to fill the specified area. This will
+     * ensure that the rendered tree matches our user's chosen size, and that
+     * radial trees don't have weird gaps.
+     */
+    var minX = Number.POSITIVE_INFINITY,
+        minY = Number.POSITIVE_INFINITY,
+        maxX = Number.NEGATIVE_INFINITY,
+        maxY = Number.NEGATIVE_INFINITY;
+    $.each(data.phyloNodes, function(i, node) {
+        minX = Math.min(minX, node.x);
+        minY = Math.min(minY, node.y);
+        maxX = Math.max(maxX, node.x);
+        maxY = Math.max(maxY, node.y);
+    });
+    var xScale = 1.0 / (maxX - minX);
+    var yScale = 1.0 / (maxY - minY);
+    $.each(data.phyloNodes, function(i, node) {
+        node.x = (node.x - minX) * xScale;
+        node.y = (node.y - minY) * yScale;
+    });
 
     // add all possible labels to each node
     var tree = getSpecifiedTree();
@@ -375,7 +405,6 @@ prototype.transform = function(input) {
     });
 */
 
-
 /*
     console.log("OUTGOING data from nexson transform:");
     console.log(data);
@@ -438,8 +467,6 @@ if (false) {
 
 vg.transforms.nexson = function() {
   var layout = d3.layout.cluster()  // or tree (seems most basic)
-                 //.children(function(d) { return d.values; }),
-                 //.size([20,20])  // defaults to [1.0, 1.0]
                  .children(getNexsonChildren),  // below
       value = vg.accessor("data"),
       fullNexson = null,
@@ -548,7 +575,7 @@ console.log(data);
 */
 
     
-/*
+/* UNUSED
     console.log("OUTGOING data from nexson transform:");
     console.log(data);
 */
