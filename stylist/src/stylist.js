@@ -762,6 +762,68 @@ $(document).ready(function() {
                                         // convert from radians to degrees and force to range from 0-360
                                         var newAngleInDegrees = utils.normalizeDegrees( utils.radiansToDegrees( newAngleInRadians ) );
                                         dragElement[ dragHandleName === 'start-angle' ? 'startAngle' : 'endAngle' ]( newAngleInDegrees );
+
+                                        /* Update hotspot and handle positions */
+                                        var isClockwise = (dragElement.radialSweep() === TreeIllustrator.sweepDirections.CLOCKWISE),
+                                            pendingRadius = dragElement.radius(),  // reflect active constraints!
+                                            pendingStartAngle = dragElement.startAngle(),
+                                            pendingEndAngle = dragElement.endAngle(),
+                                            totalArcDegrees = isClockwise ?
+                                                utils.normalizeDegrees(pendingEndAngle - pendingStartAngle) :
+                                                utils.normalizeDegrees(pendingStartAngle - pendingEndAngle),
+                                            usingLargeArc = (totalArcDegrees >= 180),
+                                            pendingStartAngleVertex = {
+                                                // Reckon this from the angle and radius (hypotenuse)
+                                                x: pendingRadius * Math.cos( utils.degreesToRadians(pendingStartAngle) ), // Fx = F cos(a)
+                                                y: pendingRadius * Math.sin( utils.degreesToRadians(pendingStartAngle) )  // Fy = F sin(a)
+                                            },
+                                            pendingEndAngleVertex = {
+                                                x: pendingRadius * Math.cos( utils.degreesToRadians(pendingEndAngle) ),
+                                                y: pendingRadius * Math.sin( utils.degreesToRadians(pendingEndAngle) )
+                                            },
+                                            midArcAngle = isClockwise ?
+                                                utils.normalizeDegrees(pendingStartAngle + (totalArcDegrees/2)) :
+                                                utils.normalizeDegrees(pendingStartAngle - (totalArcDegrees/2)),
+                                            pendingRadiusControlVertex = {
+                                                x: pendingRadius * Math.cos( utils.degreesToRadians(midArcAngle) ),
+                                                y: pendingRadius * Math.sin( utils.degreesToRadians(midArcAngle) )
+                                            };
+                                        var $hotspot = $handlesGroup.find('.tree-hotspot path');
+
+                                        $hotspot.attr('d', generateRadialHotspotPath(
+                                            usingLargeArc,
+                                            isClockwise,
+                                            pendingRadius,
+                                            pendingStartAngleVertex,
+                                            pendingEndAngleVertex
+                                        ));
+                                        // ... hide its border (beause scaling stroke-width is ugly)
+                                        $hotspot.css('stroke-opacity', '0');
+                                        // ... and move the vertex handles to match ("push" from origin) by
+                                        // modifying the datum for each, then *carefully* updating its transforms.
+                                        var $vertexHandles = $handlesGroup.find('.vertex-handle path');
+                                        $vertexHandles.each(function(i, path) {
+                                            var d3el = d3.select(path);
+                                            var itsDatum = d3el.datum().datum;
+                                            switch( itsDatum.name ) {
+                                                case 'center':
+                                                    // this never moves
+                                                    break;
+                                                case 'start-angle':
+                                                    itsDatum.x = pendingStartAngleVertex.x;
+                                                    itsDatum.y = pendingStartAngleVertex.y;
+                                                    break;
+                                                case 'end-angle':
+                                                    itsDatum.x = pendingEndAngleVertex.x;
+                                                    itsDatum.y = pendingEndAngleVertex.y;
+                                                    break;
+                                                case 'radius':
+                                                    itsDatum.x = pendingRadiusControlVertex.x;
+                                                    itsDatum.y = pendingRadiusControlVertex.y;
+                                                    break;
+                                            }
+                                        });
+                                        resetActualSizeElements();
                                         break;
 
                                     default:
@@ -785,6 +847,25 @@ $(document).ready(function() {
         }
     });
 });
+
+function generateRadialHotspotPath( largeArc, sweepValue, radius, startPoint, endPoint ) {
+    /* Return a path that sweeps an arc around origin 0,0
+     *  EXAMPLE: "M0,0 L36.79,231.24 A234.14,234.14 0 0,1 -209.42,104.73 Z"
+     * ASSUMES that angles are in radians!
+     * Adapted from `vg.data.phylogram.js`, see also:
+     *  https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths#Arcs
+     *  http://www.w3.org/TR/SVG/paths.html#PathDataEllipticalArcCommands
+     */
+    var rotation = 0,  // this is moot for a circle
+        //clockwise = Math.abs(midAngle - srcAngle) > Math.PI ? midAngle <= srcAngle : midAngle > srcAngle,
+        largeArc = Number(largeArc),
+        sweepValue = Number(sweepValue);
+    var path = "M0,0" +
+      " L"+ [startPoint.x,startPoint.y] +
+      " A" + [radius,radius] +' '+ rotation +' '+ largeArc +','+ sweepValue +' '+ [endPoint.x,endPoint.y] +
+      " Z";
+    return path;
+}
 
 function getViewportMouseLoc(event, $scrollingViewport) {
     // Reckon mouse position as display px, relative to the SVG viewport

@@ -399,21 +399,21 @@ prototype.buildPhylogram = function(data) {
                                  tooltip: moveHandleTip });
                   // Reckon three handle positions (on perimeter) in Cartesian coordinates...
                   var extents = getBoundingBoxFromPoints( data.phyloNodes, {useCoordinates: 'CARTESIAN'} );
-                  var startPoint = {x: extents.maxX, y: extents.minY},
-                      midPoint = {x: extents.maxX, y: (extents.maxY + extents.minY) / 2},
-                      endPoint = {x: extents.maxX, y: extents.maxY};
+                  var startPoint = {x: extents.maxX, y: (radialSweep === 'CLOCKWISE') ? extents.minY : extents.maxY},
+                      midPoint =   {x: extents.maxX, y: (extents.maxY + extents.minY) / 2},
+                      endPoint =   {x: extents.maxX, y: (radialSweep === 'CLOCKWISE') ? extents.maxY : extents.minY};
                   // ... then convert to polar coordinates (simple arrays)
                   startPoint = cartesianToPolarProjection( startPoint, {returnType: 'POLAR_COORDS'} );
-                  endPoint = cartesianToPolarProjection( endPoint, {returnType: 'POLAR_COORDS'} );
                   midPoint = cartesianToPolarProjection( midPoint, {returnType: 'POLAR_COORDS'} );
+                  endPoint = cartesianToPolarProjection( endPoint, {returnType: 'POLAR_COORDS'} );
 
                   // pass all polar properties (angle, radius, theta) plus a descriptive name
                   handles.push( $.extend(startPoint, {name: 'start-angle',
                                                       tooltip: "Drag to change radius and starting angle"}) );
-                  handles.push( $.extend(endPoint, {name: 'end-angle',
-                                                    tooltip: "Drag to change radius and ending angle"}) );
                   handles.push( $.extend(midPoint, {name: 'radius',
                                                     tooltip: "Drag to change this tree's radius" }) );
+                  handles.push( $.extend(endPoint, {name: 'end-angle',
+                                                    tooltip: "Drag to change radius and ending angle"}) );
                   break;
           }
           // merge in default properties as needed
