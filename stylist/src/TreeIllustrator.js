@@ -1669,7 +1669,8 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     var foundPosition = acceptableValues.indexOf(value);
                     // TODO: trim whitespace? force to upper case?
                     if (foundPosition === -1) {
-                        // reject the proposed value
+                        // reject the proposed value; re-assert the old value for UI refresh
+                        obj[ fieldName ].valueHasMutated();
                         return false;
                     }
                 }
@@ -1679,7 +1680,8 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     newValue = Number(value);
                     console.log("numeric newValue = "+ newValue);
                     if (isNaN( newValue )) {
-                        // reject this new value
+                        // reject the proposed value; re-assert the old value for UI refresh
+                        obj[ fieldName ].valueHasMutated();
                         return false;
                     }
                     if ('min' in constraints) {
