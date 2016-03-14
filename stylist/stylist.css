@@ -433,10 +433,24 @@ button.btn-mini-function {
     cursor: ns-resize;
 }
 .tree-radius-handle {
-    cursor: move;
+    cursor: nwse-resize;
 }
 .tree-angle-handle {
-    cursor: move;
+    cursor: nwse-resize;
+}
+
+.tree-hotspot path {
+    fill: #0f0 !important;
+}
+.vertex-handle path {
+    fill: #0c0 !important;
+}
+
+.tree-hotspot path.out-of-bounds {
+    fill: #c90 !important;
+}
+.vertex-handle path.out-of-bounds {
+    fill: #f90 !important;
 }
 
 /* diagnostic styles for viewport, masks, etc.

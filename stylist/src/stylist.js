@@ -574,7 +574,6 @@ function startDragging( event ) {
 }
 
 function stopDragging( callback ) {
-    console.warn("<<<< stopDragging");
     if (typeof(callback) === 'function') {
         //callback(dragHandle, dragElement, ... );
         callback();
@@ -648,20 +647,24 @@ $(document).ready(function() {
                                                               width: dragElement.width(), height: dragElement.height() };
                                 }
                                 // Reckon new width and height as a ratio vs. the original.
-                                var newWidth,
-                                    oldWidth,
+                                var newPartialWidth,
+                                    oldPartialWidth,
                                     xScale,
-                                    newHeight,
-                                    oldHeight,
-                                    yscale;
-                                newWidth = Math.abs(mouseLoc.x - dragStartElementProps.rootX);
-                                oldWidth = Math.abs(dragStartHandleLoc.x - dragStartElementProps.rootX);
-                                xScale = newWidth / oldWidth;
+                                    newPartialHeight,
+                                    oldPartialHeight,
+                                    yscale,
+                                    newTotalWidth,
+                                    newTotalHeight;
+                                newPartialWidth = Math.abs(mouseLoc.x - dragStartElementProps.rootX);
+                                oldPartialWidth = Math.abs(dragStartHandleLoc.x - dragStartElementProps.rootX);
+                                xScale = newPartialWidth / oldPartialWidth;
+                                newTotalWidth = dragStartElementProps.width * xScale;
 
                                 // reckon proportional share of width for this handle
-                                newHeight = Math.abs(mouseLoc.y - dragStartElementProps.rootY);
-                                oldHeight = Math.abs(dragStartHandleLoc.y - dragStartElementProps.rootY);
-                                yScale = newHeight / oldHeight;
+                                newPartialHeight = Math.abs(mouseLoc.y - dragStartElementProps.rootY);
+                                oldPartialHeight = Math.abs(dragStartHandleLoc.y - dragStartElementProps.rootY);
+                                yScale = newPartialHeight / oldPartialHeight;
+                                newTotalHeight = dragStartElementProps.height * yScale;
 
                                 /* TODO: Restrict to min. dimensions, OR handle crossing the origin by
                                  *      - if they swap the two vertex handles, they should switch proportions
@@ -680,19 +683,37 @@ $(document).ready(function() {
                                 }
                                 */
 
-                                dragElement.width( dragStartElementProps.width * xScale );
-                                console.log("yScale: "+ yScale);
-                                dragElement.height( dragStartElementProps.height * yScale );
+                                // Update the tree, subject to any constraints
+                                dragElement.constrainedWidth( newTotalWidth );
+                                dragElement.constrainedHeight( newTotalHeight );
+                                // Were the new values accepted? (Allow for minor slippage here.)
+                                var inBounds = (Math.abs(dragElement.width() - newTotalWidth) < 2) &&
+                                               (Math.abs(dragElement.height() - newTotalHeight) < 2);
+
+                                // Scales used for the hotspot should reflect any active constraints
+                                var constrainedXScale = dragElement.width() / dragStartElementProps.width;
+                                var constrainedYScale = dragElement.height() / dragStartElementProps.height;
 
                                 /* Update hotspot and handle positions */
                                 // Scale the main hotspot to match the ratios of old vs. new...
                                 var $hotspot = $handlesGroup.find('.tree-hotspot path');
-                                $hotspot.attr('transform', "scale("+ xScale +","+ yScale +")");
+                                $hotspot.attr('transform', "scale("+ constrainedXScale +","+ constrainedYScale +")");
                                 // ... hide its border (beause scaling stroke-width is ugly)
                                 $hotspot.css('stroke-opacity', '0');
+                                if (inBounds) {
+                                    $hotspot.removeAttr('class');
+                                } else {
+                                    $hotspot.attr('class', 'out-of-bounds');
+                                }
+
                                 // ... and move the vertex handles to match ("push" from origin) by 
                                 // modifying the datum for each, then *carefully* updating its transforms.
                                 var $vertexHandles = $handlesGroup.find('.vertex-handle path');
+                                if (inBounds) {
+                                    $vertexHandles.removeAttr('class');
+                                } else {
+                                    $vertexHandles.attr('class', 'out-of-bounds');
+                                }
                                 $vertexHandles.each(function(i, path) {
                                     var d3el = d3.select(path);
                                     var itsDatum = d3el.datum().datum;
@@ -701,8 +722,8 @@ $(document).ready(function() {
                                         itsDatum.old_x = itsDatum.x || 0;
                                         itsDatum.old_y = itsDatum.y || 0;
                                     }
-                                    itsDatum.x = itsDatum.old_x * xScale;
-                                    itsDatum.y = itsDatum.old_y * yScale;
+                                    itsDatum.x = itsDatum.old_x * constrainedXScale;
+                                    itsDatum.y = itsDatum.old_y * constrainedYScale;
                                 });
                                 resetActualSizeElements();
 
@@ -722,7 +743,7 @@ $(document).ready(function() {
                                 var xDistance = mouseLoc.x - dragStartElementProps.rootX;
                                 var yDistance = mouseLoc.y - dragStartElementProps.rootY;
                                 var hypotenuse = Math.sqrt( Math.pow(xDistance, 2) + Math.pow(yDistance, 2) );
-                                dragElement.radius( hypotenuse );
+                                dragElement.constrainedRadius( hypotenuse );
 
                                 switch(dragHandleName) {
                                     case 'radius':
@@ -732,12 +753,23 @@ $(document).ready(function() {
                                             pendingRadius = dragElement.radius(),  // reflect active constraints!
                                             sizeChangeRatio = pendingRadius / oldRadius;
                                         var $hotspot = $handlesGroup.find('.tree-hotspot path');
+                                        var inBounds = (pendingRadius === hypotenuse);
+                                        if (inBounds) {
+                                            $hotspot.removeAttr('class');
+                                        } else {
+                                            $hotspot.attr('class', 'out-of-bounds');
+                                        }
                                         $hotspot.attr('transform', "scale("+ sizeChangeRatio +")");
                                         // ... hide its border (beause scaling stroke-width is ugly)
                                         $hotspot.css('stroke-opacity', '0');
                                         // ... and move the vertex handles to match ("push" from origin) by 
                                         // modifying the datum for each, then *carefully* updating its transforms.
                                         var $vertexHandles = $handlesGroup.find('.vertex-handle path');
+                                        if (inBounds) {
+                                            $vertexHandles.removeAttr('class');
+                                        } else {
+                                            $vertexHandles.attr('class', 'out-of-bounds');
+                                        }
                                         $vertexHandles.each(function(i, path) {
                                             var d3el = d3.select(path);
                                             var itsDatum = d3el.datum().datum;
@@ -789,6 +821,14 @@ $(document).ready(function() {
                                                 y: pendingRadius * Math.sin( utils.degreesToRadians(midArcAngle) )
                                             };
                                         var $hotspot = $handlesGroup.find('.tree-hotspot path');
+                                        var newAngle = dragElement[ dragHandleName === 'start-angle' ? 'startAngle' : 'endAngle' ]();
+                                        var inBounds = (pendingRadius === hypotenuse) &&
+                                                       (newAngle === newAngleInDegrees);
+                                        if (inBounds) {
+                                            $hotspot.removeAttr('class');
+                                        } else {
+                                            $hotspot.attr('class', 'out-of-bounds');
+                                        }
 
                                         $hotspot.attr('d', generateRadialHotspotPath(
                                             usingLargeArc,
@@ -802,6 +842,11 @@ $(document).ready(function() {
                                         // ... and move the vertex handles to match ("push" from origin) by
                                         // modifying the datum for each, then *carefully* updating its transforms.
                                         var $vertexHandles = $handlesGroup.find('.vertex-handle path');
+                                        if (inBounds) {
+                                            $vertexHandles.removeAttr('class');
+                                        } else {
+                                            $vertexHandles.attr('class', 'out-of-bounds');
+                                        }
                                         $vertexHandles.each(function(i, path) {
                                             var d3el = d3.select(path);
                                             var itsDatum = d3el.datum().datum;

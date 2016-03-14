@@ -1138,7 +1138,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                                                 "stroke": {"value": "#0f0"},
                                                 "strokeWidth": {"value": "1px"},
                                                 "strokeOpacity": {"value": "0.0"},
-                                                "fill": {"value": "#0f0"},
+                                                "fill": {"value": "#000"},  /* override this in CSS */
                                                 "fillOpacity": {"value": "0.0"}
                                             },
                                             "hover": {
@@ -1161,7 +1161,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                                                 "tooltip": {"field":"tooltip"},  /* assigned to datum, not to mark! */
                                                 "shape": {"field": "shape"}, /* default shape is "circle" */
                                                 "size": {"field": "size"},
-                                                "fill": {"value": "#0c0"},
+                                                "fill": {"value": "#000"},  /* override this in CSS */
                                                 "fillOpacity": {"value": "0.0"},
                                                 "stroke": {"value": "#f00"},
                                                 "strokeWidth": {"value": "6"},  /* hidden hit area */
@@ -1230,10 +1230,26 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         // point back to my parent illustration?
         //self.illustration = illustration;
 
-        // Bind to writable computed observables, so users can "think in physical units"
-        self.physicalWidth = wrapFieldWithPhysicalUnits(self, 'width');
-        self.physicalHeight = wrapFieldWithPhysicalUnits(self, 'height');
-        self.physicalRadius = wrapFieldWithPhysicalUnits(self, 'radius');
+        /* Apply hard constraints to some properties and wrap their fields
+         * accordingly. We do this by binding each basic property to a
+         * writable computed observable that applies any constraints before
+         * updating its value, protecting us from out-of-bounds or nonsensical
+         * values.
+         */
+        var treeSizeConstraint = {
+            'type': Number,
+            'min': stylist.inchesToPixels( 0.25, stylist.internal_ppi),  // 1/4" tree seems like a reasonable minimum
+            // TODO: Check for a minimum in the current style guide?
+            'max': stylist.inchesToPixels( 1000, stylist.internal_ppi)  // stop at 1000 inches wide
+        }
+        self.constrainedWidth = wrapFieldWithConstraints(self, 'width', treeSizeConstraint);
+        self.constrainedHeight = wrapFieldWithConstraints(self, 'height', treeSizeConstraint);
+        self.constrainedRadius = wrapFieldWithConstraints(self, 'radius', treeSizeConstraint);
+
+        // Bind some fields to writable computed observables, so users can "think in physical units"
+        self.physicalWidth = wrapFieldWithPhysicalUnits(self, 'constrainedWidth');
+        self.physicalHeight = wrapFieldWithPhysicalUnits(self, 'constrainedHeight');
+        self.physicalRadius = wrapFieldWithPhysicalUnits(self, 'constrainedRadius');
         self.physicalRootX = wrapFieldWithPhysicalUnits(self, 'rootX');
         self.physicalRootY = wrapFieldWithPhysicalUnits(self, 'rootY');
 
@@ -1602,7 +1618,8 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
      */
     var wrapFieldWithPhysicalUnits = function(obj, fieldName, precision) {
         // Display using selected precision (number of places), with hundredths by default.
-        precision = precision || 2;  
+        // EXAMPLE: self.physicalWidth = wrapFieldWithPhysicalUnits(self, 'width');
+        precision = precision || 2;
         return ko.computed({
             read: function() {
                 var physicalValue = stylist.pixelsToPhysicalUnits(obj[ fieldName ](), stylist.internal_ppi);
@@ -1610,6 +1627,79 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             },
             write: function(value) {
                 obj[ fieldName ]( stylist.physicalUnitsToPixels(value, stylist.internal_ppi));
+            },
+            owner: obj,
+            deferEvaluation: true
+        })
+    }
+
+    /* Apply hard constraints to proposed values. These might be universal
+     * values (e.g. minimum legible text height = 5px), or set within an active
+     * style guide (e.g., figures in _Systematic Biology_ must use font sizes
+     * from 10px to 64px).
+     *
+     * NOTE that these wrappers can be nested like so;
+     *   self.constrainedWidth = wrapFieldWithConstraints(self, 'width');
+     *   self.physicalWidth = wrapFieldWithPhysicalUnits(self, 'constrainedWidth');
+     * This lets us get/set with constraints, using either px or physical units.
+     */
+    var wrapFieldWithConstraints = function(obj, fieldName, constraints, precision) {
+        // Display using selected precision (number of places), with hundredths by default.
+        precision = precision || 2;
+        if (!constraints) {
+            console.error("wrapFieldWithConstraints() expects a constraints object!");
+            return;
+        };
+        return ko.computed({
+            read: function() {
+                // nothing interesting here, just call the wrapped field
+                console.log("READING from constrained '"+ fieldName +"'!");
+                return obj[ fieldName ]();
+            },
+            write: function(value) {
+                // Interpret and apply the specified constraints, perhaps signaling
+                // whether the proposed value is allowed.
+                console.log("WRITING to a constrained '"+ fieldName +"'!");
+                var itsType = constraints.type;
+                var newValue;
+
+                // Check for a whitelist of acceptable values
+                if ('whitelist' in constraints) {
+                    var acceptableValues = constraints.whitelist;
+                    var foundPosition = acceptableValues.indexOf(value);
+                    // TODO: trim whitespace? force to upper case?
+                    if (foundPosition === -1) {
+                        // reject the proposed value
+                        return false;
+                    }
+                }
+
+                if (itsType === Number) {
+                    // look for minimum, maximum, precision? coerce and block NaN
+                    newValue = Number(value);
+                    console.log("numeric newValue = "+ newValue);
+                    if (isNaN( newValue )) {
+                        // reject this new value
+                        return false;
+                    }
+                    if ('min' in constraints) {
+                        var minValue = Number(constraints.min);
+                        newValue = Math.max( minValue, newValue );
+                        console.log("after min, newValue = "+ newValue);
+                    }
+                    if ('max' in constraints) {
+                        var maxValue = Number(constraints.max);
+                        newValue = Math.min( maxValue, newValue );
+                        console.log("after max, newValue = "+ newValue);
+                    }
+                }
+                if (itsType === String) {
+                    // Add any string-specific constraints here (min. chars, etc.)
+                }
+
+                // Still here? Update the value (which may *not* have changed) and return true
+                obj[ fieldName ]( newValue );
+                return true;
             },
             owner: obj,
             deferEvaluation: true
