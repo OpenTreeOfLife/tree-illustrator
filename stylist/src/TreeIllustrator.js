@@ -38,6 +38,13 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         CIRCLE: 'CIRCLE',
         TRIANGLE: 'TRIANGLE'
     };
+    var branchRotationMethods = {
+        UNCHANGED: 'UNCHANGED',  // preserve the original sibling order
+        ALPHABETICAL: 'ALPHABETICAL',  // also used as a tie-breaker for all methods
+        LADDERIZE_RIGHT: 'LADDERIZE_RIGHT',
+        LADDERIZE_LEFT: 'LADDERIZE_LEFT',
+        ZIG_ZAG: 'ZIG_ZAG'
+    };
     var alignments = {
         TOP: 'TOP',
         RIGHT: 'RIGHT',
@@ -247,6 +254,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
              * ones that current apply *and* retain last-known values for
              * others, in case the user switches back to a prior layout
              */
+            'branchRotation': branchRotationMethods.UNCHANGED,
             'width': landmarks.width * 0.4,
             'height': landmarks.height * 0.4,
             'radius': Math.min(landmarks.height, landmarks.width) * 0.3,
@@ -932,11 +940,13 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     });
 
                     // Next transform imports data from its source format to our basic phyloTree
-                    if (true) { 
+                    if (true) {   // TODO: Pivot to other importers (e.g. NEXUS), as appropriate
                         treeData.transform.push({
                             "type": "nexson", 
                             "treesCollectionPosition":0, 
-                            "treePosition":0
+                            "treePosition":0,
+                            "branchRotation": el.branchRotation(),
+                            "nodeLabelField": el.nodeLabelField()   // needed for alphabetical branch rotation!
                         });
                     }
 
@@ -1653,13 +1663,13 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         return ko.computed({
             read: function() {
                 // nothing interesting here, just call the wrapped field
-                console.log("READING from constrained '"+ fieldName +"'!");
+                ///console.log("READING from constrained '"+ fieldName +"'!");
                 return obj[ fieldName ]();
             },
             write: function(value) {
                 // Interpret and apply the specified constraints, perhaps signaling
                 // whether the proposed value is allowed.
-                console.log("WRITING to a constrained '"+ fieldName +"'!");
+                ///console.log("WRITING to a constrained '"+ fieldName +"'!");
                 var itsType = constraints.type;
                 var newValue;
 
@@ -1678,7 +1688,6 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                 if (itsType === Number) {
                     // look for minimum, maximum, precision? coerce and block NaN
                     newValue = Number(value);
-                    console.log("numeric newValue = "+ newValue);
                     if (isNaN( newValue )) {
                         // reject the proposed value; re-assert the old value for UI refresh
                         obj[ fieldName ].valueHasMutated();
@@ -1687,12 +1696,10 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     if ('min' in constraints) {
                         var minValue = Number(constraints.min);
                         newValue = Math.max( minValue, newValue );
-                        console.log("after min, newValue = "+ newValue);
                     }
                     if ('max' in constraints) {
                         var maxValue = Number(constraints.max);
                         newValue = Math.min( maxValue, newValue );
-                        console.log("after max, newValue = "+ newValue);
                     }
                 }
                 if (itsType === String) {
@@ -1749,6 +1756,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         units: units,
         colorDepths: colorDepths,
         treeLayouts: treeLayouts,
+        branchRotationMethods: branchRotationMethods,
         alignments: alignments,
         sweepDirections: sweepDirections,
         dataSourceTypes: dataSourceTypes,

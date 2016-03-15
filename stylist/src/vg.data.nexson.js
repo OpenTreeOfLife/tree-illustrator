@@ -9,6 +9,10 @@
  * can we parse free-form text? YES, since vega handles CSV, etc.). Each one 
  * should produce the same output: a uniform JS object representing a
  * d3-ready tree (see https://github.com/OpenTreeOfLife/tree-illustrator/wiki/Building-on-D3-and-Vega#data-importers)
+ *
+ * NOTE that this output creates a basic layout with X and Y position for each
+ * node, so any branch-rotation scheme (e.g. ladderized right) must be applied
+ * here rather than downstream!
  */
 var vg  = require('vega'),
     //d3  = require('d3'),
@@ -20,7 +24,9 @@ function Nexson(graph) {
   Transform.addParameters(this, {
       treeID: {type: 'value'},
       treesCollectionPosition: {type: 'value', default: 0},
-      treePosition: {type: 'value', default: 0}
+      treePosition: {type: 'value', default: 0},
+      branchRotation: {type: 'value', default: 'UNCHANGED'},
+      nodeLabelField: {type: 'value', default: 'originalLabel'}
   });
   return this.produces(true)
              .mutates(true);
@@ -35,6 +41,8 @@ prototype.transform = function(input) {
   var treeID = this.param('treeID'),
       treesCollectionPosition = this.param('treesCollectionPosition'),
       treePosition = this.param('treePosition'),
+      branchRotation = this.param('branchRotation'),
+      nodeLabelField = this.param('nodeLabelField'),
       nexml = null;
 
   /*
@@ -186,6 +194,82 @@ prototype.transform = function(input) {
       ///return (itsChildren.length === 0) ? null: itsChildren;
       return itsChildren;
   }
+  function countDescendantTips( node ) {
+      /* Recurse through all descendants of this node and count the tips,
+       * adding the total as an ad-hoc property of the node.
+       *
+       * Since these totals are often used in for branch rotation, we should be
+       * able to pre-process nodes as needed, then run a final sweep that
+       * only processes un-modified nodes.
+       *
+       * TODO: Count just tips? or all descendants?
+       */
+      if ('descendantTipCount' in node) {   // do this once only!
+          return;
+      }
+      var children = getNexsonChildren(node);
+      if (children.length === 0) {
+          // this node is a leaf and should "count itself"
+          node.descendantTipCount = 1;
+      } else {
+          var tipCount = 0;
+          $.each(children, function(i, child) {
+              countDescendantTips(child);
+              tipCount += child.descendantTipCount;
+          });
+          node.descendantTipCount = tipCount;
+      }
+  }
+  function assignNodeLabels( node ) {
+      /* Add the various properties that might be shown as labels. Since these
+       * can also be used in an alphabetical sort (for branch rotation), we
+       * should be able to pre-process these as needed, followed by a final
+       * sweep that just processes any un-modified nodes.
+       */
+      if ('originalLabel' in node) {   // do this once only!
+          return;
+      }
+      /* N.B. It's best to provide at least an empty string for all
+       * properties, to avoid showing 'undefined' labels in some browsers.
+       */
+      node.explicitLabel = '';
+      node.originalLabel = '';
+      node.ottTaxonName = '';
+      node.ottId = '';
+      if ('label' in node) {
+        console.log(">> this node has 'label'");
+        node.explicitLabel = node['label'];
+      }
+      if ('@label' in node) {
+        console.log(">> this node has '@label'");
+        node.explicitLabel = node['@label'];
+      }
+      if ('@otu' in node) {
+        var itsOTU = getOTUByID( node['@otu'] );
+        // attach OTU with possible label(s) here
+        if (itsOTU) {
+          // nudge the relevant properties into a generic form
+          if ('^ot:originalLabel' in itsOTU) {
+            node.originalLabel = itsOTU['^ot:originalLabel'];
+          }
+          if ('^ot:ottTaxonName' in itsOTU) {
+            node.ottTaxonName = itsOTU['^ot:ottTaxonName'];
+          }
+          if ('^ot:ottId' in itsOTU) {
+            node.ottId = itsOTU['^ot:ottId'];
+          }
+          if ('@label' in itsOTU) {
+            // This is uncommon, but appears in our converted Newick.
+            // Yield to an explicit label on the node itself!
+            console.log(">> stealing otu label '"+ itsOTU['@label'] +"' for this node");
+            if ($.trim(node.explicitLabel) === '') {
+              node.explicitLabel = itsOTU['@label'];
+            }
+          }
+        }
+      }
+  };
+
   function getTreeNodeByID(id) {
       // There should be only one matching (or none) within a tree
       // (NOTE that we now use a flat collection across all trees, so there's no 'tree' argument)
@@ -283,6 +367,82 @@ prototype.transform = function(input) {
     // convert a new (or changed?) tree to Tree Illustrator's preferred format
     nexml = fullNexson.data.nexml;
 
+    /* Apply the chosen branch-rotation method, i.e. how child nodes are
+     * ordered within the tree. Note that all options here should be
+     * deterministic; the same input tree and rotation method should *always*
+     * produce the same output. We'll accomplish this by using d3's
+     * alphabetical sort as the tie-breaker.
+     *
+     * Some of these methods introduce new burdens:
+     *  - Sorting by clade size means we need to recurse and count children for
+     *    all nodes ahead of time.
+     *  - Alpha-sorting uses active node labels, so we need to know them.
+     *
+     * The method choices below are enumerated in TreeIllustrator.js, so any
+     * changes should be shared in both places.
+     */
+    var branchRotator;
+    switch(branchRotation) {
+        case 'UNCHANGED':
+            branchRotator = null;
+            break;
+        case 'ALPHABETICAL':
+            branchRotator = function(a,b) {
+                // sort based on the user's chosen field (passed as param)
+                assignNodeLabels(a);
+                assignNodeLabels(b);
+                return d3.descending(a[ nodeLabelField ], b[ nodeLabelField ]);
+            };
+            break;
+        case 'LADDERIZE_RIGHT':
+            branchRotator = function(a,b) {
+                countDescendantTips(a);
+                countDescendantTips(b);
+                if (a.descendantTipCount > b.descendantTipCount) return -1;
+                if (b.descendantTipCount > a.descendantTipCount) return 1;
+                // Still here? Fall back to alphabetic sort
+                assignNodeLabels(a);
+                assignNodeLabels(b);
+                return d3.descending(a[ nodeLabelField ], b[ nodeLabelField ]);
+            };
+            break;
+        case 'LADDERIZE_LEFT':
+            branchRotator = function(a,b) {
+                countDescendantTips(a);
+                countDescendantTips(b);
+                if (a.descendantTipCount > b.descendantTipCount) return 1;
+                if (b.descendantTipCount > a.descendantTipCount) return -1;
+                // Still here? Fall back to alphabetic sort
+                assignNodeLabels(a);
+                assignNodeLabels(b);
+                return d3.descending(a[ nodeLabelField ], b[ nodeLabelField ]);
+            };
+            break;
+        case 'ZIG_ZAG':
+            // Mimic the ladderize options above, but alternate left and right each time
+            var leftOrRight = 'LEFT';
+            branchRotator = function(a,b) {
+                countDescendantTips(a);
+                countDescendantTips(b);
+                if (leftOrRight === 'LEFT') {
+                    leftOrRight = 'RIGHT';
+                    if (a.descendantTipCount > b.descendantTipCount) return 1;
+                    if (b.descendantTipCount > a.descendantTipCount) return -1;
+                } else {  // presumably it's 'RIGHT'
+                    leftOrRight = 'LEFT';
+                    if (a.descendantTipCount > b.descendantTipCount) return -1;
+                    if (b.descendantTipCount > a.descendantTipCount) return 1;
+                }
+                // Still here? Fall back to alphabetic sort
+                assignNodeLabels(a);
+                assignNodeLabels(b);
+                return d3.descending(a[ nodeLabelField ], b[ nodeLabelField ]);
+            };
+            break;
+        default:
+            console.error("No such branch-rotation method: '"+ branchRotation +"'!");
+    }
+
     var layout = d3.layout.cluster()  // or tree (seems most basic)
                           .size([1.0, 1.0])  // just making the default size explicit
                           .separation(function(a,b) {
@@ -293,7 +453,8 @@ prototype.transform = function(input) {
                                // return (a.parent == b.parent) ? 1 : 2;
                                return 1;
                            })
-                           .children(getNexsonChildren),  // below
+                           .children(getNexsonChildren)   // defined below
+                           .sort(branchRotator),   // defined above
         params = [ 'size' ],  // ["round", "sticky", "ratio", "padding"],
         output = {
           //"x": "x",
@@ -345,45 +506,7 @@ prototype.transform = function(input) {
     // add all possible labels to each node
     var tree = getSpecifiedTree();
     $.each(data.phyloNodes, function(i, node) {
-      /* N.B. It's best to provide at least an empty string for all
-       * properties, to avoid showing 'undefined' labels in some browsers.
-       */
-      node.explicitLabel = '';
-      node.originalLabel = '';
-      node.ottTaxonName = '';
-      node.ottId = '';
-      if ('label' in node) {
-        console.log(">> node "+ i +" has 'label'");
-        node.explicitLabel = node['label'];
-      }
-      if ('@label' in node) {
-        console.log(">> node "+ i +" has '@label'");
-        node.explicitLabel = node['@label'];
-      }
-      if ('@otu' in node) {
-        var itsOTU = getOTUByID( node['@otu'] );
-        // attach OTU with possible label(s) here
-        if (itsOTU) {
-          // nudge the relevant properties into a generic form
-          if ('^ot:originalLabel' in itsOTU) {
-            node.originalLabel = itsOTU['^ot:originalLabel'];
-          }
-          if ('^ot:ottTaxonName' in itsOTU) {
-            node.ottTaxonName = itsOTU['^ot:ottTaxonName'];
-          }
-          if ('^ot:ottId' in itsOTU) {
-            node.ottId = itsOTU['^ot:ottId'];
-          }
-          if ('@label' in itsOTU) {
-            // This is uncommon, but appears in our converted Newick.
-            // Yield to an explicit label on the node itself!
-            console.log(">> stealing otu label '"+ itsOTU['@label'] +"' for this node");
-            if ($.trim(node.explicitLabel) === '') {
-              node.explicitLabel = itsOTU['@label'];
-            }
-          }
-        }
-      }
+        assignNodeLabels(node);
     });
 
     data.phyloEdges = layout.links(data.phyloNodes);
@@ -456,187 +579,3 @@ Nexson.schema = {
   "additionalProperties": false,  // TODO: confirm this
   "required": ["type"]  // TODO: add required params
 };
-
-
-
-
-
-
-
-if (false) {
-
-vg.transforms.nexson = function() {
-  var layout = d3.layout.cluster()  // or tree (seems most basic)
-                 .children(getNexsonChildren),  // below
-      value = vg.accessor("data"),
-      fullNexson = null,
-      nexml = null,
-      //size = ["width", "height"],
-      params = [ 'size' ],  // ["round", "sticky", "ratio", "padding"],
-      output = {
-        //"x": "x",
-        //"y": "y",
-        //"dx": "width",
-        //"dy": "height"
-      };
-
-  // Expect the ID of the specified tree, or the position of the specified
-  // trees collection and tree.
-  var treeID = null,
-      treesCollectionPosition = 0,
-      treePosition = 0;
-
-  function nexson(data, db, group) {
-/*
-console.log("INCOMING data to nexson transform:");
-console.log(data);
-*/
-    fullNexson = data['data'];  // stash the complete NEXson!
-    nexml = fullNexson.data.nexml;
-    var rootNode = getRootNode();  // defined below
-    if (!rootNode) {
-        console.warn("No root node found!");
-        console.warn("  treeID: "+ treeID);
-        console.warn("  treesCollectionPosition: "+ treesCollectionPosition);
-        console.warn("  treePosition: "+ treePosition);
-        return false;
-    }
-
-    data = {};
-
-    data.phyloNodes = layout
-      //.size(vg.data.size(size, group))
-      //.value(value)
-      .nodes(rootNode);
-
-    // add all possible labels to each node
-    var tree = getSpecifiedTree();
-    $.each(data.phyloNodes, function(i, node) {
-        /* N.B. It's best to provide at least an empty string for all
-         * properties, to avoid showing 'undefined' labels in some browsers.
-         */
-        node.explicitLabel = '';
-        node.originalLabel = '';
-        node.ottTaxonName = '';
-        node.ottId = '';
-        if ('label' in node) {
-            console.log(">> node "+ i +" has 'label'");
-            node.explicitLabel = node['label'];
-        }
-        if ('@label' in node) {
-            console.log(">> node "+ i +" has '@label'");
-            node.explicitLabel = node['@label'];
-        }
-        if ('@otu' in node) {
-            var itsOTU = getOTUByID( node['@otu'] );
-            // attach OTU with possible label(s) here
-            if (itsOTU) {
-                // nudge the relevant properties into a generic form
-                if ('^ot:originalLabel' in itsOTU) {
-                    node.originalLabel = itsOTU['^ot:originalLabel'];
-                }
-                if ('^ot:ottTaxonName' in itsOTU) {
-                    node.ottTaxonName = itsOTU['^ot:ottTaxonName'];
-                }
-                if ('^ot:ottId' in itsOTU) {
-                    node.ottId = itsOTU['^ot:ottId'];
-                }
-                if ('@label' in itsOTU) {
-                    // This is uncommon, but appears in our converted Newick.
-                    // Yield to an explicit label on the node itself!
-                    if ($.trim(node.explicitLabel) === '') {
-                        console.log(">> stealing otu label '"+ itsOTU['@label'] +"' for this node");
-                        node.explicitLabel = itsOTU['@label'];
-                    } else {
-                        console.log(".. existing explicitLabel: "+ node.explicitLabel);
-                    }
-                }
-            }
-        }
-    });
-    
-    data.phyloEdges = layout.links(data.phyloNodes);
-/* translate incoming keys to their output names?
-    var keys = vg.keys(output),
-        len = keys.length;
-
-    data.forEach(function(d) {
-      var key, val;
-      for (var i=0; i<len; ++i) {
-        key = keys[i];
-        if (key !== output[key]) {
-          val = d[key];
-          delete d[key];
-          d[output[key]] = val;
-        }
-      }
-      //d.children = getChildren(d);
-    });
-*/
-
-    
-/* UNUSED
-    console.log("OUTGOING data from nexson transform:");
-    console.log(data);
-*/
-    return data;
-  }
-
-  nexson.value = function(field) {
-    value = vg.accessor(field);
-    return nexson;
-  };
-
-  params.forEach(function(name) {
-    nexson[name] = function(x) {
-      layout[name](x);
-      return nexson;
-    }
-  });
-
-  // stolen from facet.js
-  nexson.keys = function(k) {
-    keys = vg.array(k).map(vg.accessor);
-    return nexson;
-  };
-  nexson.sort = function(s) {
-    sort = vg.data.sort().by(s);
-    return nexson;
-  };
-
-  // Expose methods to accept tree ID (or ordinal position of the 
-  // desired trees collection and a tree within it).
-  nexson.treeID = function(s) {
-    treeID = s;
-    return nexson;
-  };
-  nexson.treesCollectionPosition = function(n) {
-    treesCollectionPosition = n;
-    return nexson;
-  };
-  nexson.treePosition = function(n) {
-    treePosition = n;
-    return nexson;
-  };
-
-    /*
-     * NEXson-specific logic, encapsulated for easy access to nexml, etc.
-MOVED
-     */
-
-  nexson.output = function(map) {
-    // build children
-    vg.keys(output).forEach(function(k) {
-      if (map[k] !== undefined) {
-        output[k] = map[k];
-      }
-    });
-    return nexson;
-  };
-
-  return nexson;
-};
-
-}
-
-

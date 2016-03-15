@@ -596,6 +596,32 @@
                     </div>
                 </div>
                 <div class="control-group">
+                    <!-- TODO: call this "Ladderize"? "Sibling order"? "Laddering"? "Sister groups"? -->
+                    <label class="control-label"
+                           data-bind="attr: {for: '#'+ id() +'-branchrotation-chooser'}" >Branch rotation</label> 
+                    <div class="controls">
+                        <select style="margin-bottom: 0;"
+                                data-bind="attr: {id: id() +'-branchrotation-chooser'},
+                                           options: [
+                                           {label: 'Original (no change to input tree)', 
+                                            value: TreeIllustrator.branchRotationMethods.UNCHANGED},
+                                           {label: 'Alphabetical by node label', 
+                                            value: TreeIllustrator.branchRotationMethods.ALPHABETICAL},
+                                           {label: 'Ladderize right (smaller clades first)', 
+                                            value: TreeIllustrator.branchRotationMethods.LADDERIZE_RIGHT},
+                                           {label: 'Ladderize left (larger clades first)', 
+                                            value: TreeIllustrator.branchRotationMethods.LADDERIZE_LEFT},
+                                           {label: 'Zig-zag (alternate left and right)', 
+                                            value: TreeIllustrator.branchRotationMethods.ZIG_ZAG}
+                                          ],
+                                          optionsText: 'label',
+                                          optionsValue: 'value',
+                                          value: branchRotation,
+                                          event: {change: stylist.refreshViz}">
+                        </select>
+                    </div>
+                </div>
+                <div class="control-group">
                     <label class="control-label" for="">Tree size</label>
                     <div class="controls mini-form"
                          style="margin-top: 0.25em;"
