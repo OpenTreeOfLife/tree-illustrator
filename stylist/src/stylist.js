@@ -1164,7 +1164,7 @@ $(document).ready(function() {
         });
     } else {
         // dim and disable the full-screen toggle
-        $fullScreenToggle.css("opacity: 0.5;")
+        $fullScreenToggle.css("opacity", "0.5")
                          .click(function() {
                             alert("This browser does not support full-screen display.");
                             return false;
