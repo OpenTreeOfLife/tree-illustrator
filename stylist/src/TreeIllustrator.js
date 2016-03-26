@@ -1746,6 +1746,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
     var mostLikelyDataFormat = function (data) {
         if (utils.isProbablyNewick(data)) { return  'newick'; }
         if (utils.isProbablyNEXUS(data))  { return  'nexus'; }
+        if (utils.isProbablyRPhylo(data))  { return  'phylo'; }
         if (utils.isProbablyNeXML(data))  { return  'nexml'; }
         return '';  // format unknown
     }
