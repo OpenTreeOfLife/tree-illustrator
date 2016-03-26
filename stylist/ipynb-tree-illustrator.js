@@ -638,7 +638,7 @@ function listAllNotebookVars( callback ) {
         case 'R':
             kernelCode = "library(jsonlite)\n"  // use "\\n" here?
                        + ".ti.locals = ls()\n"
-                       + ".ti.locals <- sapply( .ti.locals, function(varName) {\n"
+                       + ".ti.locals <- lapply( .ti.locals, function(varName) {\n"
                        + "    varValue = get(varName)\n"
                        + "    varType = class(varValue)\n"
                        + "    return( c(varName, varType, 'R') )\n"
