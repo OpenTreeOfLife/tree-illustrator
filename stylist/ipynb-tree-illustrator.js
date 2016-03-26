@@ -639,10 +639,10 @@ function listAllNotebookVars( callback ) {
             kernelCode = "library(jsonlite)\n"  // use "\\n" here?
                        + ".ti.locals = ls()\n"
                        + ".ti.locals <- sapply( .ti.locals, function(varName) {\n"
-                       + "    varValue = get(varName)\\n"
-                       + "    varType = class(varValue)\\n"
-                       + "    return( c(varName, varType, 'R') )\\n"
-                       + "})\\n"
+                       + "    varValue = get(varName)\n"
+                       + "    varType = class(varValue)\n"
+                       + "    return( c(varName, varType, 'R') )\n"
+                       + "})\n"
                        + "toJSON(.ti.locals, force=TRUE)\n"; 
             console.log('=================');
             console.log(kernelCode);
