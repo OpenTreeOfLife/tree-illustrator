@@ -666,14 +666,17 @@ function listAllNotebookVars( callback ) {
                 console.log( out.content.data );
                 var restoredOutput;
                 try {
-                    // string should evaluate as JS (not valid JSON)
+                    // string should evaluate as JS (if not valid JSON)
                     // TODO: Confirm this in Jupyter docs!
                     switch (out.msg_type) {
                         case 'execute_result':  
                         case 'display_data':
                             // result should be in `data['text/plain']`
-                            //restoredOutput = JSON.parse(out.content.data['text/plain']);
-                            restoredOutput = eval(out.content.data['text/plain']);
+                            try {
+                                restoredOutput = JSON.parse(out.content.data['text/plain']);
+                            } catch (e) {
+                                restoredOutput = eval(out.content.data['text/plain']);
+                            }
                             break;
                         case 'stream':          
                             // result should be the main `data` property
@@ -763,15 +766,18 @@ function getNotebookVar( varName, callback ) {
                 console.log( out.content.data );
                 var restoredOutput;
                 try {
-                    // string should evaluate as JS (not valid JSON)
+                    // string should evaluate as JS (if not valid JSON)
                     // TODO: Confirm this in Jupyter docs!
                     switch (out.msg_type) {
                         case 'execute_result':  
                         case 'display_data':
                             debugger;
                             // result should be in `data['text/plain']`
-                            //restoredOutput = JSON.parse(out.content.data['text/plain']);
-                            restoredOutput = eval(out.content.data['text/plain']);
+                            try {
+                                restoredOutput = JSON.parse(out.content.data['text/plain']);
+                            } catch (e) {
+                                restoredOutput = eval(out.content.data['text/plain']);
+                            }
                             break;
                         case 'stream':          
                             // result should be the main `data` property
