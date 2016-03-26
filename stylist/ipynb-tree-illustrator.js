@@ -636,7 +636,7 @@ function listAllNotebookVars( callback ) {
             break;
 
         case 'R':
-            kernelCode = "library(jsonlite)\n"  // use "\\n" here?
+            kernelCode = "library(jsonlite)\n"
                        + ".ti.locals = ls()\n"
                        + ".ti.locals <- lapply( .ti.locals, function(varName) {\n"
                        + "    varValue = get(varName)\n"
@@ -738,7 +738,8 @@ function getNotebookVar( varName, callback ) {
             break;
 
         case 'R':
-            kernelCode = varName;
+            kernelCode = "library(jsonlite)\n"
+                       + "toJSON("+ varName +", force=TRUE)\n"; 
             break;
 
         default:
@@ -758,6 +759,7 @@ function getNotebookVar( varName, callback ) {
         switch (out.msg_type) {
             case 'execute_result':
             case 'stream':
+            case 'display_data':  // from R kernel
                 console.log( out.content.data );
                 var restoredOutput;
                 try {
@@ -765,6 +767,7 @@ function getNotebookVar( varName, callback ) {
                     // TODO: Confirm this in Jupyter docs!
                     switch (out.msg_type) {
                         case 'execute_result':  
+                        case 'display_data':
                             // result should be in `data['text/plain']`
                             //restoredOutput = JSON.parse(out.content.data['text/plain']);
                             restoredOutput = eval(out.content.data['text/plain']);
@@ -791,7 +794,6 @@ function getNotebookVar( varName, callback ) {
             case 'error':
             case 'pyerr':
             default:
-                debugger;
                 response.error = failureMsg +"\n\n"+ 
                           out.content.ename +"\n"+ 
                           out.content.evalue;
