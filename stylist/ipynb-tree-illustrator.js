@@ -665,6 +665,7 @@ function listAllNotebookVars( callback ) {
         switch (out.msg_type) {
             case 'execute_result':  
             case 'stream':          
+            case 'display_data':   // returned from R kernel
                 console.log( out.content.data );
                 var restoredOutput;
                 try {
@@ -672,6 +673,7 @@ function listAllNotebookVars( callback ) {
                     // TODO: Confirm this in Jupyter docs!
                     switch (out.msg_type) {
                         case 'execute_result':  
+                        case 'display_data':
                             // result should be in `data['text/plain']`
                             //restoredOutput = JSON.parse(out.content.data['text/plain']);
                             restoredOutput = eval(out.content.data['text/plain']);
@@ -680,11 +682,6 @@ function listAllNotebookVars( callback ) {
                             // result should be the main `data` property
                             restoredOutput = eval(out.content.data);
                             break;
-                        default:
-                            response.error = ("Unexpected out.msg_type: "+ out.msg_type);
-                            console.error(response.error);
-                            callback(response);
-                            return;
                     }
                 } catch (e) {
                     // return more, in case there's an unexpected mimetype
@@ -695,14 +692,21 @@ function listAllNotebookVars( callback ) {
                 callback(response);
                 return;
 
+                break;
+
             case 'error':
             case 'pyerr':
-            default:
                 response.error = failureMsg +"\n\n"+ 
                                  out.content.ename +"\n"+ 
                                  out.content.evalue;
                 console.error(response.error);
                 callback( response );
+                return;
+
+            default:
+                response.error = ("Unexpected out.msg_type: "+ out.msg_type);
+                console.error(response.error);
+                callback(response);
                 return;
         }
     };
