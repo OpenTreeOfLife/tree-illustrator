@@ -635,6 +635,17 @@ function listAllNotebookVars( callback ) {
                            + "if (_x not in _ignore_names) and (_x.startswith('_') == False)]";
             break;
 
+        case 'R':
+            kernelCode = "library(jsonlite)\n"  // use "\\n" here?
+                       + ".ti.locals = ls()\n"
+                       + ".ti.locals <- sapply( .ti.locals, function(varName) {\n"
+                       + "    varValue = get(varName)\n"
+                       + "    varType = class(varValue)\n"
+                       + "    return( c(varName, varType, 'R') )\n"
+                       + "})\n"
+                       + "toJSON(.ti.locals, force=TRUE)\n"; 
+            break;
+
         default:
             response.error = ("I don't know how to read variables from a '"+
                 kernelLanguage +"' kernel!");
