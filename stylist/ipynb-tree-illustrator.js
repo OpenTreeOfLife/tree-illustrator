@@ -644,13 +644,10 @@ function listAllNotebookVars( callback ) {
                        + "    return( c(varName, varType, 'R') )\n"
                        + "})\n"
                        + "toJSON(.ti.locals, force=TRUE)\n"; 
-            console.log('=================');
-            console.log(kernelCode);
-            console.log('=================');
             break;
 
         default:
-            response.error = ("I don't know how to read variables from a '"+
+            response.error = ("I don't know how to list variables from a '"+
                 kernelLanguage +"' kernel!");
         console.error(response.error);
         // return the error immediately
@@ -740,6 +737,10 @@ function getNotebookVar( varName, callback ) {
             kernelCode = varName;
             break;
 
+        case 'R':
+            kernelCode = varName;
+            break;
+
         default:
             response.error = ("I don't know how to read variables from a '"+
                 kernelLanguage +"' kernel!");
@@ -790,6 +791,7 @@ function getNotebookVar( varName, callback ) {
             case 'error':
             case 'pyerr':
             default:
+                debugger;
                 response.error = failureMsg +"\n\n"+ 
                           out.content.ename +"\n"+ 
                           out.content.evalue;
