@@ -663,7 +663,7 @@ function listAllNotebookVars( callback ) {
             case 'execute_result':  
             case 'stream':          
             case 'display_data':   // returned from R kernel
-                console.log( out.content.data );
+                console.log( out.content.data || out.content.text );
                 var restoredOutput;
                 try {
                     // string should evaluate as JS (if not valid JSON)
@@ -679,8 +679,12 @@ function listAllNotebookVars( callback ) {
                             }
                             break;
                         case 'stream':          
-                            // result should be the main `data` property
-                            restoredOutput = eval(out.content.data || out.content.text);
+                            // result should be the main `data` property, or as literal text
+                            if ('data' in out.content) {
+                                restoredOutput = eval(out.content.data);
+                            } else {
+                                restoredOutput = out.content.text;
+                            }
                             break;
                     }
                 } catch (e) {
@@ -768,7 +772,7 @@ function getNotebookVar( varName, callback ) {
             case 'execute_result':
             case 'stream':
             case 'display_data':  // from R kernel
-                console.log( out.content.data );
+                console.log( out.content.data || out.content.text );
                 var restoredOutput;
                 try {
                     // string should evaluate as JS (if not valid JSON)
@@ -776,7 +780,6 @@ function getNotebookVar( varName, callback ) {
                     switch (out.msg_type) {
                         case 'execute_result':  
                         case 'display_data':
-                            debugger;
                             // result should be in `data['text/plain']`
                             try {
                                 restoredOutput = JSON.parse(out.content.data['text/plain']);
@@ -785,8 +788,12 @@ function getNotebookVar( varName, callback ) {
                             }
                             break;
                         case 'stream':          
-                            // result should be the main `data` property
-                            restoredOutput = eval(out.content.data || out.content.text);
+                            // result should be the main `data` property, or as literal text
+                            if ('data' in out.content) {
+                                restoredOutput = eval(out.content.data);
+                            } else {
+                                restoredOutput = out.content.text;
+                            }
                             break;
                         default:
                             response.error = ("Unexpected out.msg_type: "+ out.msg_type);
