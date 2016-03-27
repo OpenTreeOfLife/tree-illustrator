@@ -742,7 +742,7 @@ function getNotebookVar( varName, callback ) {
 
         case 'R':
             kernelCode = "library(jsonlite)\n"
-                       + "if (class("+ varName +") == 'phylo' {\n"
+                       + "if (class("+ varName +") == 'phylo') {\n"
                     // + "    write.tree("+ varName +")\n";  // generates Newick string
                        + "    write.nexus("+ varName +")\n"; // generates NEXUS (richer format)
                        + "} else {\n"
