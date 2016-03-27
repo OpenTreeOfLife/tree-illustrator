@@ -680,7 +680,7 @@ function listAllNotebookVars( callback ) {
                             break;
                         case 'stream':          
                             // result should be the main `data` property
-                            restoredOutput = eval(out.content.data);
+                            restoredOutput = eval(out.content.data || out.content.text);
                             break;
                     }
                 } catch (e) {
@@ -786,7 +786,7 @@ function getNotebookVar( varName, callback ) {
                             break;
                         case 'stream':          
                             // result should be the main `data` property
-                            restoredOutput = eval(out.content.data);
+                            restoredOutput = eval(out.content.data || out.content.text);
                             break;
                         default:
                             response.error = ("Unexpected out.msg_type: "+ out.msg_type);
