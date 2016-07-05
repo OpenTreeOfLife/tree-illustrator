@@ -17,4 +17,6 @@ questions about:
 Initial work is focused on a
 [proof-of-concept](https://github.com/OpenTreeOfLife/tree-illustrator/tree/master/stylist)
 web application and on further discussion in the
-[wiki](https://github.com/OpenTreeOfLife/tree-illustrator/wiki).
+[wiki](https://github.com/OpenTreeOfLife/tree-illustrator/wiki). 
+
+Our [simple project website](http://opentreeoflife.github.io/tree-illustrator/) is managed with GitHub Pages; by convention, its source can be found [in the `gh-pages` branch of this repository](https://github.com/OpenTreeOfLife/tree-illustrator/tree/gh-pages). 
