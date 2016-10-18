@@ -13,9 +13,10 @@
     </script>
     <script src="dist/stylist-bundle.js"></script>
     <script src="jquery.fullscreen.min.js"></script>
-    <script src="ipython-notebook-bridge.js"></script>
-    <!-- TODO: only add this if we're embedded in a notebook? -->
-
+    <!-- Only add appropriate storage backend for the current host application,
+         e.g. if we're embedded in a Jupyter notebook:
+            src="ipython-notebook-bridge.js"
+    -->
     <script src="bootstrap.min.js"></script>
     <link rel="stylesheet" type="text/css" href="bootstrap.min.css"/>
     <!--<link rel="stylesheet" type="text/css" href="bootstrap-responsive.min.css"/>-->

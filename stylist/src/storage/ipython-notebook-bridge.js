@@ -195,3 +195,18 @@ function getOrnamentSourceList(id, callback) {
     // TODO
 }
 
+// Expose some members to outside code (eg, Knockout bindings, onClick
+// attributes...)
+var api = [
+    // expected API for storage backend
+    'getIllustrationList',
+    'loadIllustration',
+    'saveIllustration',
+    // functions unique to an IPython notebook
+    'getTreeSourceList',
+    'getTreeSourceData'
+];
+$.each(api, function(i, methodName) {
+    // populate the default 'module.exports' object
+    exports[ methodName ] = eval( methodName );
+});

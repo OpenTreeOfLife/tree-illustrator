@@ -63,6 +63,18 @@ $.each(TreeIllustrator.hostApplications, function(i, testValue) {
     }
 });
 console.log("Tree Illustrator host application: "+ hostApplication);
+// Attempt to dynamically load its storage backend and other components
+var storage;
+switch(hostApplication) {
+    case TreeIllustrator.hostApplications.JUPYTER_NOTEBOOK:
+        storage = require('./storage/ipython-notebook-bridge.js');
+        break;
+    case TreeIllustrator.hostApplications.STANDALONE:
+        storage = require('./storage/namespaced-urls.js');
+        break;
+    default:
+        console.error("No designated storage backend for this host app!");
+}
 
 /* Offer all studies and trees from the Open Tree of Life repository,
  * plus other sources and tree formats. We'll make a tree of Knockout
@@ -170,7 +182,7 @@ function updateAvailableTrees() {
              * TODO: Can we deal with multiple kernels in the newest notebooks?
              * TODO: Can we distinguish R-via-Python from the Python kernel?
              */
-            getTreeSourceList(function(response) {
+            storage.getTreeSourceList(function(response) {
                 var notebookSourceList = ko.utils.arrayFirst(availableTrees(), function(item) {
                     return item.name() === 'From notebook kernel';
                 });
@@ -1112,7 +1124,7 @@ function loadEmptyIllustration() {
 function fetchAndLoadExistingIllustration( docID ) {
     /* Load the JS (or JSON?) data provided, and keep track of its original ID/slot.
      */
-    loadIllustration(docID, function(response) {
+    storage.loadIllustration(docID, function(response) {
         if ('data' in response) {
             var data = response.data;
             loadIllustrationData( data, 'EXISTING' );
@@ -1128,7 +1140,7 @@ function fetchAndLoadIllustrationTemplate( templateID ) {
      * internal prompts and placeholder trees/data, but we'll treat it as new.
      */
     // TODO: fetch using storage backend
-    loadIllustration(docID, function(response) {
+    storage.loadIllustration(docID, function(response) {
         if ('data' in response) {
             var template = response.data;
             loadIllustrationData( template, 'NEW' );
@@ -2148,7 +2160,7 @@ var currentIllustrationList = null;
     // keep the latest ordered array (with positions, names, descriptions)
 function loadIllustrationList(callback) {
     console.log("loadIllustrationList() STARTING...");
-    getIllustrationList(function(response) {
+    storage.getIllustrationList(function(response) {
         // show the returned list (or report any error) from the upstream response
         if ('data' in response) {
             // expect an ordered array with names and descriptions
@@ -2167,23 +2179,29 @@ function showIllustrationList() {
         var $chooser = $('#simple-chooser');
         $chooser.find('[id="dialog-heading"]').html('Choose an existing illustration');
         $chooser.find('.found-matches').empty();
-        $.each(currentIllustrationList, function(i, match) {
-            /* List item should include these properties
-             *  - name
-             *  - description
-             *  - source
-             * N.B. In slot-based storage, `i` is the only source information
-             */
-            var $matchInfo = $('<div class="match"><div class="name"></div><div class="description"></div></div>');
-            $matchInfo.find('.name').html(match.name || '<em>No name found</em>')
-            $matchInfo.find('.description').html(match.description || '');
-            $matchInfo.click(function() {
-                fetchAndLoadExistingIllustration( match.source || i);
-                // close the modal chooser
-                $(this).closest('.modal-simple-chooser').find('.modal-header .close').click();
+        if (currentIllustrationList.length === 0) {
+            $chooser.find('.found-matches').append('<div>'+
+              '<em>No trees found in storage.</em>'+
+            '</div>');
+        } else {
+            $.each(currentIllustrationList, function(i, match) {
+                /* List item should include these properties
+                 *  - name
+                 *  - description
+                 *  - source
+                 * N.B. In slot-based storage, `i` is the only source information
+                 */
+                var $matchInfo = $('<div class="match"><div class="name"></div><div class="description"></div></div>');
+                $matchInfo.find('.name').html(match.name || '<em>No name found</em>')
+                $matchInfo.find('.description').html(match.description || '');
+                $matchInfo.click(function() {
+                    fetchAndLoadExistingIllustration( match.source || i);
+                    // close the modal chooser
+                    $(this).closest('.modal-simple-chooser').find('.modal-header .close').click();
+                });
+                $chooser.find('.found-matches').append($matchInfo);
             });
-            $chooser.find('.found-matches').append($matchInfo);
-        });
+        }
         $chooser.off('shown').on('shown', function() {
             // size scrolling list to fit in the current DOI-lookup popup window
             var $chooser = $('#simple-chooser');
@@ -2209,7 +2227,7 @@ function saveCurrentIllustration(saveToID) {
     //  - OR should we rely entirely on (and possibly modify) its internal metadata?
     // Current behavior (in IPython notebook) is to assume the current (nth)
     // storage slot, unless 'NEW' or another integer is asserted here.
-    saveIllustration(saveToID, function(response) {
+    storage.saveIllustration(saveToID, function(response) {
         // (re)load the saved illustration (or report any error)
         if (response.error) {
             console.error( response.error );

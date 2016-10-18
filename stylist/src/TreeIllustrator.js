@@ -1415,7 +1415,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                         $fileUploadPanel.show();
                         // TODO: For a multi-kernel notebook, expect a specific kernel-id, eg 'python2'
                         var nbVarName = treeInfo.name().split(' ')[0];
-                        getTreeSourceData(nbVarName, function(response) {
+                        stylist.storage.getTreeSourceData(nbVarName, function(response) {
                             if ('data' in response) {
                                 var treeSourceData = response.data;
                                 /* To interpret this as tree source data, we'll 
