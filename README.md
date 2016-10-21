@@ -24,4 +24,4 @@ Our [simple project website](http://opentreeoflife.github.io/tree-illustrator/) 
 Bundling the JS with NPM and Browserify
 ---------------------------------------
 
-Our code incorporates Vega 2, so we've adopted their basic toolchain for bundling most of Tree Illustrator's functionaly in CommonJS modules. See [this wiki page for a quick overview](https://github.com/vega/vega/wiki/Vega-and-Browserify) of the build tools required (Node.js, npm, Browserify) and a basic working setup that will watch your source files and attempt bundle them following any saved changes.
+Our code incorporates Vega 2, so we've adopted their basic toolchain for bundling most of Tree Illustrator's functionality in CommonJS modules. See [this wiki page for a quick overview](https://github.com/vega/vega/wiki/Vega-and-Browserify) of the build tools required (Node.js, npm, Browserify) and a basic working setup that will watch your source files and attempt bundle them following any saved changes.
