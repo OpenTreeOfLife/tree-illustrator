@@ -20,3 +20,8 @@ web application and on further discussion in the
 [wiki](https://github.com/OpenTreeOfLife/tree-illustrator/wiki). 
 
 Our [simple project website](http://opentreeoflife.github.io/tree-illustrator/) is managed with GitHub Pages; by convention, its source can be found [in the `gh-pages` branch of this repository](https://github.com/OpenTreeOfLife/tree-illustrator/tree/gh-pages). 
+
+Bundling the JS with NPM and Browserify
+---------------------------------------
+
+Our code incorporates Vega 2, so we've adopted their basic toolchain for bundling most of Tree Illustrator's functionaly in CommonJS modules. See [this wiki page for a quick overview](https://github.com/vega/vega/wiki/Vega-and-Browserify) of the build tools required (Node.js, npm, Browserify) and a basic working setup that will watch your source files and attempt bundle them following any saved changes.
