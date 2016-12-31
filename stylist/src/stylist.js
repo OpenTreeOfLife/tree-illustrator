@@ -2155,6 +2155,34 @@ function applyChosenStyleGuide(clicked) {
     $sgBlock.closest('.modal-styleguide-chooser').find('.modal-header .close').click();
 }
 
+// reflect the current user's identity, or null for an anonymous user
+function userID() {
+    return storage.getUserID();
+}
+function userDisplayName() {
+    return storage.getUserDisplayName();
+}
+function userEmail() {
+    return storage.getUserEmail();
+}
+function loginToGitHub() {
+    return storage.loginToGitHub();
+}
+function userIsLoggedIn(callback) {
+    if (storage.userAuthToken) {
+        // asynchronous, since it may require an AJAX roundtrip...
+        if (typeof(callback) !== 'function') {
+            alert('stylist.userIsLoggedIn() - requires a callback function!')
+            return;
+        }
+        // return true if OAuth still recognizes this token
+        callback(storage.userIsLoggedIn());
+        return;
+    }
+    // no callback required!
+    return true;  // treat as "true" by default, e.g. Jupyter notebook
+}
+
 // manage illustrations (using an adapter with API methods, already loaded)
 var currentIllustrationList = null;
     // keep the latest ordered array (with positions, names, descriptions)
@@ -2241,6 +2269,11 @@ function saveCurrentIllustration(saveToID) {
 // attributes...)
 var api = [
     'TreeIllustrator',
+    'userID',
+    'userDisplayName',
+    'userEmail',
+    'loginToGitHub',
+    'userIsLoggedIn',
     'showIllustrationList',
     'fetchAndLoadExistingIllustration',
     'fetchAndLoadIllustrationTemplate',

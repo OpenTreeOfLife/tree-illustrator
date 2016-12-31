@@ -1123,5 +1123,48 @@
         </div>
     </div>
 
+    <!-- hidden template for GitHub login -->
+    <!-- TODO: Add alternate messages and actions if user is logged in, or has a stale OAuth token. -->
+    <div id="github-login-popup" class="modal fade">
+        <div class="modal-header" style="padding: 0px inherit;">
+          <a data-dismiss="modal" class="close" onclick="hideGithubLoginPopup(); return false;">x</a>
+          <h4 style="margin-top: 0;">Login to GitHub <span style="font-weight: normal;">to save your work</span></h4>
+        </div>
+        <div class="modal-body">
+            <p>
+            You'll need an active <a href="https://github.com/settings/profile" target="_blank">GitHub account</a> to save data in our 
+                <a href="https://github.com/OpenTreeOfLife/collections-1/tree/master/collections-by-owner" target="_blank">shared online repository</a>. 
+                <em style="color: #933;">NOTE that all data saved in this repo is <strong>publicly visible</strong>!</em>
+                (Once access is granted here, you'll be able to see the Tree Illustrator's
+                <a href="https://github.com/settings/tokens" target="_blank">detailed permissions in your GitHub account settings</a>.)
+                If you need truly private storage, consider using Tree Illustrator from <a href="#TODO" target="_blank">a different host application</a>.
+            </p>
+            <form class="form-horizontal" style="margin-bottom: 0px;">
+                <div class="control-group">
+                    <label class="control-label" for="#github-userid">GitHub user name (id)</label> 
+                    <div class="controls">
+                        <input class="input-xlarge" id="github-userid" type="text" value="" 
+                               placeholder="EXAMPLE: 'jsmith', not 'John Smith'"
+                               TODOdata-bind="value: metadata.name" />
+                    </div>
+                </div>
+                <div class="control-group" style="margin-bottom: 0px;">
+                    <label class="control-label" for="#github-password"><i class="icon icon-lock"></i> GitHub password</label> 
+                    <div class="controls">
+                        <input class="input-xlarge" id="github-password" type="password" value="" 
+                               placeholder="Sent once via HTTPS, then cleared"
+                               TODOdata-bind="value: metadata.name" />
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+          <button id="github-authorize" 
+                  class="btn btn-info pull-right" style="margin-left: 20px;">Authorize</button>
+          <a data-dismiss="modal" class="btn"
+             onclick="hideGithubLoginPopup(); return false;">Cancel</a>
+        </div>
+    </div>
+
 </html>
 

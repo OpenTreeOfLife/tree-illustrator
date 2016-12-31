@@ -105,7 +105,8 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                 'description': "",
                 'authors': [ ],   // assign immediately to this user?
                 'tags': [ ],
-                'dois': [ ]
+                'dois': [ ],
+                'date_created': new Date().toISOString()
             },
             'styleGuide': {
                 // maybe the defaults here are "anything goes" (all options enabled)?
