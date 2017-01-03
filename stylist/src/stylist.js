@@ -2156,8 +2156,8 @@ function applyChosenStyleGuide(clicked) {
 }
 
 // reflect the current user's identity, or null for an anonymous user
-function userID() {
-    return storage.getUserID();
+function userLogin() {
+    return storage.getUserLogin();
 }
 function userDisplayName() {
     return storage.getUserDisplayName();
@@ -2269,7 +2269,7 @@ function saveCurrentIllustration(saveToID) {
 // attributes...)
 var api = [
     'TreeIllustrator',
-    'userID',
+    'userLogin',
     'userDisplayName',
     'userEmail',
     'loginToGitHub',

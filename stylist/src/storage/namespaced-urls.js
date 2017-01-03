@@ -45,6 +45,22 @@ var loadFile_GET_url = illustrationAPIBaseURL + '/v3/illustration/{DOC_ID}/file/
 var updateFile_PUT_url = illustrationAPIBaseURL + '/v3/illustration/{DOC_ID}/file/{FILE_ID}';
 var removeFile_DELETE_url = illustrationAPIBaseURL + '/v3/illustration/{DOC_ID}/file/{FILE_ID}';
 
+// Use a known-good URL fragment to extract an illustration ID from its API URL
+var illustrationURLSplitterAPI = '/illustration/';
+// Fall back to raw-data URL in some cases
+var illustrationURLSplitterRaw = '/docs-by-owner/';  // or 'illustrations'?
+
+function getIllustrationIDFromURL(url) {
+    // anything after the known API endpoint is a illustration ID
+    var fromAPI = url.split( illustrationURLSplitterAPI )[1];
+    var fromRawData = url.split( illustrationURLSplitterRaw )[1];
+    if (fromRawData) {
+        // strip file extension
+        fromRawData = fromRawData.split('.json')[0];
+    }
+    return fromAPI || fromRawData;
+}
+
 /* Most operations (beyond a simple fetch) will require the user to be logged
  * in via GitHub. Store their id, name, and credentials here.
  */
@@ -52,7 +68,7 @@ var githubAPIBaseURL = 'https://api.github.com';
 var getGitHubToken_url = githubAPIBaseURL + '/authorizations';
 var getGitHubUserInfo_url = githubAPIBaseURL + '/user';
 var userDisplayName,
-    userID,
+    userLogin,
     userEmail,
     userAuthToken;
 var githubTokenProps = {
@@ -63,8 +79,8 @@ var githubTokenProps = {
 function getUserDisplayName() {
     return userDisplayName;
 }
-function getUserID() {
-    return userID;
+function getUserLogin() {
+    return userLogin;
 }
 function getUserEmail() {
     return userEmail;
@@ -164,7 +180,7 @@ function loginToGitHub( username, password ) {
                         success: function(data) {
                             // These should have proper values
                             userDisplayName = data.name || "NAME_NOT_FOUND";
-                            userID = data.login || "USERID_NOT_FOUND";
+                            userLogin = data.login || "LOGIN_NOT_FOUND";
                             userEmail = data.email || "EMAIL_NOT_FOUND";
                         },
                         complete: function() {
@@ -196,6 +212,13 @@ function loginToGitHub( username, password ) {
     $popup.modal('show');
 }
 
+function slugify(str) {
+    // Convert any string into a simplified "slug" suitable for use in URL or query-string
+    return str.toLowerCase()
+              .replace(/[^a-z0-9 -]/g, '')  // remove invalid chars
+              .replace(/\s+/g, '-')         // collapse whitespace and replace by -
+              .replace(/-+/g, '-');         // collapse dashes
+}
 
 function getIllustrationList(callback) {
     /* The 'data' (if successful) should be an array of objects, each with
@@ -217,8 +240,8 @@ function getIllustrationList(callback) {
             if (foundIllustrations.length) {
                 // TODO: Convert these properties to the more generic ones expected
                 // by the Tree Illustrator (name, description, source)
-                console.warn('=== found '+ resultsJSON.length +' illustrations ===');
-                $.each( data, function(i, illustrationInfo) {
+                console.warn('=== found '+ foundIllustrations.length +' illustrations ===');
+                $.each( foundIllustrations, function(i, illustrationInfo) {
                     console.warn(illustrationInfo);
                 });
             } else if ($.isArray(foundIllustrations)) {
@@ -264,6 +287,11 @@ function saveIllustration(illustrationID, callback) {
     // 'callback' should expect a single obj with 'data' or 'error' properties)
     // TODO: support save, save-as, copy?
 
+    if (!userAuthToken) {
+        // We can't save without a token; stop and prompt for login
+        loginToGitHub();
+        return;
+    }
     // add this user to the authors list, if not found
     // TODO: add email or userid here, so we can link to authors?
     var listPos = $.inArray( userDisplayName, stylist.ill.metadata.authors() );
@@ -286,7 +314,28 @@ function saveIllustration(illustrationID, callback) {
 
 
     // Are we creating a new one, or updating an existing one?
+    var createOrUpdate;
+    if (stylist.ill.metadata.sha()) {
+        // we're UPDATING an existing collection
+        createOrUpdate = 'UPDATE';
+    } else {
+        // we're CREATING a new collection
+        createOrUpdate = 'CREATE';
+    }
     if (illustrationID && typeof(illustrationID) === 'string') {
+        // update (or add) an internal URL with the specified ID, e.g. from Save As...
+        clonableIllustration.metadata.url = illustrationURLSplitterAPI + illustrationID;
+    } else if (clonableIllustration.metadata.url) {
+        // we'll use the ID already stored in its URL
+    } else {
+        // we'll build a propsed url, based on the illustration's name
+        var nameSlug = slugify(clonableIllustration.metadata.name);
+        // build a fresh ID with current user as creator
+        clonableIllustration.metadata.url = illustrationURLSplitterAPI + userLogin +'/'+ nameSlug;
+    }
+    illustrationID = getIllustrationIDFromURL(clonableIllustration.metadata.url);
+
+    if (createOrUpdate === 'UPDATE') {
         // Update the existing illustration
         var saveURL = updateIllustration_PUT_url.replace('{DOC_ID}', illustrationID);
         /* TODO? gather commit message (if any) from pre-save popup
@@ -347,11 +396,13 @@ function saveIllustration(illustrationID, callback) {
                     return;
                 }
                 var putResponse = $.parseJSON(jqXHR.responseText);
-                viewModel.startingCommitSHA = putResponse['sha'] || viewModel.startingCommitSHA;
-                /*
-                // update the History tab to show the latest commit
+                var newCommitSHA = putResponse['sha'];
+                if (newCommitSHA) {
+                    stylist.ill.metadata.sha(newCommitSHA);
+                }
+                /* TODO: add 'versions' or 'metadata.versions' to record these commits?
                 if ('versionHistory' in putResponse) {
-                    viewModel.versions(putResponse['versionHistory'] || [ ]);
+                    stylist.ill.metadata.versions(putResponse['versionHistory'] || [ ]);
                 }
                 */
                 if (putResponse['merge_needed']) {
@@ -400,6 +451,11 @@ function saveIllustration(illustrationID, callback) {
                     alert('Sorry, there was an error creating this illustration.');
                     return;
                 }
+
+                // update the internal 'url' of the live illustration to match what was assigned
+                // (API ensures uniqueness, typically by incrementing duplicate ids)
+                var assignedID = data.resource_id;
+                stylist.ill.metadata.url( assignedID );
 
                 /*
                 alert('Illustration created, redirecting now....');
@@ -461,7 +517,7 @@ var api = [
     'saveIllustration',
     // auth information (specific to this backend?)
     'getUserDisplayName',
-    'getUserID',
+    'getUserLogin',
     'getUserEmail',
     //'userAuthToken'
     'loginToGitHub',

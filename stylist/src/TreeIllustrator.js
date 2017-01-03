@@ -102,6 +102,8 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         var obj = {
             'metadata': {
                 'name': "Untitled illustration",
+                'url': "",  // source URL on GitHub (GitHub storage only)
+                'sha': "",  // latest SHA on GitHub (GitHub storage only)
                 'description': "",
                 'authors': [ ],   // assign immediately to this user?
                 'tags': [ ],
