@@ -454,14 +454,14 @@ function saveIllustration(illustrationID, callback) {
 
                 // update the internal 'url' of the live illustration to match what was assigned
                 // (API ensures uniqueness, typically by incrementing duplicate ids)
-                var assignedID = data.resource_id;
-                stylist.ill.metadata.url( assignedID );
-
-                /*
-                alert('Illustration created, redirecting now....');
-                // bounce to the new illustration, to load it normally?
-                window.location = "/curator/study/edit/"+ data['resource_id'];
-                */
+                // EXAMPLE:  https://api.opentreeoflife.org/v3/illustration/jimallman/my-illustration
+                var assignedURL = data.resource_url;
+                stylist.ill.metadata.url( assignedURL );
+                var newCommitSHA = data['sha'];
+                if (newCommitSHA) {
+                    stylist.ill.metadata.sha(newCommitSHA);
+                }
+                // TODO: add 'versions' or 'metadata.versions' to record these commits?
             },
             error: function( data, textStatus, jqXHR ) {
                 //hideModalScreen();
