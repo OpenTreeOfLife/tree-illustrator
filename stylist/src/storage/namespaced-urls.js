@@ -356,7 +356,7 @@ function saveIllustration(illustrationID, callback) {
             author_name: userDisplayName,
             author_email: userEmail,
             auth_token: userAuthToken,
-            starting_commit_SHA: stylist.ill.startingCommitSHA,
+            starting_commit_SHA: stylist.ill.metadata.sha(),
             commit_msg: 'Saved from Tree Illustrator'       // add version?
         });
         saveURL += ('?'+ qsVars);
@@ -369,7 +369,7 @@ function saveIllustration(illustrationID, callback) {
             contentType: "application/json; charset=utf-8",
             url: saveURL,
             processData: false,
-            data: ('{"illustration":'+ JSON.stringify(clonableIllustration) +'}'),  // TODO: some kind of wrapper needed?
+            data: ('{"json":'+ JSON.stringify(clonableIllustration) +'}'),  // TODO: move auth info to this wrapper?
             complete: function( jqXHR, textStatus ) {
                 // report errors or malformed data, if any
                 if (textStatus !== 'success') {
@@ -406,7 +406,7 @@ function saveIllustration(illustrationID, callback) {
                 }
                 */
                 if (putResponse['merge_needed']) {
-                    var errMsg = 'Your changes were saved, but an edit by another user prevented your edit from merging to the publicly visible location. In the near future, we hope to take care of this automatically. In the meantime, please <a href="mailto:info@opentreeoflife.org?subject=Illustration%20merge%20needed%20-%20'+ viewModel.startingCommitSHA +'">report this error</a> to the Open Tree of Life software team';
+                    var errMsg = 'Your changes were saved, but an edit by another user prevented your edit from merging to the publicly visible location. In the near future, we hope to take care of this automatically. In the meantime, please <a href="mailto:info@opentreeoflife.org?subject=Illustration%20merge%20needed%20-%20'+ newCommitSHA +'">report this error</a> to the Open Tree of Life software team';
                     /* TODO: make this a cleaner, more friendly display (with active mailto: hyperlink)
                     hideModalScreen();
                     showErrorMessage(errMsg);
