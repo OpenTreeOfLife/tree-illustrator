@@ -242,7 +242,24 @@ function getIllustrationList(callback) {
                 // by the Tree Illustrator (name, description, source)
                 console.warn('=== found '+ foundIllustrations.length +' illustrations ===');
                 $.each( foundIllustrations, function(i, illustrationInfo) {
-                    console.warn(illustrationInfo);
+                    //console.warn(illustrationInfo);
+                    // build a rich HTML description block
+                    var srcURL = 'https://devapi.opentreeoflife.org/v3/illustration/{ID}'
+                                   .replace('{ID}', illustrationInfo['id']);  
+                    // TODO: Adapt the URL above to use matching API domain!
+                    var descHTML = '<a href="{URL}" target="_blank" title="Click to see source in a new window">{ID}</a></div>'
+                                     .replace('{URL}', srcURL)
+                                     .replace('{ID}', illustrationInfo['id']);
+                    if (illustrationInfo.metadata['description']) {
+                        descHTML += '<br/><i>{DESC}</i>'
+                                      .replace('{DESC}', illustrationInfo.metadata['description']);
+                    }
+                    resp.data.push({
+                        // use the expected properties for simple-chooser
+                        name: illustrationInfo.metadata['name'],
+                        description: descHTML,
+                        source: illustrationInfo['id']
+                    });
                 });
             } else if ($.isArray(foundIllustrations)) {
                 console.warn('=== no illustrations found ===');

@@ -2275,6 +2275,7 @@ var api = [
     'loginToGitHub',
     'userIsLoggedIn',
     'showIllustrationList',
+    'loadIllustrationList',
     'fetchAndLoadExistingIllustration',
     'fetchAndLoadIllustrationTemplate',
     'saveCurrentIllustration',
