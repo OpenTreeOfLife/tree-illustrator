@@ -1083,13 +1083,16 @@ function hideElementHandles( illElement ) {
 
 var ill;  
 
+// Keep safe copy of list-containing markup for re-use as a Knockout template (see below)
+var $stashedEditArea = null;
+
 // Load an illustration from JS/JSON data (usu. called by convenience functions below)
 function loadIllustrationData( data, newOrExisting ) {
     // Use an Illustration object as our primary view model for KnockoutJS
     // (by convention, it's usually named 'viewModel')
     ill = new TreeIllustrator.Illustration( data );
     // export the new illustration
-    exports.ill = ill; 
+    exports.ill = ill;
 
     /* TODO: handle the newOrExisting storage info? or maybe this is
      * handled by the storage backend...
@@ -1098,6 +1101,20 @@ function loadIllustrationData( data, newOrExisting ) {
     // add a single placeholder tree
     if (!data) {
         ill.addIllustratedTree();
+    }
+
+    if ($stashedEditArea === null) {
+        // Stash the pristine markup before binding this popup for the first time
+        $stashedEditArea = $('#ti-main-accordion').clone();
+        /*
+        $stashedCollectionDecisionElement = $('#tree-collection-viewer')
+            .find('#tree-collection-decisions > tr.single-tree-row').eq(0).clone();
+        */
+    } else {
+        // Replace with pristine markup to avoid weird results when loading a new illustration
+        $('#ti-main-accordion').contents().replaceWith(
+            $stashedEditArea.clone().contents()
+        );
     }
 
     // (re)bind to editor UI with Knockout
@@ -1330,7 +1347,7 @@ function initTreeIllustratorWindow() {
 
     // reset units display; clear old rulers
     $rulerUnitsDisplay.text( ill.style.printSize.units() === TreeIllustrator.units.INCHES ? "in" : "cm" );
-    
+
     // adjust viewport/viewbox to reflect current magnification (display_ppi)
     updateViewportViewbox( $scrollingViewport );
 
@@ -1342,7 +1359,7 @@ function initTreeIllustratorWindow() {
         $topRuler.scrollLeft($scrollingViewport.scrollLeft());
         $leftRuler.scrollTop($scrollingViewport.scrollTop());
     });
-    
+
     // sync resizing of rulers to viewport
     // (no event for this except on the window, it's an on-demand thing)
     var viewportWidth = $scrollingViewport[0].scrollWidth;

@@ -245,7 +245,7 @@ function getIllustrationList(callback) {
                     //console.warn(illustrationInfo);
                     // build a rich HTML description block
                     var srcURL = 'https://devapi.opentreeoflife.org/v3/illustration/{ID}'
-                                   .replace('{ID}', illustrationInfo['id']);  
+                                   .replace('{ID}', illustrationInfo['id']);
                     // TODO: Adapt the URL above to use matching API domain!
                     var descHTML = '<a href="{URL}" target="_blank" title="Click to see source in a new window">{ID}</a></div>'
                                      .replace('{URL}', srcURL)
@@ -297,7 +297,61 @@ function getIllustrationList(callback) {
 }
 
 function loadIllustration(id, callback) {
-    callback(notImplementedResponse);
+    $.ajax({
+        global: false,  // suppress web2py's aggressive error handling
+        type: 'GET',
+        dataType: 'json',
+        // crossdomain: true,
+        // contentType: "application/json; charset=utf-8",
+        url: loadIllustration_GET_url.replace('{DOC_ID}', id),
+        data: {
+            // misc identifying information
+            'author_name': (userDisplayName || ""),
+            'author_email': (userEmail || ""),
+            'auth_token': (userAuthToken || "")
+        },
+        success: function( data, textStatus, jqXHR ) {
+            // fetch method should return either the new illustration JSON, or an error
+            //hideModalScreen();
+
+            console.log('loadIllustration(): done! textStatus = '+ textStatus);
+            // report errors or malformed data, if any
+            if (textStatus !== 'success') {
+                alert('Sorry, there was an error loading this illustration.');
+                return;
+            }
+
+            // TODO: Add version history or other metadata?
+            /* The callback provided will replace stylist.ill and rebind UI
+             * and the rendering pipeline. It expects a response object with
+             * 'data' or 'error'.
+             */
+            var response = {};
+            var ill = data['data'];  // illustration as JS object
+            if (!ill) {  // TODO
+                response.error = "No illustration data found!";
+                console.error(response.error);
+            } else {
+                if (typeof(ill) === 'undefined') {
+                    response.error = "No illustration '"+ id +"' found!";
+                } else {
+                    response.data = ill;
+                }
+            }
+            callback( response );
+        },
+        error: function( data, textStatus, jqXHR ) {
+            //hideModalScreen();
+            var errMsg;
+            if ((typeof(jqXHR.responseText) !== 'string') || jqXHR.responseText.length === 0) {
+                errMsg = 'Sorry, there was an error loading this illustration. (No more information is available.)';
+            } else {
+                errMsg = 'Sorry, there was an error loading this illustration:\n\n '+ jqXHR.responseText;
+            }
+            alert(errMsg);
+        }
+    });
+    //callback(notImplementedResponse);
 }
 
 function saveIllustration(illustrationID, callback) {
@@ -482,7 +536,7 @@ function saveIllustration(illustrationID, callback) {
             },
             error: function( data, textStatus, jqXHR ) {
                 //hideModalScreen();
-                var errMsg; 
+                var errMsg;
                 if ((typeof(jqXHR.responseText) !== 'string') || jqXHR.responseText.length === 0) {
                     errMsg = 'Sorry, there was an error creating this illustration. (No more information is available.)';
                 } else {
@@ -492,8 +546,6 @@ function saveIllustration(illustrationID, callback) {
             }
         });
     }
-    
-
 }
 
 // Get user-friendly list of available source data for trees, etc.?
