@@ -105,9 +105,13 @@
             <div class="button-bar" style="margin-bottom: 1em;">
                 <button class="btn btn-small" onclick="stylist.loadIllustrationList(stylist.showIllustrationList); return false;">Load illustration...</button>
                 <button class="btn btn-small">Create from template...</button>
-              <span class="pull-right">
+              <span class="pull-right" data-bind="if: stylist.userHasStorageAccess()">
                 <button class="btn btn-small" onclick="stylist.saveCurrentIllustration(); return false;">Save</button>
                 <button class="btn btn-small">Save illustration as...</button>
+              </span>
+              <span class="pull-right" data-bind="if: !(stylist.userHasStorageAccess())">
+                <!-- N.B. This currently only appears if we're using GitHub storage. -->
+                <a href="#" onclick="stylist.loginToGitHub(); return false;">Login via GitHub</a> to save your work!
               </span>
             </div>
 
@@ -980,9 +984,13 @@
             <div class="button-bar" style="margin-bottom: 1em;">
                 <button class="btn btn-small">Load illustration...</button>
                 <button class="btn btn-small">Create from template...</button>
-              <span class="pull-right">
-                <button class="btn btn-small">Save</button>
+              <span class="pull-right" data-bind="if: stylist.userHasStorageAccess()">
+                <button class="btn btn-small" onclick="stylist.saveCurrentIllustration(); return false;">Save</button>
                 <button class="btn btn-small">Save illustration as...</button>
+              </span>
+              <span class="pull-right" data-bind="if: !(stylist.userHasStorageAccess())">
+                <!-- N.B. This currently only appears if we're using GitHub storage. -->
+                <a href="#" onclick="stylist.loginToGitHub(); return false;">Login via GitHub</a> to save your work!
               </span>
             </div>
 

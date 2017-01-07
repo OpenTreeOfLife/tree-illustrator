@@ -67,23 +67,17 @@ function getIllustrationIDFromURL(url) {
 var githubAPIBaseURL = 'https://api.github.com';
 var getGitHubToken_url = githubAPIBaseURL + '/authorizations';
 var getGitHubUserInfo_url = githubAPIBaseURL + '/user';
-var userDisplayName,
-    userLogin,
-    userEmail,
+var userDisplayName = ko.observable(),
+    userLogin = ko.observable(),
+    userEmail = ko.observable(),
     userAuthToken;
 var githubTokenProps = {
     "scopes": ["public_repo"], 
     "note": "Tree Illustrator ("+ window.location.hostname +")",
     "fingerprint": "tree-illustrator-one-time-token"
 }
-function getUserDisplayName() {
-    return userDisplayName;
-}
-function getUserLogin() {
-    return userLogin;
-}
-function getUserEmail() {
-    return userEmail;
+function userHasStorageAccess() {
+    return userLogin() && (userLogin() !== 'LOGIN_NOT_FOUND');
 }
 function loginToGitHub( username, password ) {
     // TODO: Accept stored username+password?
@@ -178,10 +172,10 @@ function loginToGitHub( username, password ) {
                             "Authorization": "Token "+ userAuthToken
                         },
                         success: function(data) {
-                            // These should have proper values
-                            userDisplayName = data.name || "NAME_NOT_FOUND";
-                            userLogin = data.login || "LOGIN_NOT_FOUND";
-                            userEmail = data.email || "EMAIL_NOT_FOUND";
+                            // These should now have proper values
+                            userDisplayName(data.name || "NAME_NOT_FOUND");
+                            userLogin(data.login || "LOGIN_NOT_FOUND");
+                            userEmail(data.email || "EMAIL_NOT_FOUND");
                         },
                         complete: function() {
                             // TODO: Update UI to show that we're now logged in (show Save buttons, etc.)
@@ -306,8 +300,8 @@ function loadIllustration(id, callback) {
         url: loadIllustration_GET_url.replace('{DOC_ID}', id),
         data: {
             // misc identifying information
-            'author_name': (userDisplayName || ""),
-            'author_email': (userEmail || ""),
+            'author_name': (userDisplayName() || ""),
+            'author_email': (userEmail() || ""),
             'auth_token': (userAuthToken || "")
         },
         success: function( data, textStatus, jqXHR ) {
@@ -365,9 +359,9 @@ function saveIllustration(illustrationID, callback) {
     }
     // add this user to the authors list, if not found
     // TODO: add email or userid here, so we can link to authors?
-    var listPos = $.inArray( userDisplayName, stylist.ill.metadata.authors() );
+    var listPos = $.inArray( userDisplayName(), stylist.ill.metadata.authors() );
     if (listPos === -1) {
-        stylist.ill.metadata.authors.push( userDisplayName );
+        stylist.ill.metadata.authors.push( userDisplayName() );
     }
 
     // TODO: add a "scrubber" as we do for OpenTree studies? 
@@ -402,7 +396,7 @@ function saveIllustration(illustrationID, callback) {
         // we'll build a propsed url, based on the illustration's name
         var nameSlug = slugify(clonableIllustration.metadata.name);
         // build a fresh ID with current user as creator
-        clonableIllustration.metadata.url = illustrationURLSplitterAPI + userLogin +'/'+ nameSlug;
+        clonableIllustration.metadata.url = illustrationURLSplitterAPI + userLogin() +'/'+ nameSlug;
     }
     illustrationID = getIllustrationIDFromURL(clonableIllustration.metadata.url);
 
@@ -424,8 +418,8 @@ function saveIllustration(illustrationID, callback) {
 
         // add non-Nexson values to the query string
         var qsVars = $.param({
-            author_name: userDisplayName,
-            author_email: userEmail,
+            author_name: userDisplayName(),
+            author_email: userEmail(),
             auth_token: userAuthToken,
             starting_commit_SHA: stylist.ill.metadata.sha(),
             commit_msg: 'Saved from Tree Illustrator'       // add version?
@@ -507,8 +501,8 @@ function saveIllustration(illustrationID, callback) {
             url: createIllustration_POST_url,
             data: {
                 // misc identifying information
-                'author_name': (userDisplayName || ""),
-                'author_email': (userEmail || ""),
+                'author_name': (userDisplayName() || ""),
+                'author_email': (userEmail() || ""),
                 'auth_token': (userAuthToken || ""),
                 'json': JSON.stringify(clonableIllustration)
             },
@@ -584,10 +578,11 @@ var api = [
     'getIllustrationList',
     'loadIllustration',
     'saveIllustration',
+    'userHasStorageAccess',
     // auth information (specific to this backend?)
-    'getUserDisplayName',
-    'getUserLogin',
-    'getUserEmail',
+    'userDisplayName',
+    'userLogin',
+    'userEmail',
     //'userAuthToken'
     'loginToGitHub',
     /* TODO: Add providers for minor types?

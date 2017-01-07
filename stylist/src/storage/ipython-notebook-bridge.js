@@ -113,6 +113,10 @@ $(window).off('message.TreeIllustrator')
 
 // Manage illustrations from the current docstore (in this case, the notebook metadata)
 
+function userHasStorageAccess() {
+    // If we're inside a running, editable notebook, anyone can save data.
+    return true;
+}
 // stash callbacks for use by cross-window responses
 var getIllustrationList_callback = null,
     loadIllustration_callback = null,
@@ -202,6 +206,7 @@ var api = [
     'getIllustrationList',
     'loadIllustration',
     'saveIllustration',
+    'userHasStorageAccess',
     // functions unique to an IPython notebook
     'getTreeSourceList',
     'getTreeSourceData'

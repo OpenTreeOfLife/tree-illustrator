@@ -2174,13 +2174,17 @@ function applyChosenStyleGuide(clicked) {
 
 // reflect the current user's identity, or null for an anonymous user
 function userLogin() {
-    return storage.getUserLogin();
+    return storage.userLogin();
 }
 function userDisplayName() {
-    return storage.getUserDisplayName();
+    return storage.userDisplayName();
 }
 function userEmail() {
     return storage.getUserEmail();
+}
+function userHasStorageAccess() {
+    //return userLogin() && (userLogin() !== 'LOGIN_NOT_FOUND');
+    return storage.userHasStorageAccess();
 }
 function loginToGitHub() {
     return storage.loginToGitHub();
@@ -2289,6 +2293,7 @@ var api = [
     'userLogin',
     'userDisplayName',
     'userEmail',
+    'userHasStorageAccess',
     'loginToGitHub',
     'userIsLoggedIn',
     'showIllustrationList',
