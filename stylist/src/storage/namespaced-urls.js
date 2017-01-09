@@ -39,11 +39,17 @@ var createIllustration_POST_url = illustrationAPIBaseURL + '/v3/illustration';
 var loadIllustration_GET_url = illustrationAPIBaseURL + '/v3/illustration/{DOC_ID}';
 var updateIllustration_PUT_url = illustrationAPIBaseURL + '/v3/illustration/{DOC_ID}';
 var deleteIllustration_DELETE_url = illustrationAPIBaseURL + '/v3/illustration/{DOC_ID}';
-/* Manage sub-resources for complex types, e.g. supporting data for an illustration */
-var createFile_POST_url = illustrationAPIBaseURL + '/v3/illustration/{DOC_ID}/file';
-var loadFile_GET_url = illustrationAPIBaseURL + '/v3/illustration/{DOC_ID}/file/{FILE_ID}';
-var updateFile_PUT_url = illustrationAPIBaseURL + '/v3/illustration/{DOC_ID}/file/{FILE_ID}';
-var removeFile_DELETE_url = illustrationAPIBaseURL + '/v3/illustration/{DOC_ID}/file/{FILE_ID}';
+/* Manage sub-resources (opaque files) within complex types, e.g. supporting
+ * data for an illustration.
+ *
+ * N.B. We'll use PUT (vs. POST) for creation *and* updates, since we'll
+ * specify the desired file-path in the URL. Any subsequent PUTs to this URL
+ * will update the resource stored there.
+ */
+//var createFile_POST_url = illustrationAPIBaseURL + '/v3/illustration/{DOC_ID}/file';
+var createOrUpdateFile_PUT_url = illustrationAPIBaseURL + '/v3/illustration/{DOC_ID}/{FILE_PATH}';
+var loadFile_GET_url = illustrationAPIBaseURL + '/v3/illustration/{DOC_ID}/{FILE_PATH}';
+var removeFile_DELETE_url = illustrationAPIBaseURL + '/v3/illustration/{DOC_ID}/{FILE_PATH}';
 
 // Use a known-good URL fragment to extract an illustration ID from its API URL
 var illustrationURLSplitterAPI = '/illustration/';
