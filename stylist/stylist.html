@@ -109,7 +109,8 @@
                 <button class="btn btn-small" onclick="stylist.saveCurrentIllustration(); return false;">Save</button>
                 <button class="btn btn-small">Save illustration as...</button>
               </span>
-              <span class="pull-right" data-bind="if: !(stylist.userHasStorageAccess())">
+              <span class="pull-right" data-bind="if: !(stylist.userHasStorageAccess())"
+                    style="padding: 3px; font-size: 0.9em;">
                 <!-- N.B. This currently only appears if we're using GitHub storage. -->
                 <a href="#" onclick="stylist.loginToGitHub(); return false;">Login via GitHub</a> to save your work!
               </span>
@@ -988,7 +989,8 @@
                 <button class="btn btn-small" onclick="stylist.saveCurrentIllustration(); return false;">Save</button>
                 <button class="btn btn-small">Save illustration as...</button>
               </span>
-              <span class="pull-right" data-bind="if: !(stylist.userHasStorageAccess())">
+              <span class="pull-right" data-bind="if: !(stylist.userHasStorageAccess())"
+                    style="padding: 3px; font-size: 0.9em;">
                 <!-- N.B. This currently only appears if we're using GitHub storage. -->
                 <a href="#" onclick="stylist.loginToGitHub(); return false;">Login via GitHub</a> to save your work!
               </span>
