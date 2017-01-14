@@ -80,7 +80,7 @@ var userDisplayName = ko.observable(),
 var githubTokenProps = {
     "scopes": ["public_repo"], 
     "note": "Tree Illustrator ("+ window.location.hostname +")",
-    "fingerprint": "tree-illustrator-one-time-token"
+    "fingerprint": "tree-illustrator-"+ window.location.hostname +"-one-time-token"
 }
 function userHasStorageAccess() {
     return userLogin() && (userLogin() !== 'LOGIN_NOT_FOUND');
@@ -113,8 +113,8 @@ function loginToGitHub( username, password ) {
                     // TODO: Find the id of the existing token with my properties
                     var staleTokenID = null;
                     $.each(data, function(i, tokenInfo) {
-                        if ((tokenInfo.app.name === githubTokenProps.note) &&
-                            (tokenInfo.fingerprint === githubTokenProps.fingerprint)) {
+                        //if ((tokenInfo.app.name === githubTokenProps.note) && ...
+                        if (tokenInfo.fingerprint === githubTokenProps.fingerprint) {
                             staleTokenID = tokenInfo.id;
                             return false;
                         }
