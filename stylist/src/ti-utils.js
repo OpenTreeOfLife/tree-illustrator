@@ -81,26 +81,41 @@ function isProbablyNeXML(data) {
 
 function isProbablyRPhylo(data) {
     // test for valid JSON/JS nested array, then examine its structure
-    var testObj;
-    if ($.isPlainObject(data)) {
-        testObj = data;
-    } else {
-        try {
-            testObj = eval(data);
-            if (!testObj) {
-                // if data is not a string, result is null 
-                return false;
-            }
-        } catch (err) {
-            // var failed to evaluate to a JS object
-            console.error(err);
-            return false;
-        }
-    }
+    var testObj = coerceToJSObject(data);
+    if (!testObj) return false;
     // check for basic phylo fields
     return ('edge' in testObj) && ('tip.label' in testObj) && ('Nnode' in testObj);
+    // TODO: Is tip.label an optional element? Choose something else instead?
 }
 
+function isProbablyNexson(data) {
+    // test for valid JSON/JS nested array, then examine its structure
+    var testObj = coerceToJSObject(data);
+    if (!testObj) return false;
+    // check for basic nexson structure
+    return ('data' in testObj) && ('nexml' in testObj.data);
+}
+
+function coerceToJSObject(data) {
+    // return a proper JS object (or null if coercion fails)
+    if ($.isPlainObject(data)) {
+        // this is fine as-is
+        return data;
+    }
+    try {
+        var jsObject = eval(data);
+        if (!jsObject) {
+            // if data is not a string, result is null
+            return null;
+        }
+    } catch (err) {
+        // var failed to evaluate to a JS object
+        console.error("Coercion to JS object failed!");
+        console.error(err);
+        return null;
+    }
+    return jsObject;
+}
 /* Copied from vg.data.phylogram.js, for wider use (but keeping the code in
  * both places, to minimize dependencies in the Vega transform).
  */
