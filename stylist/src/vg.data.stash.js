@@ -55,6 +55,8 @@ prototype.transform = function(input) {
 
   // For now, this transform ASSUMES just one incoming tuple, which will be
   // completely replaced by the plucked values.
+  assert(input.add.length > 0,
+         "The stash transform expects an added datum (none found).");
   assert((input.add.length < 2 &&
           input.mod.length === 0 &&
           input.rem.length === 0),
