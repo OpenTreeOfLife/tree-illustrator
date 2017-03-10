@@ -900,6 +900,9 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                      * an AJAX fetch each time we tweak the visual presentation of a tree!
                      */
                     var treeSourceCacheKey = 'ELEMENT-SOURCE-';
+                    console.warn('=== source for element "'+ dataSourceName +'" ===');
+                    console.warn('  type: '+ el.metadata.source.type());
+                    console.warn('  value: '+ el.metadata.source.value());
                     switch (el.metadata.source.type()) { 
                         case dataSourceTypes.BUILT_IN:
                         case dataSourceTypes.URL:
@@ -1358,7 +1361,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     self.metadata.source.value( $.trim($otherField.val()) );
                     break;
 
-                case "Paste/enter tree data":
+                case "Enter or upload tree data":
                 //case "Upload tree data":
                 //case "Newick string":
                 //case "Newick string with extra data":
@@ -1419,6 +1422,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                         // TODO: For a multi-kernel notebook, expect a specific kernel-id, eg 'python2'
                         var nbVarName = treeInfo.name().split(' ')[0];
                         stylist.storage.getTreeSourceData(nbVarName, function(response) {
+                            console.warn('getTreeSourceData returning for tree "'+ treeInfo.name() +'"...');
                             if ('data' in response) {
                                 var treeSourceData = response.data;
                                 /* To interpret this as tree source data, we'll 
@@ -1458,6 +1462,15 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             stylist.refreshViz();
         }
         ,
+        convertSourceDataToNexson: function(treeID, srcText) {
+            // Convert pasted/uploaded source data to nexson, using the
+            // conversion methods in the main open tree curation tool.  
+            // N.B. This is used for newly pasted/uploaded text as well as for
+            // source data loaded from an existing illustration.
+            var self = this;  // the tree in question
+
+        }
+        ,
         convertPastedDataToTree: function(treeID) {
             // Try to convert pasted/uploaded text to nexson, using the conversion
             // methods in the main open tree curation tool.
@@ -1469,9 +1482,13 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                 // TODO: clear any cached and internal values regardless, to hide an old tree?
                 return;
             }
+            self.convertSourceDataToNexson(treeID, pastedText);
+
+            // TODO
             self.metadata.source.value( pastedText );
             self.metadata.source.type(dataSourceTypes.UPLOAD);
             var treeSourceCacheKey = ('PASTED-SOURCE-' + $.trim(self.metadata.source.value()));
+            console.warn('...converting pasted data to tree...');
             // TODO: build up cache key with format + content?
             var cachedValue = getCachedData( treeSourceCacheKey );
             if (cachedValue) {
@@ -1539,6 +1556,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                         fixUpConvertedNexson(data);
 
                         // store it in the cache, at the key defined above
+                        console.warn('...storing pasted data in cache... key='+ treeSourceCacheKey);
                         setCachedData( treeSourceCacheKey, data );
                         // force node-label field to show "explicit" labels (TODO: for Newick only?)
                         self.nodeLabelField('explicitLabel');
@@ -1587,6 +1605,242 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         // TODO: Based on the element type, offer appropriate styles and constraints
         // TODO: Include options to map selected data to visual style
         return self;
+    }
+    SupportingDataset.prototype = {
+        constructor: SupportingDataset,
+
+        useChosenDataSource: function() {
+            var self = this;
+            // pick up latest data from bound widgets
+            var $chooser = $('#'+ self.id() +'-datasource-chooser');
+            var $opentreeIDsPanel = $('#'+ self.id() +'-datasource-opentreeids-panel');
+            var $nexsonUrlPanel = $('#'+ self.id() +'-datasource-nexsonurl-panel');
+            var $fileUploadPanel = $('#'+ self.id() +'-datasource-upload-panel');
+            // TODO: Replace these with appropriate panels!?
+            var chosenSource = $chooser.val();
+            switch(chosenSource) {
+                /* Match against strings defined in `stylist.js`. We'll start
+                 * with some special cases that drive changes to the UI.
+                 */
+                /*
+                case "Enter OpenTree study and tree ids":
+                    $opentreeIDsPanel.show();
+                    $nexsonUrlPanel.hide();
+                    $fileUploadPanel.hide();
+                    self.metadata.source.type(dataSourceTypes.URL);
+                    var studyID = self.metadata.source.phylesystemStudyID(); 
+                    var treeID = self.metadata.source.phylesystemTreeID();
+                    var treeNexsonURL = 'https://api.opentreeoflife.org/phylesystem/v1/study/'
+                                      + studyID +'/tree/'+ treeID +'?output_nexml2json=1.0.0';
+                    self.metadata.source.value( treeNexsonURL );
+                    break;
+
+                */
+                case "Enter URL to data file":
+                    $opentreeIDsPanel.hide();
+                    $nexsonUrlPanel.show();
+                    $fileUploadPanel.hide();
+                    self.metadata.source.type(dataSourceTypes.URL);
+                    var $otherField = $('#'+ self.id() +'-datasource-nexsonurl');
+                    self.metadata.source.value( $.trim($otherField.val()) );
+                    break;
+
+                case "Enter URL to a GitHub gist":
+                    $opentreeIDsPanel.hide();
+                    $nexsonUrlPanel.show();
+                    $fileUploadPanel.hide();
+                    self.metadata.source.type(dataSourceTypes.URL);
+                    var $otherField = $('#'+ self.id() +'-datasource-nexsonurl');
+                        // TODO: Use another field for Gist URLs?
+                    self.metadata.source.value( $.trim($otherField.val()) );
+                    break;
+
+                case "Enter or upload data":
+                //case "Newick string":
+                //case "Newick string with extra data":
+                //case "NEXUS":
+                    $opentreeIDsPanel.hide();
+                    $nexsonUrlPanel.hide();
+                    // enable "pasted text" field for this method
+                    var $pastedField = $('#'+ self.id() +'-datasource-pasted');
+                    $pastedField.attr('disabled', false)
+                                .css('color','#aaa');
+                    $fileUploadPanel.show();
+                    break;
+
+                default:
+                    /* Handle common cases for listed tree sources:
+                     *  - explicit "fetch" URLs for data on the web
+                     *  - Jupyter kernel values from a hosting notebook
+                     */
+                    // Look for the matching URL at any level of this tree of *observable* arrays
+                    var testLists = [stylist.availableTrees()];
+                    $.each(stylist.availableTrees(), function(i, testItem) {
+                        if ('children' in testItem) {
+                            testLists.push(testItem.children());
+                        }
+                    });
+                    var treeInfo = null;
+                    $.each(testLists, function(i, testList) {
+                        // ASSUMES unique display text for all items in nested list!
+                        var selectedTrees = $.grep(testList, function(o) {
+                            return o.name() === chosenSource;
+                        });
+                        if (selectedTrees.length > 0) {
+                            treeInfo = selectedTrees[0];
+                        }
+                    });
+                    if (!treeInfo) {
+                        console.warn("No data found under '"+ chosenSource +"'!");
+                        return;
+                    }
+                    if ('url' in treeInfo) {
+                        $opentreeIDsPanel.hide();
+                        $nexsonUrlPanel.hide();
+                        $fileUploadPanel.hide();
+                        self.metadata.source.type(dataSourceTypes.URL);
+                        self.metadata.source.value( treeInfo.url() );
+                    } else if ('kernel' in treeInfo) { // or 'kernel'? 'nbkernel'?
+                        // assume this is 'python' for now
+                        $opentreeIDsPanel.hide();
+                        $nexsonUrlPanel.hide();
+                        // Disable the format chooser while we try to guess
+                        var $inputFormatChooser = $('#'+ self.id() +'-datasource-format');
+                        $inputFormatChooser.attr('disabled', true);
+                        // disable "pasted text" field (display only)
+                        var $pastedField = $('#'+ self.id() +'-datasource-pasted');
+                        $pastedField.attr('disabled', true)
+                                    .css('color',''); // restore default text color
+                        $fileUploadPanel.show();
+                        // TODO: For a multi-kernel notebook, expect a specific kernel-id, eg 'python2'
+                        var nbVarName = treeInfo.name().split(' ')[0];
+                        stylist.storage.getTreeSourceData(nbVarName, function(response) {
+                            console.warn('getTreeSourceData returning for tree "'+ treeInfo.name() +'"...');
+                            if ('data' in response) {
+                                var treeSourceData = response.data;
+                                /* To interpret this as tree source data, we'll 
+                                 * need to figure out its format. Pass it to a 
+                                 * series of "sniffers" to identify Newick, Nexson, etc.
+                                 */
+                                // TODO: push this source into persistent storage?
+                                ///self.metadata.source.value(treeSourceData);
+                                var matchingFormat = mostLikelyDataFormat(treeSourceData);
+                                $inputFormatChooser.val(matchingFormat);
+                                // show something friendly in the (disabled) text field
+                                var treeSourceAsText = (typeof treeSourceData === 'string') ?
+                                    treeSourceData :
+                                    JSON.stringify(treeSourceData);
+                                $pastedField.val(treeSourceAsText);
+                            } else {
+                                var msg = response.error || "No data returned (unspecified error)!";
+                                console.error(msg);
+                                alert(msg);
+                            }
+                            $inputFormatChooser.attr('disabled', false);
+                        });
+                    } else {
+                        // Maybe this string should be added to the special cases above!
+                        console.warn("No URL or kernel found for '"+ chosenSource +"'!");
+                        return;
+                    }
+            }
+            stylist.refreshViz();
+        }
+        ,
+        capturePastedData: function(datasetID) {
+            // Try to convert pasted/uploaded text to nexson, using the conversion
+            // methods in the main open tree curation tool.
+            var self = this;  // the tree in question
+            var $pastedField = $('#'+ self.id() +'-datasource-pasted');
+            var pastedText = $.trim($pastedField.val());
+            if (pastedText === '') {
+                alert("Please paste Newick or other text into the text area provided, then try again.");
+                // TODO: clear any cached and internal values regardless, to hide an old tree?
+                return;
+            }
+            self.convertSourceDataToNexson(datasetID, pastedText);
+
+            // TODO
+            self.metadata.source.value( pastedText );
+            self.metadata.source.type(dataSourceTypes.UPLOAD);
+            var treeSourceCacheKey = ('PASTED-SOURCE-' + $.trim(self.metadata.source.value()));
+            console.warn('...converting pasted data to tree...');
+            // TODO: build up cache key with format + content?
+            var cachedValue = getCachedData( treeSourceCacheKey );
+            if (cachedValue) {
+                // N.B. This data will be safely cloned by Vega when spec is parsed!
+                // NOTE that we should still refresh immediately, in case the cached tree data was loaded
+                // created for another tree, or an earlier version of this one.
+                self.nodeLabelField('explicitLabel');
+                stylist.refreshViz();
+            } else {
+                // call opentree web services to convert to nexson
+                //TODO: Apply other pasted formats (and REMEMBER THEM in the saved illustration!)
+                var $inputFormatChooser = $('#'+ self.id() +'-datasource-format');
+                //$inputFormatChooser.attr('disabled', true);
+                var inputFormat = $inputFormatChooser.val();
+                if (inputFormat === '') {
+                    alert("Please choose the format of this tree data, then try again.");
+                    return;
+                }
+                $.ajax({
+                    type: 'POST',
+                    dataType: 'json',
+                    // crossDomain: true,
+                    contentType: "application/json; charset=utf-8",
+                    url: 'https://devtree.opentreeoflife.org/curator/to_nexson',
+                    /* NOTE that idPrefix and firstAvailable*ID args are
+                     * currently required to get well-formed Nexson!
+                     */
+                    data: ('{"output": "ot:nexson", '+
+                            '"auth_token": "ANONYMOUS", '+
+                            '"idPrefix": "", ' +
+                            '"firstAvailableEdgeID": "1", '+
+                            '"firstAvailableNodeID": "1", '+
+                            '"firstAvailableOTUID": "1", '+
+                            '"firstAvailableOTUsID": "1", '+
+                            '"firstAvailableTreeID": "1", '+
+                            '"firstAvailableTreesID": "1", '+
+                            '"firstAvailableAnnotationID": "1", '+
+                            '"firstAvailableAgentID": "1", '+
+                            '"firstAvailableMessageID": "1", '+
+                            '"inputFormat": '+ JSON.stringify(inputFormat) +', '+
+                            '"content": '+ JSON.stringify($.trim(self.metadata.source.value())) +
+                           ' }'),
+                    processData: false,
+                    complete: function( jqXHR, textStatus ) {
+                        // report errors or malformed data, if any
+                        if (textStatus !== 'success') {
+                            if (jqXHR.status >= 500) {
+                                // major server-side error, just show raw response for tech support
+                                var errMsg = 'Sorry, there was an error ('+ jqXHR.status +') converting this tree to Nexson:\n\n'+ jqXHR.responseText;
+                                alert(errMsg);
+                                return;
+                            }
+                            // Server blocked the save due to major validation errors!
+                            var data = $.parseJSON(jqXHR.responseText);
+                            // TODO: This should be properly parsed JSON, show it more sensibly
+                            // (but for now, repeat the crude feedback used above)
+                            var errMsg = 'Sorry, there was an error ('+ jqXHR.status +') converting this tree to Nexson:\n\n'+ jqXHR.responseText;
+                            alert(errMsg);
+                            return;
+                        }
+                        // Pasted tree was converted successfully; capture the Nexson as a string
+                        var data = $.parseJSON(jqXHR.responseText);
+
+                        // fix any quirks to conform to our expected Nexson structure
+                        fixUpConvertedNexson(data);
+
+                        // store it in the cache, at the key defined above
+                        console.warn('...storing pasted data in cache... key='+ treeSourceCacheKey);
+                        setCachedData( treeSourceCacheKey, data );
+                        // force node-label field to show "explicit" labels (TODO: for Newick only?)
+                        self.nodeLabelField('explicitLabel');
+                        stylist.refreshViz();
+                    }
+                });
+            }
+        }
     }
     var Ornament = function(illustration, data) {
         if ( !(this instanceof Ornament) ) {

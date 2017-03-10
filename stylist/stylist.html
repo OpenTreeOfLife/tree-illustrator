@@ -561,6 +561,28 @@
                          style="display: none; margin-top: 0.25em;"
                          data-bind="attr: {id: id() +'-datasource-upload-panel'}">
                         <textarea data-bind="attr: {id: id() +'-datasource-pasted'}" placeholder="Paste tree as text..."></textarea>
+                       <br/>
+                        <span>&hellip;or choose a file to upload</span>
+                       <br/>
+                        <input type="file"
+                               data-bind="visible: stylist.utils.browserSupportsFileAPI(),
+                                          attr: {id: id() +'-datasource-upload'},
+                                          event: {change: stylist.handleChosenLocalFile}" />
+                        <em data-bind="visible: !(stylist.utils.browserSupportsFileAPI())"
+                            style="color: #933;">File APIs not supported in this browser!</em>
+<!--
+                    <label class="control-label">Data details</label> 
+-->
+                    <div class="mini-form" style="margin-left: 4px; margin-top: -10px; color: #777;">
+                        <label>File name:</label> &nbsp; <span class="chosen-file-name">&mdash;</span>
+                        <br/>
+                        <label>Content type:</label> &nbsp; <span class="chosen-file-type">&mdash;</span>
+                        <br/>
+                        <label>Size (bytes):</label> &nbsp; <span class="chosen-file-size">&mdash;</span>
+                        <br/>
+                        <label>Last modified:</label> &nbsp; <span class="chosen-file-last-mod-date">&mdash;</span>
+                    </div>
+
                         <select data-bind="attr: {id: id() +'-datasource-format'}" name="inputFormat" 
                                 class="input-block-level" style="margin-bottom: 3px;" 
                                 oninput="return true;" onchange="return true;">
@@ -570,13 +592,7 @@
                             <option value="nexml">NeXML</option>
                             <option value="phylo">phylo (R data frame)</option>
                         </select>
-                        <button data-bind="click: convertPastedDataToTree.bind($data, id())" style="margin: 3px 0;">Convert and update tree</button>
-<!-- TODO: Add typical file-upload feature
-                       <br/>
-                        <span style="color: #c33;">Coming soon:</span>
-                        <input type="file" disabled="disabled"
-                               data-bind="attr: {id: id() +'-datasource-upload'}" />
--->
+                        <button data-bind="click: convertPastedDataToTree.bind($data, id())" style="margin: 3px 0;">Update tree</button>
                     </div>
                 </div>
                 <div class="control-group">
@@ -855,12 +871,95 @@
         <div class="accordion-body panel-body collapse"
              data-bind="attr: {id: 'ti-panel-'+ id()}">
           <div class="accordion-inner">
+            <form class="form-horizontal">
+                <div class="control-group">
+                    <label class="control-label"
+                           data-bind="attr: {for: '#'+ id() +'-name-field'}" >Dataset or file name</label> 
+                    <div class="controls">
+                        <input class="input-xlarge" type="text" type="text" value="?" 
+                               data-bind="value: metadata.name,
+                                          attr: {id: id() +'-name-field'},
+                                          valueUpdate: ['afterkeydown','input']" />
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label"
+                           data-bind="attr: {for: '#'+ id() +'-datasource-chooser'}" >Data source</label> 
+                    <div class="controls">
+                        <select style="margin-bottom: 0;"
+                                data-bind="foreach: stylist.availableDataSources,
+                                           attr: {id: id() +'-datasource-chooser'},
+                                           event: {change: useChosenDataSource.bind($data)}">
+                          <!-- ko if: $data.children && $data.children().length -->
+                            <optgroup data-bind="attr: {label: name},
+                                                 foreach: $data.children">
+                                <option data-bind="text: $data.name, attr: {value: $data.name, disabled: $data.disabled}"></option>
+                            </optgroup>
+                          <!-- /ko -->
+                          <!-- ko if: !('children' in $data) -->
+                                <option data-bind="text: $data.name, attr: {value: $data.name, disabled: $data.disabled}"></option>
+                          <!-- /ko -->
+                        </select>
+                    </div>
+                    <div class="controls mini-form" 
+                         style="display: none; margin-top: 0.25em;"
+                         data-bind="attr: {id: id() +'-datasource-opentreeids-panel'}">
+                        <label for="#style-printsize-width-field">study id</label> 
+                        <input id="style-printsize-width-field" type="text" value="?"
+                               style="width: 3.0em;"
+                               data-bind="value: 'TODO: metadata.source.phylesystemStudyID',
+                                          valueUpdate: ['afterkeydown','input'],
+                                          event: {change: useChosenDataSource.bind($data)}" />&nbsp;
+
+                        <label for="#style-printsize-height-field">tree id</label> 
+                        <input id="style-printsize-height-field" type="text" value="?"
+                               style="width: 3.0em;"
+                               data-bind="value: 'TODO: metadata.source.phylesystemTreeID',
+                                          valueUpdate: ['afterkeydown','input'],
+                                          event: {change: useChosenDataSource.bind($data)}" />&nbsp;
+                    </div>
+                    <div class="controls" 
+                         style="display: none; margin-top: 0.25em;"
+                         data-bind="attr: {id: id() +'-datasource-nexsonurl-panel'}">
+                        <input id="tree-url" type="text" placeholder="URL should fetch Nexson 1.0"
+                               data-bind="event: {change: useChosenDataSource.bind($data)},
+                                          attr: {id: id() +'-datasource-nexsonurl'}" />
+                    </div>
+                    <div class="controls" 
+                         style="display: none; margin-top: 0.25em;"
+                         data-bind="attr: {id: id() +'-datasource-upload-panel'}">
+                        <textarea data-bind="attr: {id: id() +'-datasource-pasted'}" placeholder="Paste data as text..."></textarea>
+                       <br/>
+                        <span>&hellip;or choose a file to upload</span>
+                       <br/>
+                        <input type="file"
+                               data-bind="visible: stylist.utils.browserSupportsFileAPI,
+                                          attr: {id: id() +'-datasource-upload'},
+                                          event: {change: stylist.handleChosenLocalFile}" />
+                        <em data-bind="visible: !(stylist.utils.browserSupportsFileAPI())"
+                            style="color: #933;">File APIs not supported in this browser!</em>
+                       <br/>
+                        <select data-bind="attr: {id: id() +'-datasource-format'}" name="inputFormat" 
+                                class="input-block-level" style="margin-bottom: 3px;" 
+                                oninput="return true;" onchange="return true;">
+                            <option value="" selected="selected">What is the format of this dataset?</option>
+                            <option value="newick">Newick</option>
+                            <option value="nexus">NEXUS</option>
+                            <option value="nexml">NeXML</option>
+                            <option value="phylo">phylo (R data frame)</option>
+                            <option value="csv">Comma-delimited text</option>
+                            <option value="tsv">Tab-delimited text</option>
+                        </select>
+                        <button data-bind="click: capturePastedData.bind($data, id())" style="margin: 3px 0;">Update dataset</button>
+                    </div>
+                </div>
+            </form>
             <em>TODO: Add supporting data to enhance displayed trees</em>
             <ul>
                 <li>data source</li>
                 <li>data type</li>
                 <li>data filter</li>
-                <li>tabular display of raw data?</li>
+                <li>tabular displays of raw data?</li>
             </ul>
           </div>
         </div>
@@ -924,10 +1023,10 @@
                 onclick="var tree = stylist.ill.addIllustratedTree(); stylist.showAccordionPanelForElement( tree.id() ); return false;"
         >Add tree...</button>
         <button class="btn btn-small" 
-                onclick="stylist.ill.addSupportingDataset(); return false;"
+                onclick="ds = stylist.ill.addSupportingDataset(); stylist.showAccordionPanelForElement( ds.id() ); return false;"
         >Add supporting data...</button>
         <button class="btn btn-small" 
-                onclick="stylist.ill.addOrnament(); return false;"
+                onclick="ornament = stylist.ill.addOrnament(); stylist.showAccordionPanelForElement( ornament.id() ); return false;"
         >Add ornament...</button>
     </div>
 

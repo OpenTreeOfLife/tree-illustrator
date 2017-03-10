@@ -6,6 +6,8 @@
 
 var $ = require('jquery'),
     utils = require('./ti-utils'),
+    jszip = require('jszip'),
+    md5 = require('spark-md5'),
     vg = require('vega'),
     TreeIllustrator = require('./TreeIllustrator.js'),
     stashTransform = require('./vg.data.stash.js');
@@ -120,26 +122,9 @@ var availableTrees = ko.mapping.fromJS([
         ]
     },
     {
-        name: "Paste/enter tree data"
+        name: "Enter or upload tree data"
         /*
-        name: "Paste/enter tree data as...",
-        children: [
-            {
-                name: "Newick string"
-            },
-            {
-                name: "Newick string with extra data"
-            },
-            {
-                name: "NEXUS"
-            }
-        ]
-        */
-    },
-    {
-        name: "Upload tree data"
-        /*
-        name: "Upload tree data as...",
+        name: "Enter or upload tree data as...",
         children: [
             {
                 name: "Newick string"
@@ -161,6 +146,45 @@ var availableTrees = ko.mapping.fromJS([
             },
             {
                 name: "Enter URL to NexSON 1.0"
+            },
+            {
+                name: "Enter URL to a GitHub gist"
+            }
+        ]
+    }
+]);
+
+var availableDataSources = ko.mapping.fromJS([
+    {
+        name: "Placeholder dataset", 
+        url: './placeholder-dataset.json'
+    },
+    {
+        name: "From notebook kernel",
+        children: [
+            /* A list of variables, each marked with its language/kernel */
+        ]
+    },
+    {
+        name: "Enter or upload data"
+        /*
+        name: "Enter or upload data as...",
+        children: [
+            {
+                name: "Comma-separated values"
+            },
+            {
+                name: "Tab-separated values"
+            }
+            // etc.
+        ]
+        */
+    },
+    {
+        name: "On the web",
+        children: [
+            {
+                name: "Enter URL to data file"
             },
             {
                 name: "Enter URL to a GitHub gist"
@@ -2096,6 +2120,10 @@ function showAccordionPanelForElement( elementID ) {
     var panelID = '#ti-panel-'+ elementID;
     showAccordionPanel( panelID );
 }
+function getAccordionPanelForElement( illElement ) {
+    var panelID = '#ti-panel-'+ illElement.id();
+    return $(panelID);
+}
 
 $(document).ready(function() {
     $('#ti-main-accordion .panel-body').on('shown', accordionPanelShown);
@@ -2144,6 +2172,64 @@ function enterFullScreen() {
 function exitFullScreen() {
     $.fullscreen.exit();
     return false;
+}
+
+/* Test regexps for MIME-type (content-type) of a File or Blob */
+var allTypes = /.*/;
+var textTypes = /text.*/; // TODO: add 'application/json', etc?
+var imageTypes = /image.*/;
+
+// What do we expect (or forbid) for different illustration elements?
+var expectedMIMETypes = {
+    'IllustratedTree': textTypes,
+    'SupportingDataset': textTypes,
+    'Ornament': imageTypes
+};
+var disallowedMIMETypes = {
+    'IllustratedTree': imageTypes,
+    'SupportingDataset': imageTypes,
+    'Ornament': allTypes
+};
+
+function handleChosenLocalFile( illElement, event ) {
+    var fileList = event.target.files;      // a FileList
+    // For now, we expect just one file!
+    var chosenFile = fileList[0];           // a File
+
+    // Warn/reject if not an appropriate MIME-type for this element?
+    var expectedTypes = expectedMIMETypes[ illElement.metadata.type() ];
+    var disallowedTypes = disallowedMIMETypes[ illElement.metadata.type() ];
+    if (chosenFile.type.match(expectedTypes)) {
+        // This is an expected content type, carry on...
+    } else if (chosenFile.type.match(disallowedTypes)) {
+        alert("Files of MIME-type '"+ chosenFile.type +"' are not allowed for "+ illElement.metadata.type() +" elements.");
+        return;
+    } else {
+        // This content type is not in either list. Accept for now?
+        console.warn("Tentatively allowing MIME-type '"+ chosenFile.type +"' for this "+ illElement.metadata.type());
+    }
+
+    // Show file information in its accordion element
+    var $panel = getAccordionPanelForElement( illElement );
+    $panel.find('.chosen-file-name').text(chosenFile.name);
+    $panel.find('.chosen-file-type').html(chosenFile.type || '<em>Unknown</em>');
+    $panel.find('.chosen-file-size').text(chosenFile.size);
+    $panel.find('.chosen-file-last-mod-date').text(chosenFile.lastModifiedDate.toLocaleString());
+
+    // create a URL to this File
+    var reader = new FileReader();
+    // closure to capture the file information.
+    reader.onload = (function(theFile) {
+        return function(e) {
+            var r = e.target;  // i.e., this FileReader
+            console.log("FileReadr result for '"+ escape(theFile.name) +"':\n"+ r.result);
+            //debugger;
+        };
+    })(chosenFile);
+    //reader.readAsDataURL(chosenFile);       // result is 'data:;base64,KEEsKEIsKEMsRCkpKTs='
+    //reader.readAsBinaryString(chosenFile);  // result is '(A,(B,(C,D)));'
+    //reader.readAsText(chosenFile);          // result is '(A,(B,(C,D)));'
+    reader.readAsArrayBuffer(chosenFile);     // result is '[object ArrayBuffer]', more to do here obviously
 }
 
 function applyChosenStyleGuide(clicked) {
@@ -2324,6 +2410,7 @@ var api = [
     'internalUnitsToOverlayPixels',
     'overlayPixelsToInternalUnits',
     'availableTrees',
+    'availableDataSources',
     'zoomViewport',
     'printIllustration',
     'resizeViewportToShowAll',
@@ -2332,10 +2419,13 @@ var api = [
     'showAccordionPanel',
     'showAccordionPanelForElement',
     'applyChosenStyleGuide',
+    'handleChosenLocalFile',
     'enterFullScreen',
     'exitFullScreen',
     'ill',
-    'view'
+    'view',
+  //'jszip',
+    'utils'
 ];
 $.each(api, function(i, methodName) {
     // populate the default 'module.exports' object

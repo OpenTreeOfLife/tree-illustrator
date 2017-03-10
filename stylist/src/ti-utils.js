@@ -116,6 +116,13 @@ function coerceToJSObject(data) {
     }
     return jsObject;
 }
+
+/* Detect browser capabilities */
+function browserSupportsFileAPI() {
+    // Can load and manipulate local files in this browser?
+    return (window.File && window.FileReader && window.FileList && window.Blob);
+}
+
 /* Copied from vg.data.phylogram.js, for wider use (but keeping the code in
  * both places, to minimize dependencies in the Vega transform).
  */
@@ -137,6 +144,7 @@ var api = [
     'isProbablyNEXUS',
     'isProbablyNeXML',
     'isProbablyRPhylo',
+    'browserSupportsFileAPI',
     'radiansToDegrees',
     'degreesToRadians',
     'normalizeDegrees'

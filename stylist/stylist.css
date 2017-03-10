@@ -318,6 +318,9 @@ svg,
 .mini-form input {
     display: inline-block;
 }
+input[type=file] {
+    line-height: normal;  /* align with filename or prompt */
+}
 
 /* styles for modal popups */
 .current-styleguide-values {
