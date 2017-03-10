@@ -1,6 +1,6 @@
 /* 
- * Store the incoming data (if it's not already found) in the specified object
- * using the specified key, then pass it along unchanged.
+ * Store the incoming data (if it's not already found) using the specified
+ * function and key, then pass it along unchanged.
  *
  * This is a "do-nothing" data transform to allow caching of intermediate results
  * from within a Vega pipeline (a series of transforms). The intent is to
@@ -9,9 +9,9 @@
  *   https://github.com/OpenTreeOfLife/tree-illustrator
  * 
  * Note that this transform doesn't concern itself with the details of the caching 
- * mechanism; it's assumed to be an existing Javascript object (associative
- * array) that functions as a simple key/value store. Similarly, the host
- * application is responsible for defining idempotent keys for cached data.
+ * mechanism; it's assumed to be an existing key/value store, perhaps a simple
+ * associative array or something smarter. Similarly, the host application is
+ * responsible for defining idempotent keys for cached data.
  * 
  * Also, note that this doesn't *retrieve* cached data or speed things up on
  * its own! Instead, by feeding a cache it enables the host application to
@@ -27,7 +27,7 @@ var vg  = require('vega'),
 function Stash(graph) {
   Transform.prototype.init.call(this, graph);
   Transform.addParameters(this, {
-      cachePath: {type: 'value'},
+      cacheSetter: {type: 'value'},
       key: {type: 'value'},
       flush: {type: 'value', default: false}
   });
@@ -42,19 +42,18 @@ prototype.constructor = Stash;
 prototype.transform = function(input) {
   log.debug(input, ['stashing']);
 
-  var cachePath = this.param('cachePath'),
-      cache = eval(cachePath),
+  var cacheSetter = this.param('cacheSetter'),
+      setCacheItem = eval(cacheSetter),
       key = this.param('key'),
       flush = this.param('flush');
 
-  if (!cache || (typeof cache !== 'object')) {
-    // if an invalid cache path is submitted, treat this as a no-op
-    console.warn('stash transform: no cache found in eval('+ cachePath +')! skipping this data');
+  if (!setCacheItem || (typeof setCacheItem !== 'function')) {
+    // if an invalid cache setter is submitted, treat this as a no-op
+    console.warn('stash transform: no callable/function found in eval('+ cacheSetter +')! skipping this data');
     return input;
   }
 
-  // For now, this transform ASSUMES just one incoming tuple, which will be
-  // completely replaced by the plucked values.
+  // For now, this transform ASSUMES just one incoming tuple.
   assert(input.add.length > 0,
          "The stash transform expects an added datum (none found).");
   assert((input.add.length < 2 &&
@@ -64,12 +63,11 @@ prototype.transform = function(input) {
 
   /* Stash a single incoming datum. Note that we actually store a *copy* of
    * the data, since Vega always clones data in a spec (see comment above).
+   * Be sure to cache the "raw" data as returned from source!
    */
-  if (flush || !(key in cache)) {
-    // be sure to cache the "raw" data as returned from source
-    cache[ key ] = dl.duplicate(input.add[0]);
-    // N.B. dl.duplicate cleans up any weird methods and circular references
-  }
+  var rawValue = dl.duplicate(input.add[0]);
+  // N.B. dl.duplicate cleans up any weird methods and circular references
+  setCacheItem( key, rawValue, flush);
 
 /* OR should we stash all data piecemeal, based on state??
   // move new (and possibly changed) data to the cache
@@ -96,8 +94,8 @@ Stash.schema = {
   "type": "object",
   "properties": {
     "type": {"enum": ["stash"]},
-    "cachePath": {
-      "description": "A field pointing to the cache object",
+    "cacheSetter": {
+      "description": "The (full, global) name of a cache's setter function",
       "oneOf": [{"type": "string"}, {"$ref": "#/refs/signal"}]  // TODO: signal?
     },
     "key": {
@@ -111,5 +109,5 @@ Stash.schema = {
     }
   },
   "additionalProperties": false,  // TODO: confirm this
-  "required": ["type", "key", "cachePath"]
+  "required": ["type", "key", "cacheSetter"]
 };

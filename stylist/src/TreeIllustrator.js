@@ -83,8 +83,9 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
      * Note that initial use is by the 'stash' transform below.
      */
     var cache = { };
-    var setCachedData = function(key, value) {
+    var setCachedData = function(key, value, flush) {
         // add (or update) the cache for this key
+        // N.B. we'll ignore the 'flush' boolean here, in favor of a checksum.
         cache[key] = value;
     }
     var getCachedData = function(key) {
@@ -940,7 +941,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     // Cache the source data, if not already found
                     treeData.transform.push({
                         "type": "stash", 
-                        "cachePath": 'TreeIllustrator.cache',
+                        "cacheSetter": 'TreeIllustrator.setCachedData',
                         "key": treeSourceCacheKey,
                         "flush": false
                     });
@@ -2021,6 +2022,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         versionTypes: versionTypes,
         hostApplications: hostApplications,
         cache: cache,
+        setCachedData: setCachedData,
 
         // expose view-model classes
         Illustration: Illustration,
