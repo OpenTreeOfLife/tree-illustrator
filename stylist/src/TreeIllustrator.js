@@ -72,6 +72,11 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         //TODO: OPENTREE_TOOLS: 'OPENTREE_TOOLS'
         STANDALONE: 'STANDALONE'                 // "naked" stylist, perhaps from a static file
     };
+    var storageBackends = {
+        LOCAL_FILESYSTEM: 'LOCAL_FILESYSTEM',
+        JUPYTER_NOTEBOOK: 'JUPYTER_NOTEBOOK',    // JSON storage in an IPython-style notebook file
+        GITHUB_REPO: 'GITHUB_REPO'               // in our designated (public) repo
+    }
 
     /* Here we can share information among all classes and instances */
 
@@ -91,10 +96,86 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
     var getCachedData = function(key) {
         // retrieve this key's cache from the cache (or return null)
         return (key in cache) ? cache[key] : null;
-    }
-    var clearCachedData = function(key) {
-        // add (or update) the cache for this key
+    };
+    var clearCachedData = function(key, options) {
+        // clobber the data for this key, and possibly its dependents
         delete cache[key];
+        if (options.DELETE_DEPENDENT_ITEMS) {  // TODO
+            var dependents = $.filter(cache, function(cachePath, itemInfo) {
+                return ($.inArray(key, itemInfo.dependencies) !== -1);
+            });
+            $.each(dependents, function(cachePath, itemInfo) {
+                // ... and clobber *their* dependents in turn
+                clearCachedData(cachePath, {DELETE_DEPENDENT_ITEMS: true}); 
+            });
+        }
+    };
+    var flushCache = function( newCacheData ) {
+        // clear all keys and entries; replace with new data if found
+        cache = { };
+        exports.cache = cache;  // else it lags
+        if (typeof newCacheData === 'object') {
+            for (var key in newCacheData) {
+                // Transfer each property in turn, just in case there's
+                // internal housekeeping to do (checksums, timestamps, etc.)
+                setCachedData( key, newCacheData[key] );
+            }
+        }
+    };
+
+    /* Gather various subsets (or all) of cached data in a temp object. */
+    function gatherAllCachedData() {
+        return $.extend({}, cache);
+    }
+    function gatherAllInputData() {
+        // ie, everything cached under paths starting 'input/'
+        return $.map(cache, function(itemInfo, cachePath) {
+            if( cachePath.match(/^input\/.*/) ) {
+                return { path: cachePath, value: itemInfo };
+            }
+            return null;
+        });
+
+        // MOOT
+        var filtered = {};
+        $.each(cache, function(cachePath, itemInfo) {
+            if( cachePath.match(/^input\/.*/) ) {
+                filtered[ cachePath ] = itemInfo;
+            }
+        });
+        return filtered;
+    }
+    function gatherStaticInputData() {
+        // ie, everything cached under paths starting 'input/' AND with no
+        // clear provenance
+        var filtered = {};
+        $.each(cache, function(cachePath, itemInfo) {
+            if(cachePath.match(/^input\/.*/) &&
+               itemInfo.src === '') {
+                filtered[ cachePath ] = itemInfo;
+            }
+        });
+        return filtered;
+    }
+    function gatherAllTransformData() {
+        // ie, everything cached under paths starting 'transform/'
+        var filtered = {};
+        $.each(cache, function(cachePath, itemInfo) {
+            if( cachePath.match(/^transform\/.*/) ) {
+                filtered[ cachePath ] = itemInfo;
+            }
+        });
+        return filtered;
+    }
+    function gatherAllOutputData() {
+        // ie, everything cached under paths starting 'output/'
+        var filtered = {};
+        $.each(cache, function(cachePath, itemInfo) {
+            if( cachePath.match(/^output\/.*/) ) {
+                filtered[ cachePath ] = itemInfo;
+            }
+        });
+        return filtered;
     }
 
     /* Return the data model for a new illustration (our JSON representation) */
@@ -900,7 +981,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                      * NOTE that we should use cached data when possible, to avoid 
                      * an AJAX fetch each time we tweak the visual presentation of a tree!
                      */
-                    var treeSourceCacheKey = 'ELEMENT-SOURCE-';
+                    var treeSourceCacheKey = 'input/ELEMENT-SOURCE-';
                     console.warn('=== source for element "'+ dataSourceName +'" ===');
                     console.warn('  type: '+ el.metadata.source.type());
                     console.warn('  value: '+ el.metadata.source.value());
@@ -922,7 +1003,9 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                                 console.log("updateVegaSpec(): ignoring empty paste/uploads for now");
                                 return;
                             }
-                            var treeSourceCacheKey = ('PASTED-SOURCE-' + sourceValue);
+                            //var treeSourceCacheKey = ('PASTED-SOURCE-' + sourceValue);
+                            var treeSourceCacheKey = ('input/PASTED-TREE-' + sourceValue);
+
                             var cachedValue = getCachedData( treeSourceCacheKey );
                             if (cachedValue) {
                                 // N.B. This data will be safely cloned by Vega when spec is parsed!
@@ -1422,7 +1505,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                         $fileUploadPanel.show();
                         // TODO: For a multi-kernel notebook, expect a specific kernel-id, eg 'python2'
                         var nbVarName = treeInfo.name().split(' ')[0];
-                        stylist.storage.getTreeSourceData(nbVarName, function(response) {
+                        stylist.storage[ storageBackends.JUPYTER_NOTEBOOK ].getTreeSourceData(nbVarName, function(response) {
                             console.warn('getTreeSourceData returning for tree "'+ treeInfo.name() +'"...');
                             if ('data' in response) {
                                 var treeSourceData = response.data;
@@ -1488,7 +1571,8 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             // TODO
             self.metadata.source.value( pastedText );
             self.metadata.source.type(dataSourceTypes.UPLOAD);
-            var treeSourceCacheKey = ('PASTED-SOURCE-' + $.trim(self.metadata.source.value()));
+            //var treeSourceCacheKey = ('PASTED-SOURCE-' + $.trim(self.metadata.source.value()));
+            var treeSourceCacheKey = ('input/PASTED-TREE-' + $.trim(self.metadata.source.value()));
             console.warn('...converting pasted data to tree...');
             // TODO: build up cache key with format + content?
             var cachedValue = getCachedData( treeSourceCacheKey );
@@ -1715,7 +1799,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                         $fileUploadPanel.show();
                         // TODO: For a multi-kernel notebook, expect a specific kernel-id, eg 'python2'
                         var nbVarName = treeInfo.name().split(' ')[0];
-                        stylist.storage.getTreeSourceData(nbVarName, function(response) {
+                        stylist.storage[ storageBackends.JUPYTER_NOTEBOOK ].getTreeSourceData(nbVarName, function(response) {
                             console.warn('getTreeSourceData returning for tree "'+ treeInfo.name() +'"...');
                             if ('data' in response) {
                                 var treeSourceData = response.data;
@@ -1764,7 +1848,8 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             // TODO
             self.metadata.source.value( pastedText );
             self.metadata.source.type(dataSourceTypes.UPLOAD);
-            var treeSourceCacheKey = ('PASTED-SOURCE-' + $.trim(self.metadata.source.value()));
+            //var treeSourceCacheKey = ('PASTED-SOURCE-' + $.trim(self.metadata.source.value()));
+            var treeSourceCacheKey = ('input/PASTED-TREE-' + $.trim(self.metadata.source.value()));
             console.warn('...converting pasted data to tree...');
             // TODO: build up cache key with format + content?
             var cachedValue = getCachedData( treeSourceCacheKey );
@@ -2021,8 +2106,17 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         dataSourceTypes: dataSourceTypes,
         versionTypes: versionTypes,
         hostApplications: hostApplications,
+        storageBackends: storageBackends,
         cache: cache,
         setCachedData: setCachedData,
+        getCachedData: getCachedData,
+        clearCachedData: clearCachedData,
+        flushCache: flushCache,
+        gatherAllCachedData: gatherAllCachedData,
+        gatherStaticInputData: gatherStaticInputData,
+        gatherAllInputData: gatherAllInputData,
+        gatherAllTransformData: gatherAllTransformData,
+        gatherAllOutputData: gatherAllOutputData,
 
         // expose view-model classes
         Illustration: Illustration,

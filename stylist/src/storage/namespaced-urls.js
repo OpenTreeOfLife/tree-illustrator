@@ -383,7 +383,6 @@ function saveIllustration(illustrationID, callback) {
         error:"FOO (move this!)"
     });
 
-
     // Are we creating a new one, or updating an existing one?
     var createOrUpdate;
     if (stylist.ill.metadata.sha()) {

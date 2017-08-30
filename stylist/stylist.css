@@ -456,6 +456,15 @@ button.btn-mini-function {
     fill: #f90 !important;
 }
 
+#storage-options-popup .modal-body {
+}
+#storage-options-popup .modal-body h4 {
+    margin-top: 0;
+}
+#storage-options-popup .option-details {
+    display: none;
+}
+
 /* diagnostic styles for viewport, masks, etc.
 #viewport-bounds {
     stroke: red !important;

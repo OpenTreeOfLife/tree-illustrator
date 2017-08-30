@@ -98,22 +98,23 @@
     <div id="editor">
 
         <div>
-            <h2 style="margin: 0 0 4px;">Tree Illustrator (prototype)</h2>
+            <h2 style="margin: 0 0 4px;">Tree Illustrator</h2>
         </div>
 
         <!--<form action="#" onsubmit="return false;">-->
             <div class="button-bar" style="margin-bottom: 1em;">
-                <button class="btn btn-small" onclick="stylist.loadIllustrationList(stylist.showIllustrationList); return false;">Load illustration...</button>
-                <button class="btn btn-small">Create from template...</button>
-              <span class="pull-right" data-bind="if: stylist.userHasStorageAccess()">
-                <button class="btn btn-small" onclick="stylist.saveCurrentIllustration(); return false;">Save</button>
-                <button class="btn btn-small">Save illustration as...</button>
+                <button class="btn btn-small" onclick="stylist.showStorageOptions('LOADING_ILLUSTRATION'); return false;">Load illustration...</button>
+                <button disabled class="btn btn-small">Create from template...</button><!-- TODO -->
+              <span class="pull-right" Xdata-bind="if: stylist.userHasStorageAccess()">
+                <button class="btn btn-small" onclick="stylist.saveCurrentIllustration(stylist.storage.lastSave.backend, stylist.storage.lastSave.location); return false;">Save</button>
+                <button class="btn btn-small" onclick="stylist.showStorageOptions('SAVING_ILLUSTRATION'); return false;">Save illustration as...</button>
               </span>
+<!--
               <span class="pull-right" data-bind="if: !(stylist.userHasStorageAccess())"
                     style="padding: 3px; font-size: 0.9em;">
-                <!-- N.B. This currently only appears if we're using GitHub storage. -->
                 <a href="#" onclick="stylist.loginToGitHub(); return false;">Login via GitHub</a> to save your work!
               </span>
+-->
             </div>
 
 <!--
@@ -1081,22 +1082,8 @@
 </div>
         <!--</form>-->
 
-            <div class="button-bar" style="margin-bottom: 1em;">
-                <button class="btn btn-small">Load illustration...</button>
-                <button class="btn btn-small">Create from template...</button>
-              <span class="pull-right" data-bind="if: stylist.userHasStorageAccess()">
-                <button class="btn btn-small" onclick="stylist.saveCurrentIllustration(); return false;">Save</button>
-                <button class="btn btn-small">Save illustration as...</button>
-              </span>
-              <span class="pull-right" data-bind="if: !(stylist.userHasStorageAccess())"
-                    style="padding: 3px; font-size: 0.9em;">
-                <!-- N.B. This currently only appears if we're using GitHub storage. -->
-                <a href="#" onclick="stylist.loginToGitHub(); return false;">Login via GitHub</a> to save your work!
-              </span>
-            </div>
-
         <!-- diagnostic junk -->
-        <div style="margin-top: 1em;">
+        <div style="margin-top: 1em; display: none;">
             pixels/inch: <strong id="display-ppi-indicator">-</strong>
             &nbsp;
             (default in this browser: <strong id="browser-ppi-indicator">-</strong>)
@@ -1105,7 +1092,8 @@
             <br/>
             viewportMagnfication: <strong id="mag-indicator">??</strong>
             <br/>
-            SVG width: <strong id="svg-width-indicator">??</strong>, SVG height: <strong id="svg-height-indicator">??</strong>
+            SVG width: <strong id="svg-width-indicator">??</strong>, 
+            SVG height: <strong id="svg-height-indicator">??</strong>
         </div>
 
     </div><!-- /#editor -->
@@ -1232,12 +1220,119 @@
         </div>
     </div>
 
+    <!-- hidden template for all persistence options -->
+    <div id="storage-options-popup" class="modal fade" style="display: none;">
+        <div class="modal-header" style="padding: 0px inherit;">
+          <a data-dismiss="modal" class="close" style="margin-top: -2px;">x</a>
+          <h4 style="margin: 0;">
+              <span class="if-LOADING_ILLUSTRATION">Where is the illustration or template?</span>
+              <span class="if-SAVING_ILLUSTRATION">Where would you like to save your work?</span>
+          </h4>
+        </div>
+        <div class="modal-header modal-body">
+            <a class="pull-right" href="#" onclick="stylist.toggleSaveOptionDetails(this); return false;">more info</a>
+            <h4 class="if-LOADING_ILLUSTRATION">Load a local file</h4>
+            <h4 class="if-SAVING_ILLUSTRATION">Save a local file</h4>
+            <p class="option-details">
+             <span class="file-api-supported">
+                 Illustrations are stored as ZIP archives, with all inputs and
+                 data included. This is useful for sharing via email, though
+                 you might need to remove the <code>.zip</code> file extension
+                 to pass spam filters.
+             </span>
+             <span class="file-api-NOT-supported">
+                 An illustration can be saved as a ZIP archive in most modern
+                 browsers. This browser does not provide the needed access to
+                 the local filesystem.
+             </span>
+            </p>
+            <!--
+            <input type="file" class="file-api-supported" webkitdirectory
+                   Xonchange="stylist.handleChosenLocalFile"
+                   data-bind="visible: stylist.utils.browserSupportsFileAPI(),
+                              event: {change: stylist.handleChosenLocalFile}" />
+            -->
+            <p class="file-api-supported">
+              <input type="file" value="Load ZIP archive..."
+                     class="if-LOADING_ILLUSTRATION"
+                     data-bind="event: { change: stylist.loadArchiveFromChosenFile }"
+              />
+              <span class="if-SAVING_ILLUSTRATION">
+                 <input type="button" value="Save ZIP archive"
+                        data-bind="event: {click: stylist.saveArchiveWithSuggestedName }"
+                 />
+                 <span>with filename</span>
+                 <input type="text" id="suggested-archive-filename"
+                        style="margin-bottom: 0px;"
+                        data-bind="value: stylist.getDefaultArchiveFileName()" />
+                 <!-- <span>.zip</span> -->
+              </span>
+            </p>
+            <p id="local-filesystem-warning" style="color: #933; margin: 8px 0 0;" 
+               data-bind="visible: false">
+            Please <strong>check the name and location of your downloaded file</strong> carefully!
+            Due to your web browser's security restrictions, we can't save over
+            an existing illustration. It's possible that your file was
+            downloaded in an unexpected location, or with a different filename. 
+            </p>
+            <em class="file-api-NOT-supported"
+                style="color: #933;">File APIs are not supported in this browser!</em>
+        </div>
+        <div class="modal-header modal-body">
+            <a class="pull-right" href="#" onclick="stylist.toggleSaveOptionDetails(this); return false;">more info</a>
+            <h4 class="if-LOADING_ILLUSTRATION">Load from GitHub</h4>
+            <h4 class="if-SAVING_ILLUSTRATION">Save to GitHub</h4>
+            <p class="option-details">
+            You'll need an active <a href="https://github.com/settings/profile" target="_blank">GitHub account</a> to save data in our 
+                <a href="https://github.com/OpenTreeOfLife/collections-1/tree/master/collections-by-owner" target="_blank">shared online repository</a>. 
+                <em style="color: #933;">NOTE that all data saved in this repo is <strong>publicly visible</strong>!</em>
+                (Once access is granted here, you'll be able to see the Tree Illustrator's
+                <a href="https://github.com/settings/tokens" target="_blank">detailed permissions in your GitHub account settings</a>.)
+                If you need truly private storage, consider using Tree Illustrator from <a href="#TODO" target="_blank">a different host application</a>.
+            </p>
+            <form class="form-horizontal" style="margin-bottom: 0px;">
+                <div class="control-group" style="margin-bottom: 0px;">
+                    <label class="control-label" for="#github-userid">GitHub user name (id)</label> 
+                    <div class="controls" style="margin-bottom: 6px;">
+                        <input class="input-xlarge" id="github-userid" type="text" value="" 
+                               placeholder="EXAMPLE: 'jsmith', not 'John Smith'"
+                               TODOdata-bind="value: metadata.name" />
+                    </div>
+                    <label class="control-label" for="#github-password"><i class="icon icon-lock"></i> GitHub password</label> 
+                    <div class="controls">
+                        <input class="input-xlarge" id="github-password" type="password" value="" 
+                               placeholder="Sent once via HTTPS, then cleared"
+                               TODOdata-bind="value: metadata.name" />
+                        <br/>
+                        <button id="github-authorize" onclick="return false;"
+                                class="btn Xbtn-primary btn-small Xpull-right" style="margin-top: 6px;">Login</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-header modal-body">
+            <a class="pull-right" href="#" onclick="stylist.toggleSaveOptionDetails(this); return false;">more info</a>
+            <h4 class="if-LOADING_ILLUSTRATION">Load from this Jupyter (IPython) notebook</h4>
+            <h4 class="if-SAVING_ILLUSTRATION">Save in this Jupyter (IPython) notebook</h4>
+            <p class="option-details">
+              Your illustration can be saved as data within the current Jupyter web notebook.
+            </p>
+            <em class="notebook-storage-NOT-supported" style="color: #933;">
+               This option is only available when Tree Illustrator is 
+               <a href="#TODO" target="_blank">embedded in a live (editable) Jupyter web notebook</a>.
+             </em>
+        </div>
+        <div class="modal-footer">
+          <a data-dismiss="modal" class="btn">Cancel</a>
+        </div>
+    </div>
+
     <!-- hidden template for GitHub login -->
     <!-- TODO: Add alternate messages and actions if user is logged in, or has a stale OAuth token. -->
     <div id="github-login-popup" class="modal fade" style="display: none;">
         <div class="modal-header" style="padding: 0px inherit;">
-          <a data-dismiss="modal" class="close" onclick="hideGithubLoginPopup(); return false;">x</a>
-          <h4 style="margin-top: 0;">Login to GitHub <span style="font-weight: normal;">to save your work</span></h4>
+          <a data-dismiss="modal" class="close" style="margin-top: -2px;" onclick="TODO-hideGithubLoginPopup(); return false;">x</a>
+          <h4 style="margin: 0;">Login to GitHub <span style="font-weight: normal;">to save your work</span></h4>
         </div>
         <div class="modal-body">
             <p>
@@ -1268,10 +1363,10 @@
             </form>
         </div>
         <div class="modal-footer">
-          <button id="github-authorize" 
+          <button Xid="github-authorize" 
                   class="btn btn-info pull-right" style="margin-left: 20px;">Authorize</button>
           <a data-dismiss="modal" class="btn"
-             onclick="hideGithubLoginPopup(); return false;">Cancel</a>
+             onclick="TODO-hideGithubLoginPopup(); return false;">Cancel</a>
         </div>
     </div>
 

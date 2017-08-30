@@ -7,6 +7,8 @@
 var $ = require('jquery'),
     utils = require('./ti-utils'),
     jszip = require('jszip'),
+    FileSaver = require('file-saver'),
+    Blob = require('blob-polyfill'),
     md5 = require('spark-md5'),
     vg = require('vega'),
     TreeIllustrator = require('./TreeIllustrator.js'),
@@ -58,25 +60,50 @@ function getParameterByName(name) {
  * web services for data and storage.
  */
 var hostApplication = TreeIllustrator.hostApplications.STANDALONE;
-// validate received host-app string against enumerated values
+// Validate received host-app string against enumerated values
 $.each(TreeIllustrator.hostApplications, function(i, testValue) {
     if (getParameterByName('hostApplication') == testValue) {
         hostApplication = testValue;
     }
 });
 console.log("Tree Illustrator host application: "+ hostApplication);
-// Attempt to dynamically load its storage backend and other components
-var storage;
-switch(hostApplication) {
-    case TreeIllustrator.hostApplications.JUPYTER_NOTEBOOK:
-        storage = require('./storage/ipython-notebook-bridge.js');
-        break;
-    case TreeIllustrator.hostApplications.STANDALONE:
-        storage = require('./storage/namespaced-urls.js');
-        break;
-    default:
-        console.error("No designated storage backend for this host app!");
-}
+
+// We'll attempt to dynamically load appropriate storage backends and other components
+var LOCAL_FILESYSTEM = TreeIllustrator.storageBackends.LOCAL_FILESYSTEM,
+    JUPYTER_NOTEBOOK = TreeIllustrator.storageBackends.JUPYTER_NOTEBOOK,
+    GITHUB_REPO = TreeIllustrator.storageBackends.GITHUB_REPO;
+var storage = {};
+storage[ LOCAL_FILESYSTEM ] = require('./storage/local-filesystem.js');
+storage[ JUPYTER_NOTEBOOK ] = require('./storage/ipython-notebook-bridge.js');
+storage[ GITHUB_REPO ]      = require('./storage/namespaced-urls.js');
+
+storage.lastSave = {
+    backend: null,
+    location: null
+};
+/* Each time the user sucessfully saves the current illustration, stash the
+ * storage backend and any location information. NOTE that location values
+ * are different for each storage backend.
+ *
+ * LOCAL_FILESYSTEM only knows the proposed filename, *not* the one
+ * actually applied or its location in the filesystem:
+ *      backend: TreeIllustrator.storageBackends.LOCAL_FILESYSTEM,
+ *      location: 'trees-about-bees-LATEST.zip'
+ *
+ * JUPYTER_NOTEBOOK is simply an integer pointing to the n-th storage slot:
+ *      backend: TreeIllustrator.storageBackends.JUPYTER_NOTEBOOK,
+ *      location: 4
+ *
+ * GITHUB_REPO knows the final assigned Illustration ID assigned by the
+ * phylesystem API:
+ *      backend: TreeIllustrator.storageBackends.GITHUB_REPO,
+ *      location: '/jimallman/trees-about-bees'
+ *
+ * Both should reset to null if we abandon an illustration or open a new one
+ * (or if an attempted save fails?):
+ *      backend = null;
+ *      location = null;
+ */
 
 /* Offer all studies and trees from the Open Tree of Life repository,
  * plus other sources and tree formats. We'll make a tree of Knockout
@@ -93,6 +120,32 @@ var availableTrees = ko.mapping.fromJS([
     {
         name: "Placeholder tree", 
         url: './placeholder-tree.json'
+    },
+    {
+        name: "Data used in this illustration",
+        children: [
+            /* A list of "friendly" labels identifying existing source data
+             * already found in this illustration. Filter by type/format, based
+             * on the current context (e.g. trees vs. traits)?
+             * Examples would look something like this:
+            {
+                name: "Trait data 1.2e",
+                url: './inputs/Trait data 1.2e'
+            },
+            {
+                name: "Second (sparse) parsimony trees",
+                url: './inputs/Second (sparse) parsimony trees'
+            }
+             */
+            {
+                name: "Trait data 1.2e",
+                url: './inputs/Trait data 1.2e'
+            },
+            {
+                name: "Second (sparse) parsimony trees",
+                url: './inputs/Second (sparse) parsimony trees'
+            }
+        ]
     },
     {
         name: "From notebook kernel",
@@ -122,9 +175,10 @@ var availableTrees = ko.mapping.fromJS([
         ]
     },
     {
-        name: "Enter or upload tree data"
+        name: "Enter or upload tree data",
         /*
         name: "Enter or upload tree data as...",
+        */
         children: [
             {
                 name: "Newick string"
@@ -136,7 +190,6 @@ var availableTrees = ko.mapping.fromJS([
                 name: "NEXUS"
             }
         ]
-        */
     },
     {
         name: "On the web",
@@ -158,6 +211,21 @@ var availableDataSources = ko.mapping.fromJS([
     {
         name: "Placeholder dataset", 
         url: './placeholder-dataset.json'
+    },
+    {
+        name: "Data used in this illustration",
+        children: [
+            /* A list of "friendly" labels identifying existing source data
+             * already found in this illustration. Filter by type/format, based
+             * on the current context (e.g. trees vs. traits)?
+             */
+            {
+                name: "FOO"
+            },
+            {
+                name: "BAR"
+            }
+        ]
     },
     {
         name: "From notebook kernel",
@@ -206,7 +274,7 @@ function updateAvailableTrees() {
              * TODO: Can we deal with multiple kernels in the newest notebooks?
              * TODO: Can we distinguish R-via-Python from the Python kernel?
              */
-            storage.getTreeSourceList(function(response) {
+            storage[ storageBackends.JUPYTER_NOTEBOOK ].getTreeSourceList(function(response) {
                 var notebookSourceList = ko.utils.arrayFirst(availableTrees(), function(item) {
                     return item.name() === 'From notebook kernel';
                 });
@@ -1111,12 +1179,20 @@ var ill;
 var $stashedEditArea = null;
 
 // Load an illustration from JS/JSON data (usu. called by convenience functions below)
-function loadIllustrationData( data, newOrExisting ) {
+function loadIllustrationData( data, initialCache, newOrExisting ) {
     // Use an Illustration object as our primary view model for KnockoutJS
     // (by convention, it's usually named 'viewModel')
     ill = new TreeIllustrator.Illustration( data );
     // export the new illustration
     exports.ill = ill;
+
+    // Clear any existing cached data from the illustration rendering pipeline;
+    // use initial data if provided by the caller.
+    if (typeof initialCache === 'object') {
+        TreeIllustrator.flushCache( initialCache );
+    } else {
+        TreeIllustrator.flushCache( );
+    }
 
     /* TODO: handle the newOrExisting storage info? or maybe this is
      * handled by the storage backend...
@@ -1156,35 +1232,35 @@ function loadEmptyIllustration() {
      *
      * TODO: Replace this with a simple template?
      */
-    loadIllustrationData( null, 'NEW' );
+    loadIllustrationData( null, {}, 'NEW' );
 }
 // N.B. There should be additional convenience functions in the storage backend
 //  - fetchAndLoadExistingIllustration( docID )
 //  - fetchAndLoadIllustrationTemplate( templateID )
 
-function fetchAndLoadExistingIllustration( docID ) {
+function fetchAndLoadExistingIllustration( backend, docID ) {
     /* Load the JS (or JSON?) data provided, and keep track of its original ID/slot.
      */
-    storage.loadIllustration(docID, function(response) {
+    storage[ backend ].loadIllustration(docID, function(response) {
         if ('data' in response) {
             var data = response.data;
-            loadIllustrationData( data, 'EXISTING' );
+            loadIllustrationData( data, {}, 'EXISTING' );
         } else {
             console.error(response.error || "No data returned (unspecified error)!");
         }
     });
 }
-function fetchAndLoadIllustrationTemplate( templateID ) {
+function fetchAndLoadIllustrationTemplate( backend, templateID ) {
     /* Load the JS (or JSON) data provided, but treat this as a new illustration.
      *
      * N.B. A template is basically an existing illustration document, with
      * internal prompts and placeholder trees/data, but we'll treat it as new.
      */
     // TODO: fetch using storage backend
-    storage.loadIllustration(docID, function(response) {
+    storage[ backend ].loadIllustration(docID, function(response) {
         if ('data' in response) {
             var template = response.data;
-            loadIllustrationData( template, 'NEW' );
+            loadIllustrationData( template, {}, 'NEW' );
         } else {
             console.error(response.error || "No data returned (unspecified error)!");
         }
@@ -1238,12 +1314,28 @@ $(document).ready(function() {
     console.log(">> startingType: "+ startingType +" <"+ typeof(startingType) +">");
     // N.B. This should be a string, so '0' is a valid slot identifier!
     if (startingID) {
+        // Which storage backend should we use? Depends on the host app
+        var backend;
+        switch (hostApplication) {
+            case (TreeIllustrator.hostApplications.JUPYTER_NOTEBOOK):
+                // ASSUME we're being passed a storage slot number
+                backend = TreeIllustrator.storageBackends.JUPYTER_NOTEBOOK;
+                break;
+            case (TreeIllustrator.hostApplications.STANDALONE):
+                // ASSUME we're being passed a phylesystem id (stored on GitHub)
+                backend = TreeIllustrator.storageBackends.GITHUB_REPO;
+                break;
+            default:
+                console.error("Unexpected hostApplication found ('"+ hostApplication +"')!");
+                return;
+        }
+
         switch (startingType) {
             case 'ILLUSTRATION':
-                fetchAndLoadExistingIllustration( startingID );
+                fetchAndLoadExistingIllustration( backend, startingID );
                 break;
             case 'TEMPLATE':
-                fetchAndLoadIllustrationTemplate( startingID );
+                fetchAndLoadIllustrationTemplate( backend, startingID );
                 break;
             default:
                 console.error("No startingType provided (expected 'ILLUSTRATION' or 'TEMPLATE')!");
@@ -2192,6 +2284,7 @@ var disallowedMIMETypes = {
 };
 
 function handleChosenLocalFile( illElement, event ) {
+    console.log('handleChosenLocalFile STARTING...');
     var fileList = event.target.files;      // a FileList
     // For now, we expect just one file!
     var chosenFile = fileList[0];           // a File
@@ -2293,9 +2386,9 @@ function userIsLoggedIn(callback) {
 // manage illustrations (using an adapter with API methods, already loaded)
 var currentIllustrationList = null;
     // keep the latest ordered array (with positions, names, descriptions)
-function loadIllustrationList(callback) {
+function loadIllustrationList(backend, callback) {
     console.log("loadIllustrationList() STARTING...");
-    storage.getIllustrationList(function(response) {
+    storage[ backend ].getIllustrationList(function(response) {
         // show the returned list (or report any error) from the upstream response
         if ('data' in response) {
             // expect an ordered array with names and descriptions
@@ -2308,7 +2401,7 @@ function loadIllustrationList(callback) {
         }
     });
 }
-function showIllustrationList() {
+function showIllustrationList( backend ) {
     if (currentIllustrationList) {
         // Show names and descriptions in a simple, general chooser
         var $chooser = $('#simple-chooser');
@@ -2330,7 +2423,7 @@ function showIllustrationList() {
                 $matchInfo.find('.name').html(match.name || '<em>No name found</em>')
                 $matchInfo.find('.description').html(match.description || '');
                 $matchInfo.click(function() {
-                    fetchAndLoadExistingIllustration( match.source || i);
+                    fetchAndLoadExistingIllustration( backend, (match.source || i));
                     // close the modal chooser
                     $(this).closest('.modal-simple-chooser').find('.modal-header .close').click();
                 });
@@ -2352,8 +2445,15 @@ function showIllustrationList() {
         loadIllustrationList(showIllustrationList);
     }
 }
-function saveCurrentIllustration(saveToID) {
-    console.log("saveCurrentIllustration() STARTING...");
+function saveCurrentIllustration(backend, saveToLocation) {
+    console.log("saveCurrentIllustration() CHECKING FOR SPECIFIED BACKEND+LOCATION...");
+    if (!backend || !saveToLocation) {
+        // not specified (e.g., we haven't saved the current illustration in this session)
+        showStorageOptions('SAVING_ILLUSTRATION');  // defer to the Save As... behavior
+        return;
+    }
+
+    console.log("saveCurrentIllustration() STARTING simple (re)save...");
     // TODO: How should this ID be determined?
     //  - unique/serialized slug, ala tree collections?
     //  - if provided as incoming arg, use to Save As
@@ -2362,7 +2462,7 @@ function saveCurrentIllustration(saveToID) {
     //  - OR should we rely entirely on (and possibly modify) its internal metadata?
     // Current behavior (in IPython notebook) is to assume the current (nth)
     // storage slot, unless 'NEW' or another integer is asserted here.
-    storage.saveIllustration(saveToID, function(response) {
+    storage[ backend ].saveIllustration(saveToLocation, function(response) {
         // (re)load the saved illustration (or report any error)
         if (response.error) {
             console.error( response.error );
@@ -2372,6 +2472,190 @@ function saveCurrentIllustration(saveToID) {
     });
 }
 
+function showStorageOptions( currentOperation ) {
+    // Show all storage backends, incl. disabled / not available.
+    var $popup = $('#storage-options-popup');
+    // TODO: $popup.find(':input').val('');  // clear any old values?
+
+    // Show appropriate UI and behavior for the desired operation (eg, SAVING_ILLUSTRATION)
+    $popup.find('[class^=if-]').hide();
+    $popup.find('.if-'+ currentOperation).show();  // eg, '.if-SAVING_ILLUSTRATION'
+    switch (currentOperation) {
+        case ('LOADING_ILLUSTRATION'):
+        case ('SAVING_ILLUSTRATION'):
+        //case ('LOADING_TEMPLATE'):
+        //case ('LOADING_TEMPLATE'):
+            // adjust display and behavior in the shared popup
+            break;
+        default:
+            console.error("MISSING/UNKNOWN storage operation: '"+ 
+                currentOperation +"' <"+ typeof(currentOperation) +">");
+            return;
+    }
+
+    // Display should reflect the availability of each storage backend (check
+    // here, so we don't keep testing)
+    if (stylist.utils.browserSupportsFileAPI()) {
+        $popup.find('.file-api-supported').show();
+        $popup.find('.file-api-NOT-supported').hide();
+    } else {
+        $popup.find('.file-api-supported').hide();
+        $popup.find('.file-api-NOT-supported').show();
+    }
+    if (hostApplication === TreeIllustrator.hostApplications.JUPYTER_NOTEBOOK) {
+        $popup.find('.notebook-storage-supported').show();
+        $popup.find('.notebook-storage-NOT-supported').hide();
+    } else {
+        $popup.find('.notebook-storage-supported').hide();
+        $popup.find('.notebook-storage-NOT-supported').show();
+    }
+
+    $popup.modal('show');
+
+    // (re)bind UI with Knockout
+    var $boundElements = $('#storage-options-popup .modal-body'); // add other elements?
+    $.each($boundElements, function(i, el) {
+        ko.cleanNode(el);
+        ko.applyBindings({},el);
+    });
+}
+function toggleSaveOptionDetails(clicked) {
+    var $clicked = $(clicked);
+    var $currentOptionPanel = $clicked.closest('.modal-body');
+    var $otherOptionPanels = $clicked.closest('.modal').find('.modal-body').not($currentOptionPanel);
+    $otherOptionPanels.find('.option-details').hide();
+    $currentOptionPanel.find('.option-details').toggle();
+}
+
+/*
+function gatherStaticInputData() {
+    // TODO: Return an array of objects with .path, .value, other sensible properties
+    return [ ];
+}
+
+function gatherAllInputData() {
+    // TODO: Return an array of objects with .path, .value, other sensible properties
+    return [ ];
+}
+
+function gatherAllTransformData() {
+    // TODO: Return an array of objects with .path, .value, other sensible properties
+    return [ ];
+}
+*/
+
+function loadArchiveFromChosenFile( vm, evt ) {
+    // First param (corresponding view-model data) is probably empty; focus on the event!
+    // ASSUME we're in the storage-options popup.
+    var $hintArea = $('#local-filesystem-warning').eq(0);
+    $hintArea.html("");  // clear for new results
+    switch(evt.srcElement.files.length) {
+        case (0):
+            console.warn('No file(s) selected!');
+            return;
+        case (1):
+        default:  // ignore multiple files for now, just load the first
+            var fileInfo = evt.srcElement.files[0];
+            console.warn("fileInfo.name = "+ fileInfo.name);
+            console.warn("fileInfo.type = "+ fileInfo.type);
+            var isValidArchive = false;
+            switch (fileInfo.type) {
+                case 'application/zip':
+                    isValidArchive = true;
+                    break;
+                case '':
+                    // check file extension
+                    if (fileInfo.name.match('.(zip|ill)$')) {
+                        isValidArchive = true;
+                    }
+                    break;
+            }
+            if (!isValidArchive) {
+                var msg = "Archived illustrations should end in <code>.zip</code> or <code>.ill</code>. Choose another file?";
+                $hintArea.html(msg).show();
+                return;
+            }
+            // Still here? try to read and unzip this archive!
+            jszip.loadAsync(fileInfo)   // read the Blob
+                 .then(function(zip) {  // success callback
+                     console.log('reading ZIP contents...');
+                     var msg = "Reading illustration contents...";
+                     $hintArea.html(msg).show();
+                     // How will we know when it's all (async) loaded? Count down as each entry is read!
+                     var zipEntriesToLoad = 0;
+                     var initialCache = {};
+                     for (var p in zip.files) { zipEntriesToLoad++; }
+                     // Stash most found data in the cache, but main JSON should be parsed
+                     var mainIllustrationJSON = null;
+                     zip.forEach(function (relativePath, zipEntry) {  // 2) print entries
+                         console.log('  '+ zipEntry.name);
+                         console.log(zipEntry);
+                         // skip directories (nothing to do here)
+                         if (zipEntry.dir) {
+                             //console.warn("SKIPPING directory "+ zipEntry.name +"...");
+                             zipEntriesToLoad--;
+                             return;
+                         }
+                         // read and store files
+                         zipEntry.async('text', function(metadata) {
+                                    // report progress?
+                                    var msg = "Reading illustration contents ("+ zipEntry.name +"): "+ metadata.percent.toFixed(2) +" %";
+                                    $hintArea.html(msg).show();
+                                 })
+                                 .then(function success(data) {
+                                           console.log("Success unzipping "+ zipEntry.name +":\n"+ data);
+                                           zipEntriesToLoad--;
+                                           // parse and stash the main JSON data; cache the rest
+                                           switch (zipEntry.name) {
+                                               case 'main.json':
+                                                   mainIllustrationJSON = JSON.parse(data);
+                                                   break;
+                                               default:
+                                                   // copy to our initial cache
+                                                   initialCache[ zipEntry.name ] = data;
+                                           }
+                                           if (zipEntriesToLoad === 0) {
+                                               // we've read in all the ZIP data! open this illustration
+                                               // (setting its initial cache) and close this popup
+                                               loadIllustrationData( mainIllustrationJSON, initialCache, 'EXISTING');
+                                               $('#storage-options-popup').modal('hide');
+                                           }
+                                       },
+                                       function error(e) {
+                                           var msg = "Problem unzipping "+ zipEntry.name +":\n"+ e.message;
+                                           $hintArea.html(msg).show();
+                                       });
+                     });
+                 }, 
+                 function (e) {         // failure callback
+                     var msg = "Error reading <strong>" + fileInfo.name + "</strong>! Is this a proper zip file?";
+                     $hintArea.html(msg).show();
+                 });
+    }
+}
+
+function getDefaultArchiveFileName( candidateFileName ) {
+    // try to use a candidate name, if provided
+    var suggestedFileName = $.trim(candidateFileName) || 
+        stylist.ill.metadata.name() || 
+        "UNTITLED_ILLUSTRATION";
+    if (!suggestedFileName.toLowerCase().endsWith('.zip')) {
+        suggestedFileName += '.zip';
+    }
+    return suggestedFileName;
+}
+function saveArchiveWithSuggestedName() {
+    var $filenameField = $('input#suggested-archive-filename');
+    var suggestedFileName = $.trim($filenameField.val());
+    if (suggestedFileName) {
+        suggestedFileName = getDefaultArchiveFileName(suggestedFileName);
+        stylist.storage[ LOCAL_FILESYSTEM ].saveIllustration(suggestedFileName);
+    } else {
+        stylist.storage[ LOCAL_FILESYSTEM ].saveIllustration();
+    }
+    $('#local-filesystem-warning').slideDown();
+}
+
 // Expose some members to outside code (eg, Knockout bindings, onClick
 // attributes...)
 var api = [
@@ -2379,6 +2663,8 @@ var api = [
     'userLogin',
     'userDisplayName',
     'userEmail',
+    'showStorageOptions',
+    'toggleSaveOptionDetails',
     'userHasStorageAccess',
     'loginToGitHub',
     'userIsLoggedIn',
@@ -2423,9 +2709,17 @@ var api = [
     'enterFullScreen',
     'exitFullScreen',
     'ill',
+    //'gatherStaticInputData',
+    //'gatherAllInputData',
+    //'gatherAllTransformData',
+    'loadArchiveFromChosenFile',
+    'getDefaultArchiveFileName',
+    'saveArchiveWithSuggestedName',
     'view',
-  //'jszip',
-    'utils'
+    //'jszip',
+    //'FileSaver',
+    'utils',
+    'storage'
 ];
 $.each(api, function(i, methodName) {
     // populate the default 'module.exports' object

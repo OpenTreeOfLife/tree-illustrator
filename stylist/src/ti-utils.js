@@ -120,7 +120,7 @@ function coerceToJSObject(data) {
 /* Detect browser capabilities */
 function browserSupportsFileAPI() {
     // Can load and manipulate local files in this browser?
-    return (window.File && window.FileReader && window.FileList && window.Blob);
+    return (window.File && window.FileReader && window.FileList && window.Blob) ? true : false;
 }
 
 /* Copied from vg.data.phylogram.js, for wider use (but keeping the code in
