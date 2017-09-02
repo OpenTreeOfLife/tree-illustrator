@@ -1409,6 +1409,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             var $opentreeIDsPanel = $('#'+ self.id() +'-datasource-opentreeids-panel');
             var $nexsonUrlPanel = $('#'+ self.id() +'-datasource-nexsonurl-panel');
             var $fileUploadPanel = $('#'+ self.id() +'-datasource-upload-panel');
+            var $fileFormatChooser = $('#'+ self.id() +'-datasource-format');
             var chosenSource = $chooser.val();
             switch(chosenSource) {
                 /* Match against strings defined in `stylist.js`. We'll start
@@ -1447,9 +1448,9 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
 
                 case "Enter or upload tree data":
                 //case "Upload tree data":
-                //case "Newick string":
-                //case "Newick string with extra data":
-                //case "NEXUS":
+                case "Newick string":
+                case "Newick string with extra data":
+                case "NEXUS":
                     $opentreeIDsPanel.hide();
                     $nexsonUrlPanel.hide();
                     // enable "pasted text" field for this method
@@ -1457,6 +1458,25 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     $pastedField.attr('disabled', false)
                                 .css('color','#aaa');
                     $fileUploadPanel.show();
+
+                    switch(chosenSource) {
+                        case "Newick string":
+                        case "Newick string with extra data":
+                            $fileFormatChooser.val('newick');
+                            break;
+                        case "NEXUS":
+                            $fileFormatChooser.val('nexus');
+                            break;
+                        case 'NeXML':
+                            $fileFormatChooser.val('nexml');
+                            break;
+                        case 'phylo (R data frame)':
+                            $fileFormatChooser.val('phylo');
+                            break;
+                        default:
+                            $fileFormatChooser.val('');
+                            break;
+                    }
                     break;
 
                 default:
