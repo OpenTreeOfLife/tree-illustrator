@@ -939,7 +939,11 @@ prototype.buildPhylogram = function(data) {
             descendantLeafCount: 0
         };
         node.children.map(function(n, i) {
-            if (n['^ot:isLeaf'] === true) {
+            if ((n['^ot:isLeaf'] === true) ||
+               // Use additional tests for badly-formed Nexson, where
+               // a "knuckle" can appear as a non-leaf node with no children!)
+               !(n.children) ||
+               (n.children.length === 0)) {
                 // capture the next available leaf position
                 var leafPos = leafPositions.shift();
                 n.x = leafPos.x;
