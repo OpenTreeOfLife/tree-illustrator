@@ -2365,9 +2365,6 @@ function userHasStorageAccess() {
     //return userLogin() && (userLogin() !== 'LOGIN_NOT_FOUND');
     return storage.userHasStorageAccess();
 }
-function loginToGitHub() {
-    return storage.loginToGitHub();
-}
 function userIsLoggedIn(callback) {
     if (storage.userAuthToken) {
         // asynchronous, since it may require an AJAX roundtrip...
@@ -2394,22 +2391,28 @@ function loadIllustrationList(backend, callback) {
             // expect an ordered array with names and descriptions
             currentIllustrationList = response.data;
             if (callback) {
-                callback();
+                callback(backend);
             }
         } else {
             console.error(response.error || "No data returned (unspecified error)!");
         }
     });
 }
-function showIllustrationList( backend ) {
+function showIllustrationList( backend, listContainer ) {
     if (currentIllustrationList) {
         // Show names and descriptions in a simple, general chooser
-        var $chooser = $('#simple-chooser');
+        var $chooser;
+        if (listContainer) {
+            // can be a jQuery selector, or a result set
+            $chooser = $(listContainer);
+        } else {
+            $chooser = $('#simple-chooser');
+        }
         $chooser.find('[id="dialog-heading"]').html('Choose an existing illustration');
         $chooser.find('.found-matches').empty();
         if (currentIllustrationList.length === 0) {
             $chooser.find('.found-matches').append('<div>'+
-              '<em>No trees found in storage.</em>'+
+              '<em>No illustrations found in storage.</em>'+
             '</div>');
         } else {
             $.each(currentIllustrationList, function(i, match) {
@@ -2442,7 +2445,9 @@ function showIllustrationList( backend ) {
         $chooser.modal('show');
     } else {
         // load the initial list, then return here
-        loadIllustrationList(showIllustrationList);
+        loadIllustrationList(backend, function() {
+            showIllustrationList( backend, listContainer );
+        });
     }
 }
 function saveCurrentIllustration(backend, saveToLocation) {
@@ -2510,7 +2515,16 @@ function showStorageOptions( currentOperation ) {
         $popup.find('.notebook-storage-NOT-supported').show();
     }
 
+    if (storage.GITHUB_REPO.userIsLoggedIntoGitHub()) {
+        $('#github-login-panel').hide();
+        $('#github-content-panel').show();
+    } else {
+        $('#github-login-panel').show();
+        $('#github-content-panel').hide();
+    }
+
     $popup.modal('show');
+    //$popup.find('#github-authorize').unbind('click').click(loginToGitHub);
 
     // (re)bind UI with Knockout
     var $boundElements = $('#storage-options-popup .modal-body'); // add other elements?
@@ -2666,7 +2680,6 @@ var api = [
     'showStorageOptions',
     'toggleSaveOptionDetails',
     'userHasStorageAccess',
-    'loginToGitHub',
     'userIsLoggedIn',
     'showIllustrationList',
     'loadIllustrationList',

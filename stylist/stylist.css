@@ -339,23 +339,24 @@ input[type=file] {
     font-weight: normal;
 }
 
-#simple-chooser .match {
+.modal-simple-chooser .match {
     clear: left;
     border-top: 1px solid #eee;
+    margin-right: 5px;  /* don't crowd scrollbar */
     padding: 6px 0;
     overflow: hidden;
     cursor: pointer;
 }
-#simple-chooser .match:first-child {
+.modal-simple-chooser .match:first-child {
     border-top: none;
 }
-#simple-chooser .match:hover {
+.modal-simple-chooser .match:hover {
     background-color: #ffd;
 }
-#simple-chooser .name {
+.modal-simple-chooser .name {
     font-weight: bold;
 }
-#simple-chooser .description {
+.modal-simple-chooser .description {
     color: #999;
 }
 

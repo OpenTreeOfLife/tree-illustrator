@@ -109,12 +109,6 @@
                 <button class="btn btn-small" onclick="stylist.saveCurrentIllustration(stylist.storage.lastSave.backend, stylist.storage.lastSave.location); return false;">Save</button>
                 <button class="btn btn-small" onclick="stylist.showStorageOptions('SAVING_ILLUSTRATION'); return false;">Save illustration as...</button>
               </span>
-<!--
-              <span class="pull-right" data-bind="if: !(stylist.userHasStorageAccess())"
-                    style="padding: 3px; font-size: 0.9em;">
-                <a href="#" onclick="stylist.loginToGitHub(); return false;">Login via GitHub</a> to save your work!
-              </span>
--->
             </div>
 
 <!--
@@ -1290,7 +1284,7 @@
                 <a href="https://github.com/settings/tokens" target="_blank">detailed permissions in your GitHub account settings</a>.)
                 If you need truly private storage, consider using Tree Illustrator from <a href="#TODO" target="_blank">a different host application</a>.
             </p>
-            <form class="form-horizontal" style="margin-bottom: 0px;">
+            <form id="github-login-panel" class="form-horizontal" style="margin-bottom: 0px; display: none;">
                 <div class="control-group" style="margin-bottom: 0px;">
                     <label class="control-label" for="#github-userid">GitHub user name (id)</label> 
                     <div class="controls" style="margin-bottom: 6px;">
@@ -1305,10 +1299,16 @@
                                TODOdata-bind="value: metadata.name" />
                         <br/>
                         <button id="github-authorize" onclick="return false;"
-                                class="btn Xbtn-primary btn-small Xpull-right" style="margin-top: 6px;">Login</button>
+                                class="btn Xbtn-primary btn-small Xpull-right" 
+                                style="margin-top: 6px;"
+                                data-bind="event: {click: stylist.storage.GITHUB_REPO.loginToGitHub}">Login</button>
                     </div>
                 </div>
             </form>
+            <div id="github-content-panel" class="modal-simple-chooser" style="margin-bottom: 0px; display: none;">
+                <div class="before-matches"><!-- currently unused, but EXPECTED to determine list height --></div>
+                <div class="found-matches" style="overflow-y: auto;"></div>
+            </div>
         </div>
         <div class="modal-header modal-body">
             <a class="pull-right" href="#" onclick="stylist.toggleSaveOptionDetails(this); return false;">more info</a>
@@ -1345,17 +1345,17 @@
             </p>
             <form class="form-horizontal" style="margin-bottom: 0px;">
                 <div class="control-group">
-                    <label class="control-label" for="#github-userid">GitHub user name (id)</label> 
+                    <label class="control-label" Xfor="#github-userid">GitHub user name (id)</label> 
                     <div class="controls">
-                        <input class="input-xlarge" id="github-userid" type="text" value="" 
+                        <input class="input-xlarge" Xid="github-userid" type="text" value="" 
                                placeholder="EXAMPLE: 'jsmith', not 'John Smith'"
                                TODOdata-bind="value: metadata.name" />
                     </div>
                 </div>
                 <div class="control-group" style="margin-bottom: 0px;">
-                    <label class="control-label" for="#github-password"><i class="icon icon-lock"></i> GitHub password</label> 
+                    <label class="control-label" Xfor="#github-password"><i class="icon icon-lock"></i> GitHub password</label> 
                     <div class="controls">
-                        <input class="input-xlarge" id="github-password" type="password" value="" 
+                        <input class="input-xlarge" Xid="github-password" type="password" value="" 
                                placeholder="Sent once via HTTPS, then cleared"
                                TODOdata-bind="value: metadata.name" />
                     </div>

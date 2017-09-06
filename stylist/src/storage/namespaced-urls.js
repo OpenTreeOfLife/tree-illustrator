@@ -85,131 +85,137 @@ var githubTokenProps = {
 function userHasStorageAccess() {
     return userLogin() && (userLogin() !== 'LOGIN_NOT_FOUND');
 }
-function loginToGitHub( username, password ) {
-    // TODO: Accept stored username+password?
-    var $popup = $('#github-login-popup');
-    $popup.find(':input').val('');  // clear any old values
-    $popup.find('#github-authorize').unbind('click').click(function() {
-        // N.B. we need to encode credentials to Base64 for the Auth header
-        var username = $.trim( $popup.find('#github-userid').val() );
-        var password = $.trim( $popup.find('#github-password').val() );
-        var b64credentials = btoa( username+':'+password );
-        // N.B. atob(b64header) should cleanly restore the input values
-        var basicAuthHeaders = {
-            "Authorization": "Basic "+ b64credentials
-        }
-        var deletePriorAuthToken = function() {
-            /* We call this if we're blocked (below) from creating a new OAuth
-             * token by the presence of a stale one with the same properties.
-             */
-            $.ajax({
-                type: 'GET',
-                url: getGitHubToken_url,
-                headers: basicAuthHeaders,
-                //data: {},
-                //crossdomain: true,
-                //contentType: "application/json; charset=utf-8",
-                success: function( data ) {  // success callback
-                    // TODO: Find the id of the existing token with my properties
-                    var staleTokenID = null;
-                    $.each(data, function(i, tokenInfo) {
-                        //if ((tokenInfo.app.name === githubTokenProps.note) && ...
-                        if (tokenInfo.fingerprint === githubTokenProps.fingerprint) {
-                            staleTokenID = tokenInfo.id;
-                            return false;
-                        }
-                    });
-                    if (!staleTokenID) {
-                        alert("Unknown error clearing old GitHub OAuth token. Please wait a moment and try again");
-                        return;
+
+function loginToGitHub() {
+    // N.B. we need to encode credentials to Base64 for the Auth header
+    var $popup = $('#storage-options-popup');
+    var username = $.trim( $popup.find('#github-userid').val() );
+    var password = $.trim( $popup.find('#github-password').val() );
+    var b64credentials = btoa( username+':'+password );
+    // N.B. atob(b64header) should cleanly restore the input values
+    var basicAuthHeaders = {
+        "Authorization": "Basic "+ b64credentials
+    }
+    var deletePriorAuthToken = function() {
+        /* We call this if we're blocked (below) from creating a new OAuth
+         * token by the presence of a stale one with the same properties.
+         */
+        $.ajax({
+            type: 'GET',
+            url: getGitHubToken_url,
+            headers: basicAuthHeaders,
+            //data: {},
+            //crossdomain: true,
+            //contentType: "application/json; charset=utf-8",
+            success: function( data ) {  // success callback
+                // TODO: Find the id of the existing token with my properties
+                var staleTokenID = null;
+                $.each(data, function(i, tokenInfo) {
+                    //if ((tokenInfo.app.name === githubTokenProps.note) && ...
+                    if (tokenInfo.fingerprint === githubTokenProps.fingerprint) {
+                        staleTokenID = tokenInfo.id;
+                        return false;
                     }
-                    $.ajax({
-                        type: 'DELETE',
-                        url: (getGitHubToken_url +"/"+ staleTokenID),
-                        headers: basicAuthHeaders,
-                        // This really shouldn't go wrong..
-                        complete: function( jqXHR, textStatus ) {
-                            // Try again to create a new token
-                            createNewAuthToken();
-                        }
-                    });
-                    return;
-                },
-                error: function( jqXHR, textStatus, errorThrown ) {
-                    if (errorThrown == 'Unauthorized') {
-                        alert("GitHub credentials not recognized! Please try again.");
-                    } else {
-                        alert("Unknown error contacting GitHub. Please wait a moment and try again");
-                    }
-                },
-                // complete: function( jqXHR, textStatus ) { }
-            });
-        }
-        var createNewAuthToken = function() {
-            /* Call GitHub API to generate a new OAuth token for this user.  Note
-             * that we're getting a general "personal access" token for this user,
-             * not something application-specific since that would require exposing
-             * its client secret, as described here:
-             *   https://developer.github.com/v3/oauth_authorizations/#get-or-create-an-authorization-for-a-specific-app
-             */
-            $.ajax({
-                type: 'POST',
-                url: getGitHubToken_url,
-                data: JSON.stringify( githubTokenProps ),
-                /* NOTE that we can't use jQuery's newer `username` and `password` 
-                 * properties here, since the GitHub API won't present an auth
-                 * challenge. Instead, we'll need to pre-emptively send the user's
-                 * credentials in our first request.
-                 */
-                headers: basicAuthHeaders,
-                //crossdomain: true,
-                //contentType: "application/json; charset=utf-8",
-                success: function( data ) {  // success callback
-                    // raw response should be JSON
-                    userAuthToken = data.token;
-                    ///console.warn(">>> GitHub OAuth token: "+ userAuthToken);
-                    $popup.find(':input').val('');
-                    $popup.modal('hide');
-                    // Use the new token to fetch user id, display name, email(?)
-                    $.ajax({
-                        type: 'GET',
-                        url: getGitHubUserInfo_url,
-                        headers: {
-                            "Authorization": "Token "+ userAuthToken
-                        },
-                        success: function(data) {
-                            // These should now have proper values
-                            userDisplayName(data.name || "NAME_NOT_FOUND");
-                            userLogin(data.login || "LOGIN_NOT_FOUND");
-                            userEmail(data.email || "EMAIL_NOT_FOUND");
-                        },
-                        complete: function() {
-                            // TODO: Update UI to show that we're now logged in (show Save buttons, etc.)
-                            console.warn("Now I'd update the UI!");
-                        }
-                    });
-                },
-                error: function( jqXHR, textStatus, errorThrown ) {
-                    switch (errorThrown) {
-                        case 'Unauthorized':  // 401
-                            alert("GitHub credentials not recognized! Please try again.");
-                            break;
-                        case 'Unprocessable Entity':  // 422
-                            console.warn("This token already exists! Clobbering old token to retry...");
-                            // NOTE that this will search-and-destroy the old token, then retry.
-                            deletePriorAuthToken();
-                            break;
-                        default:
-                            alert("Unknown error '"+ errorThrown +"' ("+ jqXHR.status +") contacting GitHub. Please wait a moment and try again");
-                    }
+                });
+                if (!staleTokenID) {
+                    alert("Unknown error clearing old GitHub OAuth token. Please wait a moment and try again");
                     return;
                 }
-            });
-        };
-        // Start the process, using local funcs and credentials
-        createNewAuthToken();
-    });
-    $popup.modal('show');
+                $.ajax({
+                    type: 'DELETE',
+                    url: (getGitHubToken_url +"/"+ staleTokenID),
+                    headers: basicAuthHeaders,
+                    // This really shouldn't go wrong..
+                    complete: function( jqXHR, textStatus ) {
+                        // Try again to create a new token
+                        createNewAuthToken();
+                    }
+                });
+                return;
+            },
+            error: function( jqXHR, textStatus, errorThrown ) {
+                if (errorThrown == 'Unauthorized') {
+                    alert("GitHub credentials not recognized! Please try again.");
+                } else {
+                    alert("Unknown error contacting GitHub. Please wait a moment and try again");
+                }
+            },
+            // complete: function( jqXHR, textStatus ) { }
+        });
+    }
+    var createNewAuthToken = function() {
+        /* Call GitHub API to generate a new OAuth token for this user.  Note
+         * that we're getting a general "personal access" token for this user,
+         * not something application-specific since that would require exposing
+         * its client secret, as described here:
+         *   https://developer.github.com/v3/oauth_authorizations/#get-or-create-an-authorization-for-a-specific-app
+         */
+        $.ajax({
+            type: 'POST',
+            url: getGitHubToken_url,
+            data: JSON.stringify( githubTokenProps ),
+            /* NOTE that we can't use jQuery's newer `username` and `password` 
+             * properties here, since the GitHub API won't present an auth
+             * challenge. Instead, we'll need to pre-emptively send the user's
+             * credentials in our first request.
+             */
+            headers: basicAuthHeaders,
+            //crossdomain: true,
+            //contentType: "application/json; charset=utf-8",
+            success: function( data ) {  // success callback
+                // raw response should be JSON
+                userAuthToken = data.token;
+                ///console.warn(">>> GitHub OAuth token: "+ userAuthToken);
+                // clear the password-input field, hide login, show some contents
+                $popup.find('#github-password').val('');
+                $('#github-login-panel').hide();
+                $('#github-content-panel').show();
+
+                // Use the new token to fetch user id, display name, email(?)
+                $.ajax({
+                    type: 'GET',
+                    url: getGitHubUserInfo_url,
+                    headers: {
+                        "Authorization": "Token "+ userAuthToken
+                    },
+                    success: function(data) {
+                        // These should now have proper values
+                        userDisplayName(data.name || "NAME_NOT_FOUND");
+                        userLogin(data.login || "LOGIN_NOT_FOUND");
+                        userEmail(data.email || "EMAIL_NOT_FOUND");
+                    },
+                    complete: function() {
+                        // TODO: Update UI to show that we're now logged in (show Save buttons, etc.)
+                        // replace the login area of storage popup with a listing from GitHub
+                        console.warn("*** TODO: SHOW THIS USER'S ILLUSTRATION LIST ***");
+                        // ASSUMES we're using the multi-storage popup
+                        stylist.showIllustrationList('GITHUB_REPO', '#storage-options-popup');
+                    }
+                });
+            },
+            error: function( jqXHR, textStatus, errorThrown ) {
+                switch (errorThrown) {
+                    case 'Unauthorized':  // 401
+                        alert("GitHub credentials not recognized! Please try again.");
+                        break;
+                    case 'Unprocessable Entity':  // 422
+                        console.warn("This token already exists! Clobbering old token to retry...");
+                        // NOTE that this will search-and-destroy the old token, then retry.
+                        deletePriorAuthToken();
+                        break;
+                    default:
+                        alert("Unknown error '"+ errorThrown +"' ("+ jqXHR.status +") contacting GitHub. Please wait a moment and try again");
+                }
+                return;
+            }
+        });
+    };
+    // Start the process, using local funcs and credentials
+    createNewAuthToken();
+}
+
+function userIsLoggedIntoGitHub() {
+    return !!userAuthToken;  // fails on "", null, undefined
 }
 
 function slugify(str) {
@@ -590,6 +596,7 @@ var api = [
     'userEmail',
     //'userAuthToken'
     'loginToGitHub',
+    'userIsLoggedIntoGitHub'
     /* TODO: Add providers for minor types?
     'getTreeSourceList',
     'getTreeSourceData',
