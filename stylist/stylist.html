@@ -105,8 +105,10 @@
             <div class="button-bar" style="margin-bottom: 1em;">
                 <button class="btn btn-small" onclick="stylist.showStorageOptions('LOADING_ILLUSTRATION'); return false;">Load illustration...</button>
                 <button disabled class="btn btn-small">Create from template...</button><!-- TODO -->
-              <span class="pull-right" Xdata-bind="if: stylist.userHasStorageAccess()">
-                <button class="btn btn-small" onclick="stylist.saveCurrentIllustration(stylist.storage.lastSave.backend, stylist.storage.lastSave.location); return false;">Save</button>
+              <span class="pull-right">
+                <button class="btn btn-small" 
+                        data-bind="enable: stylist.storage.lastSave.backend() && stylist.storage.lastSave.location()"
+                        onclick="stylist.saveCurrentIllustration(stylist.storage.lastSave.backend(), stylist.storage.lastSave.location()); return false;">Save</button>
                 <button class="btn btn-small" onclick="stylist.showStorageOptions('SAVING_ILLUSTRATION'); return false;">Save illustration as...</button>
               </span>
             </div>
@@ -1206,8 +1208,19 @@
           </h3>
         </div>
         <div class="modal-body" style="overflow-y: inherit;">
-            <div class="before-matches"><!-- currently unused, but EXPECTED to determine list height --></div>
-            <div class="found-matches" style="overflow-y: auto;"></div>
+            <div class="before-matches" style="padding-bottom: 4px;">
+                <span class="if-LOADING_ILLUSTRATION">We're LOADING an illustration!</span>
+                <div class="if-SAVING_ILLUSTRATION">
+                  <div class="if-JUPYTER_NOTEBOOK">
+                      Click any slot below to update (or replace) a stored illustration.
+                  </div>
+                  <div class="if-GITHUB_REPO">
+                    Save this illustration with name
+                    <input type="text" id="suggested-storage-name" style="margin: -0.25em 0 0 0;"></input>
+                  </div>
+                </div>
+            </div>
+            <div class="found-matches" style="overflow-y: auto; border-top: 1px solid #eee; border-bottom: 1px solid #eee;"></div>
         </div>
         <div class="modal-footer">
           <a data-dismiss="modal" class="btn" >Close</a>
@@ -1305,9 +1318,20 @@
                     </div>
                 </div>
             </form>
-            <div id="github-content-panel" class="modal-simple-chooser" style="margin-bottom: 0px; display: none;">
-                <div class="before-matches"><!-- currently unused, but EXPECTED to determine list height --></div>
-                <div class="found-matches" style="overflow-y: auto;"></div>
+            <div id="github-logged-in" class="" style="margin-bottom: 0px;">
+                <button class="if-SAVING_ILLUSTRATION btn btn-primary btn-small pull-right"
+                        data-bind="event: {click: function() {
+                                       $('#storage-options-popup').modal('hide');
+                                       stylist.showIllustrationList('GITHUB_REPO', 'SAVING_ILLUSTRATION')
+                                   } }">Continue</button>
+                <button class="if-LOADING_ILLUSTRATION btn btn-primary btn-small pull-right"
+                        data-bind="event: {click: function() {
+                                       $('#storage-options-popup').modal('hide');
+                                       stylist.showIllustrationList('GITHUB_REPO', 'LOADING_ILLUSTRATION')
+                                   } }">Continue</button>
+                Currently logged in as user 
+                <a href="" target="_blank" data-bind="text: stylist.storage.GITHUB_REPO.userDisplayName() +' ('+ stylist.storage.GITHUB_REPO.userLogin() +')',
+                                                      attr: {href: 'https://github.com/'+ stylist.storage.GITHUB_REPO.userLogin() }">???</a>
             </div>
         </div>
         <div class="modal-header modal-body">

@@ -166,10 +166,6 @@ function loginToGitHub() {
                 // raw response should be JSON
                 userAuthToken = data.token;
                 ///console.warn(">>> GitHub OAuth token: "+ userAuthToken);
-                // clear the password-input field, hide login, show some contents
-                $popup.find('#github-password').val('');
-                $('#github-login-panel').hide();
-                $('#github-content-panel').show();
 
                 // Use the new token to fetch user id, display name, email(?)
                 $.ajax({
@@ -183,13 +179,13 @@ function loginToGitHub() {
                         userDisplayName(data.name || "NAME_NOT_FOUND");
                         userLogin(data.login || "LOGIN_NOT_FOUND");
                         userEmail(data.email || "EMAIL_NOT_FOUND");
+                        // clear the password-input field, hide login, show some contents
+                        $popup.find('#github-password').val('');
+                        $('#github-login-panel').hide();
+                        $('#github-logged-in').show();
                     },
                     complete: function() {
-                        // TODO: Update UI to show that we're now logged in (show Save buttons, etc.)
-                        // replace the login area of storage popup with a listing from GitHub
-                        console.warn("*** TODO: SHOW THIS USER'S ILLUSTRATION LIST ***");
-                        // ASSUMES we're using the multi-storage popup
-                        stylist.showIllustrationList('GITHUB_REPO', '#storage-options-popup');
+                        // Anything else to do here?
                     }
                 });
             },
@@ -216,6 +212,17 @@ function loginToGitHub() {
 
 function userIsLoggedIntoGitHub() {
     return !!userAuthToken;  // fails on "", null, undefined
+}
+
+function getDefaultGitHubIllustrationID( ) {
+    // suggest an ID, based on prior storage *or* illustration name
+    /* CURRENTLY UNUSED! but seems handy... */
+    var priorStorageURL = stylist.ill.metadata.url();
+    if (priorStorageURL) {
+        return getIllustrationIDFromURL(priorStorageURL);
+    }
+    var nameSlug = slugify(stylist.ill.metadata.name());
+    return (userLogin() +'/'+ nameSlug);
 }
 
 function slugify(str) {
@@ -248,7 +255,6 @@ function getIllustrationList(callback) {
                 // by the Tree Illustrator (name, description, source)
                 console.warn('=== found '+ foundIllustrations.length +' illustrations ===');
                 $.each( foundIllustrations, function(i, illustrationInfo) {
-                    //console.warn(illustrationInfo);
                     // build a rich HTML description block
                     var srcURL = 'https://devapi.opentreeoflife.org/v3/illustration/{ID}'
                                    .replace('{ID}', illustrationInfo['id']);
@@ -589,6 +595,7 @@ var api = [
     'getIllustrationList',
     'loadIllustration',
     'saveIllustration',
+    'getDefaultGitHubIllustrationID',
     'userHasStorageAccess',
     // auth information (specific to this backend?)
     'userDisplayName',

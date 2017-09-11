@@ -78,8 +78,8 @@ storage[ JUPYTER_NOTEBOOK ] = require('./storage/ipython-notebook-bridge.js');
 storage[ GITHUB_REPO ]      = require('./storage/namespaced-urls.js');
 
 storage.lastSave = {
-    backend: null,
-    location: null
+    backend: ko.observable(null),
+    location: ko.observable(null)
 };
 /* Each time the user sucessfully saves the current illustration, stash the
  * storage backend and any location information. NOTE that location values
@@ -89,6 +89,8 @@ storage.lastSave = {
  * actually applied or its location in the filesystem:
  *      backend: TreeIllustrator.storageBackends.LOCAL_FILESYSTEM,
  *      location: 'trees-about-bees-LATEST.zip'
+ *     OR if that proposed name is moot, empty or unreliable:
+ *      location: 'UNKNOWN'
  *
  * JUPYTER_NOTEBOOK is simply an integer pointing to the n-th storage slot:
  *      backend: TreeIllustrator.storageBackends.JUPYTER_NOTEBOOK,
@@ -104,6 +106,16 @@ storage.lastSave = {
  *      backend = null;
  *      location = null;
  */
+function updateLastSavedInfo( backend, location ) {
+    storage.lastSave.backend(backend);
+    storage.lastSave.location(location);
+    console.warn('UPDATED lastSave, backend: '+ storage.lastSave.backend() +', location: '+ storage.lastSave.location());
+}
+function clearLastSavedInfo() {
+    storage.lastSave.backend(null);
+    storage.lastSave.location(null);
+    console.warn('CLEARED lastSave, backend: '+ storage.lastSave.backend() +', location: '+ storage.lastSave.location());
+}
 
 /* Offer all studies and trees from the Open Tree of Life repository,
  * plus other sources and tree formats. We'll make a tree of Knockout
@@ -1233,6 +1245,7 @@ function loadEmptyIllustration() {
      * TODO: Replace this with a simple template?
      */
     loadIllustrationData( null, {}, 'NEW' );
+    clearLastSavedInfo();
 }
 // N.B. There should be additional convenience functions in the storage backend
 //  - fetchAndLoadExistingIllustration( docID )
@@ -1245,6 +1258,8 @@ function fetchAndLoadExistingIllustration( backend, docID ) {
         if ('data' in response) {
             var data = response.data;
             loadIllustrationData( data, {}, 'EXISTING' );
+            // update last-saved info
+            updateLastSavedInfo(backend, docID);
         } else {
             console.error(response.error || "No data returned (unspecified error)!");
         }
@@ -1261,6 +1276,7 @@ function fetchAndLoadIllustrationTemplate( backend, templateID ) {
         if ('data' in response) {
             var template = response.data;
             loadIllustrationData( template, {}, 'NEW' );
+            clearLastSavedInfo();  // so we don't overwrite the template!
         } else {
             console.error(response.error || "No data returned (unspecified error)!");
         }
@@ -2398,16 +2414,60 @@ function loadIllustrationList(backend, callback) {
         }
     });
 }
-function showIllustrationList( backend, listContainer ) {
+function showIllustrationList( backend, currentOperation ) {
     if (currentIllustrationList) {
         // Show names and descriptions in a simple, general chooser
-        var $chooser;
-        if (listContainer) {
-            // can be a jQuery selector, or a result set
-            $chooser = $(listContainer);
-        } else {
-            $chooser = $('#simple-chooser');
+        var $chooser = $('#simple-chooser');
+        // Show appropriate UI and behavior for the desired operation (eg, SAVING_ILLUSTRATION)
+        $chooser.find('[class^=if-]').hide();
+        $chooser.find('.if-'+ currentOperation).show();  // eg, '.if-SAVING_ILLUSTRATION'
+        $chooser.find('.if-'+ backend).show();  // eg, '.if-GITHUB_REPO'
+        switch (currentOperation) {
+            case ('LOADING_ILLUSTRATION'):
+            //case ('LOADING_TEMPLATE'):
+            //case ('LOADING_TEMPLATE'):
+                break;
+            case ('SAVING_ILLUSTRATION'):
+                // adjust display and behavior in the shared popup
+                /* Check for a prior storage location (lastSave); if found,
+                 * explain what happens next and offer alternative save-as
+                 * behavior, i.e. make a copy instead.
+                 */
+                $('#suggested-storage-name').val( ill.metadata.name() );
+                $('#suggested-storage-name').unbind('change')
+                                            .bind('propertychange change click keyup input paste', function() {
+                                                // N.B. lots of bound events, to catch any change in modern browsers
+                                                console.log("...checking for potential save conflicts...");
+                                                switch(backend) {
+                                                    case 'GITHUB_REPO':
+                                                        // test new slug/id (or stored prior id) against our illustration list, warn if it's a duplicate!
+                                                        var proposedID = storage.GITHUB_REPO.getDefaultGitHubIllustrationID();
+                                                        // TODO: compare all ids/urls with this!
+                                                        $.each(currentIllustrationList, function(i, match) {
+                                                            console.log(proposedID);
+                                                            console.warn(match.source);
+                                                            if (match.source === proposedID) {
+                                                                console.warn("THIS WILL OVERWRITE AN EXISTING ILLUSTRATION!");
+                                                                $('#github-storage-dupe-warning').show();
+                                                                return false;
+                                                            }
+                                                        });
+                                                        console.log(currentIllustrationList);
+                                                        break;
+                                                    case 'JUPYTER_NOTEBOOK':
+                                                    default:
+                                                        console.error("#suggested-storage-name should not be changing!");
+                                                        return;
+                                                }
+                                            })
+                                            .change();
+                break;
+            default:
+                console.error("MISSING/UNKNOWN storage operation: '"+ 
+                    currentOperation +"' <"+ typeof(currentOperation) +">");
+                return;
         }
+
         $chooser.find('[id="dialog-heading"]').html('Choose an existing illustration');
         $chooser.find('.found-matches').empty();
         if (currentIllustrationList.length === 0) {
@@ -2446,7 +2506,7 @@ function showIllustrationList( backend, listContainer ) {
     } else {
         // load the initial list, then return here
         loadIllustrationList(backend, function() {
-            showIllustrationList( backend, listContainer );
+            showIllustrationList( backend, currentOperation );
         });
     }
 }
@@ -2456,6 +2516,10 @@ function saveCurrentIllustration(backend, saveToLocation) {
         // not specified (e.g., we haven't saved the current illustration in this session)
         showStorageOptions('SAVING_ILLUSTRATION');  // defer to the Save As... behavior
         return;
+    }
+    if ((backend === 'LOCAL_FILESYSTEM') && (saveToLocation === 'UNKNOWN')) {
+        // propose an appropriate filename based on its internal name
+        saveToLocation = getDefaultArchiveFileName();
     }
 
     console.log("saveCurrentIllustration() STARTING simple (re)save...");
@@ -2473,6 +2537,19 @@ function saveCurrentIllustration(backend, saveToLocation) {
             console.error( response.error );
         } else {
             currentIllustrationList = response.data;
+            // update last-saved info
+            /* Confirm that the saveToLocation wasn't changed by the storage backend!
+             * This probably means checking the illustration's returned metadata (if any).
+             */
+            var newMetadataLocation = ill.metadata.url();
+            console.warn("SAVED illustration metadata has this url/location: "+ newMetadataLocation);
+            if (!newMetadataLocation.endsWith(saveToLocation)) {
+                console.warn("MISMATCH, saveToLocation = "+ saveToLocation);
+                console.warn("MISMATCH! lastSave.location = "+ storage.lastSave.location());
+                // TODO: Stash one of these values into lastSave.location instead?
+            }
+            /* TODO: Test saves to Jupyter notebook, so we can translate 'NEW' (stated intent) to an actual slot number! */
+            updateLastSavedInfo(backend, saveToLocation);
         }
     });
 }
@@ -2517,10 +2594,10 @@ function showStorageOptions( currentOperation ) {
 
     if (storage.GITHUB_REPO.userIsLoggedIntoGitHub()) {
         $('#github-login-panel').hide();
-        $('#github-content-panel').show();
+        $('#github-logged-in').show();
     } else {
         $('#github-login-panel').show();
-        $('#github-content-panel').hide();
+        $('#github-logged-in').hide();
     }
 
     $popup.modal('show');
@@ -2632,6 +2709,10 @@ function loadArchiveFromChosenFile( vm, evt ) {
                                                // we've read in all the ZIP data! open this illustration
                                                // (setting its initial cache) and close this popup
                                                loadIllustrationData( mainIllustrationJSON, initialCache, 'EXISTING');
+                                               // update last-saved info
+                                               //updateLastSavedInfo('LOCAL_FILESYSTEM', 'UNKNOWN');
+                                               updateLastSavedInfo('LOCAL_FILESYSTEM', fileInfo.name);
+                                               // N.B. the File API *always* downloads to an unused path+filename
                                                $('#storage-options-popup').modal('hide');
                                            }
                                        },
@@ -2667,6 +2748,7 @@ function saveArchiveWithSuggestedName() {
     } else {
         stylist.storage[ LOCAL_FILESYSTEM ].saveIllustration();
     }
+    updateLastSavedInfo('LOCAL_FILESYSTEM', suggestedFileName || 'UNKNOWN');
     $('#local-filesystem-warning').slideDown();
 }
 

@@ -124,7 +124,6 @@ function saveIllustration(id, callback) {
                       // failure callback
                       alert('ERROR saving this ZIP archive:\n'+ err);
                   } );
-
 }
 
 function serializeDataForSavedFile( data ) {
