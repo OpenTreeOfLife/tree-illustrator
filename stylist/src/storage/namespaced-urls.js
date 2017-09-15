@@ -256,14 +256,17 @@ function getIllustrationList(callback) {
                 console.warn('=== found '+ foundIllustrations.length +' illustrations ===');
                 $.each( foundIllustrations, function(i, illustrationInfo) {
                     // build a rich HTML description block
+                    /* Skipping this for now (a general GitHub URL to its folder would be better!)
                     var srcURL = 'https://devapi.opentreeoflife.org/v3/illustration/{ID}'
                                    .replace('{ID}', illustrationInfo['id']);
                     // TODO: Adapt the URL above to use matching API domain!
                     var descHTML = '<a href="{URL}" target="_blank" title="Click to see source in a new window">{ID}</a></div>'
                                      .replace('{URL}', srcURL)
                                      .replace('{ID}', illustrationInfo['id']);
+                   */
+                    var descHTML = '';
                     if (illustrationInfo.metadata['description']) {
-                        descHTML += '<br/><i>{DESC}</i>'
+                        descHTML += '<div class="github-description">{DESC}</div>'
                                       .replace('{DESC}', illustrationInfo.metadata['description']);
                     }
                     resp.data.push({
@@ -397,7 +400,7 @@ function saveIllustration(illustrationID, callback) {
 
     // Are we creating a new one, or updating an existing one?
     var createOrUpdate;
-    if (stylist.ill.metadata.sha()) {
+    if (('sha' in stylist.ill.metadata) && stylist.ill.metadata.sha()) {
         // we're UPDATING an existing collection
         createOrUpdate = 'UPDATE';
     } else {

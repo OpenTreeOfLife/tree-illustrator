@@ -2425,7 +2425,7 @@ function showIllustrationList( backend, currentOperation ) {
         switch (currentOperation) {
             case ('LOADING_ILLUSTRATION'):
             //case ('LOADING_TEMPLATE'):
-            //case ('LOADING_TEMPLATE'):
+                $chooser.find('.dialog-heading').html('Load an existing illustration');
                 break;
             case ('SAVING_ILLUSTRATION'):
                 // adjust display and behavior in the shared popup
@@ -2433,6 +2433,17 @@ function showIllustrationList( backend, currentOperation ) {
                  * explain what happens next and offer alternative save-as
                  * behavior, i.e. make a copy instead.
                  */
+                $chooser.find('.dialog-heading').html('Save (or update) your illustration');
+                if ((storage.lastSave.backend() === 'GITHUB_REPO') && storage.lastSave.location()) {
+                    // a simple update is the path of least resistance, but offer other options
+                    $('#not-replacing-on-github').hide();
+                    $('#if-replacing-on-github').show();
+                } else {
+                    // recognize an implicit match, based on name=>slug conversion?
+                    $('#not-replacing-on-github').show();
+                    $('#if-replacing-on-github').hide();
+                }
+                /*
                 $('#suggested-storage-name').val( ill.metadata.name() );
                 $('#suggested-storage-name').unbind('change')
                                             .bind('propertychange change click keyup input paste', function() {
@@ -2461,6 +2472,7 @@ function showIllustrationList( backend, currentOperation ) {
                                                 }
                                             })
                                             .change();
+                */
                 break;
             default:
                 console.error("MISSING/UNKNOWN storage operation: '"+ 
@@ -2468,7 +2480,6 @@ function showIllustrationList( backend, currentOperation ) {
                 return;
         }
 
-        $chooser.find('[id="dialog-heading"]').html('Choose an existing illustration');
         $chooser.find('.found-matches').empty();
         if (currentIllustrationList.length === 0) {
             $chooser.find('.found-matches').append('<div>'+
@@ -2482,14 +2493,59 @@ function showIllustrationList( backend, currentOperation ) {
                  *  - source
                  * N.B. In slot-based storage, `i` is the only source information
                  */
-                var $matchInfo = $('<div class="match"><div class="name"></div><div class="description"></div></div>');
+                var $matchInfo = $('<div class="match"><div><span class="name"></span><span class="storage-location"></span></div><div class="description"></div></div>');
                 $matchInfo.find('.name').html(match.name || '<em>No name found</em>')
+                if (match.source) {
+                    $matchInfo.find('.storage-location').html(' ('+ match.source +')');
+                }
                 $matchInfo.find('.description').html(match.description || '');
-                $matchInfo.click(function() {
-                    fetchAndLoadExistingIllustration( backend, (match.source || i));
-                    // close the modal chooser
-                    $(this).closest('.modal-simple-chooser').find('.modal-header .close').click();
-                });
+                var $loadButton, $deleteButton, $replaceButton;
+                switch (currentOperation) {
+                    case 'LOADING_ILLUSTRATION':
+                    //case 'LOADING_TEMPLATE':
+                        $loadButton = $('<button class="btn btn-primary btn-mini pull-right"'
+                                       +' style="margin-top: 6px; margin-left: 8px;"'
+                                       +'>Load</button>');
+                        $loadButton.click(function() {
+                            fetchAndLoadExistingIllustration( backend, (match.source || i));
+                            // close the modal chooser
+                            $(this).closest('.modal-simple-chooser').find('.modal-header .close').click();
+                        });
+                        $matchInfo.prepend($loadButton);
+                        $deleteButton = $('<button class="btn btn-danger btn-mini pull-right"'
+                                         +' style="margin-top: 6px; margin-left: 8px;"'
+                                         +'><i class="icon-white icon-remove"></i</button>');
+                        $deleteButton.click(function() {
+                            if (confirm("This will delete ALL information about this illustration. Are you sure?")) {
+                                // TODO: deleteExistingIllustration( backend, (match.source || i));
+                                console.log("Now I'd delete the illustration!");
+                                // close the modal chooser
+                                $(this).closest('.modal-simple-chooser').find('.modal-header .close').click();
+                            }
+                        });
+                        $matchInfo.prepend($deleteButton);
+                        break;
+                    case 'SAVING_ILLUSTRATION':
+                    //case 'SAVING_TEMPLATE':
+                        $replaceButton = $('<button class="btn btn-primary btn-mini pull-right"'
+                                          +' style="margin-top: 6px; margin-left: 8px;"'
+                                          +'>Replace</button>');
+                        $matchInfo.prepend($replaceButton);
+                        $deleteButton = $('<button class="btn btn-danger btn-mini pull-right"'
+                                         +' style="margin-top: 6px; margin-left: 8px;"'
+                                         +'><i class="icon-white icon-remove"></i</button>');
+                        $deleteButton.click(function() {
+                            if (confirm("This will delete ALL information about this illustration. Are you sure?")) {
+                                // TODO: deleteExistingIllustration( backend, (match.source || i));
+                                console.log("Now I'd delete the illustration!");
+                                // close the modal chooser
+                                $(this).closest('.modal-simple-chooser').find('.modal-header .close').click();
+                            }
+                        });
+                        $matchInfo.prepend($deleteButton);
+                        break;
+                }
+
                 $chooser.find('.found-matches').append($matchInfo);
             });
         }
@@ -2502,6 +2558,12 @@ function showIllustrationList( backend, currentOperation ) {
                 .css('visibility','visible');
         });
         $chooser.find('.found-matches').css('visibility','hidden');
+        // (re)bind UI with Knockout
+        var $boundElements = $chooser.find('.modal-body'); // add other elements?
+        $.each($boundElements, function(i, el) {
+            ko.cleanNode(el);
+            ko.applyBindings({},el);
+        });
         $chooser.modal('show');
     } else {
         // load the initial list, then return here

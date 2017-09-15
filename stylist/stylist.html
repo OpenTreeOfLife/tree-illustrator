@@ -1178,7 +1178,7 @@
     <div class="modal hide fade modal-styleguide-chooser" id="styleguide-chooser" style="display: none;">
         <div class="modal-header">
           <a data-dismiss="modal" class="close">x</a>
-          <h3 id='dialog-heading'>
+          <h3 class='dialog-heading'>
              Choose a style guide
           </h3>
         </div>
@@ -1203,20 +1203,37 @@
     <div class="modal hide fade modal-simple-chooser" id="simple-chooser" style="display: none;">
         <div class="modal-header">
           <a data-dismiss="modal" class="close">x</a>
-          <h3 id='dialog-heading'>
+          <h3 class='dialog-heading'>
               <!-- Set this title based on type of choice: "Choose blah" -->
           </h3>
         </div>
         <div class="modal-body" style="overflow-y: inherit;">
-            <div class="before-matches" style="padding-bottom: 4px;">
-                <span class="if-LOADING_ILLUSTRATION">We're LOADING an illustration!</span>
+            <div class="before-matches" style="margin-top: -4px; padding-bottom: 4px;">
+                <span class="if-LOADING_ILLUSTRATION">Click <strong>Load</strong> for any illustration in the list below.</span>
+                <!-- TODO: Allow loading from shared resources and templates. Also multi-author illustrations. -->
                 <div class="if-SAVING_ILLUSTRATION">
                   <div class="if-JUPYTER_NOTEBOOK">
                       Click any slot below to update (or replace) a stored illustration.
                   </div>
-                  <div class="if-GITHUB_REPO">
-                    Save this illustration with name
-                    <input type="text" id="suggested-storage-name" style="margin: -0.25em 0 0 0;"></input>
+                  <div class="if-GITHUB_REPO" style="margin-bottom: 8px; overflow: hidden;">
+                      <div id="if-replacing-on-github">
+                          By default, this will update <span class="storage-location" data-bind="text: stylist.storage.lastSave.location()">USERID/SLUG</span> below.
+                          You can also choose to save a new illustration, or click <strong>Replace</strong> to replace any illustration below.
+                          <br/>
+                          <button class="btn Xbtn-primary btn-small pull-right"
+                                  style="margin-top: 6px; margin-left: 8px;"
+                                  Xdata-bind="event: {click: stylist.storage.GITHUB_REPO.loginToGitHub}">Save as new illustration</button>
+                          <button class="btn btn-primary btn-small pull-right"
+                                  style="margin-top: 6px;"
+                                  Xdata-bind="event: {click: stylist.storage.GITHUB_REPO.loginToGitHub}">Update existing illustration</button>
+                      </div>
+                      <div id="not-replacing-on-github" style="display: none;">
+                          By default, this will create a new illustration. To replace an existing illustration, click <strong>Replace</strong>
+                          in the list below.
+                          <button class="btn btn-primary btn-small pull-right"
+                                  style="margin-top: 6px; margin-left: 8px;"
+                                  Xdata-bind="event: {click: stylist.storage.GITHUB_REPO.loginToGitHub}">Save as new illustration</button>
+                      </div>
                   </div>
                 </div>
             </div>

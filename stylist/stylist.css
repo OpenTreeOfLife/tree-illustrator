@@ -360,6 +360,15 @@ input[type=file] {
     color: #999;
 }
 
+/* used in chooser (and probably elsewhere) for visible slugs */
+.storage-location {
+    color: #b75;
+    font-style: italic;
+}
+.match .storage-location {
+    padding-left: 0.8em;
+}
+
 #styleguide-chooser .match {
     clear: left;
     border-top: 1px solid #eee;
