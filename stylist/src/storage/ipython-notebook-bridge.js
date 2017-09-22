@@ -75,6 +75,9 @@ function receiveMessage(e) {
         case 'saveIllustration_response':
             saveIllustration_callback(msg.data.response);
             break;
+        case 'deleteIllustration_response':
+            deleteIllustration_callback(msg.data.response);
+            break;
 
         case 'listAllNotebookVars_response':
             // N.B. the expected callback is named for a general API, not the
@@ -120,7 +123,8 @@ function userHasStorageAccess() {
 // stash callbacks for use by cross-window responses
 var getIllustrationList_callback = null,
     loadIllustration_callback = null,
-    saveIllustration_callback = null;
+    saveIllustration_callback = null,
+    deleteIllustration_callback = null;
 
 function getIllustrationList(callback) {
     getIllustrationList_callback = callback;
@@ -159,6 +163,24 @@ function saveIllustration(forcePosition, callback) {
     }
     
     notebookWindow.postMessage(msgInfo, '*');  
+    // TODO: restrict to this particular notebook's domain?
+}
+
+function deleteIllustration(slotPosition, callback) {
+    deleteIllustration_callback = callback;
+
+    if (typeof(slotPosition) === 'undefined') {
+        console.error("deleteIllustration() REQUIRES a valid slot position, not "+ slotPosition +" <"+ typeof(slotPosition) +">");
+        return;
+    }
+
+    var msgInfo = {
+        method: 'deleteIllustration',
+        illustration: clonableIllustration,
+        uniqueID: slotPosition
+    };
+
+    notebookWindow.postMessage(msgInfo, '*');
     // TODO: restrict to this particular notebook's domain?
 }
 
@@ -206,6 +228,7 @@ var api = [
     'getIllustrationList',
     'loadIllustration',
     'saveIllustration',
+    'deleteIllustration',
     'userHasStorageAccess',
     // functions unique to an IPython notebook
     'getTreeSourceList',

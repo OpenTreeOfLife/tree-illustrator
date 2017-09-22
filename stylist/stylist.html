@@ -1339,12 +1339,12 @@
                 <button class="if-SAVING_ILLUSTRATION btn btn-primary btn-small pull-right"
                         data-bind="event: {click: function() {
                                        $('#storage-options-popup').modal('hide');
-                                       stylist.showIllustrationList('GITHUB_REPO', 'SAVING_ILLUSTRATION')
+                                       stylist.showIllustrationList('GITHUB_REPO', 'SAVING_ILLUSTRATION', {FLUSH_CACHE: true});
                                    } }">Continue</button>
                 <button class="if-LOADING_ILLUSTRATION btn btn-primary btn-small pull-right"
                         data-bind="event: {click: function() {
                                        $('#storage-options-popup').modal('hide');
-                                       stylist.showIllustrationList('GITHUB_REPO', 'LOADING_ILLUSTRATION')
+                                       stylist.showIllustrationList('GITHUB_REPO', 'LOADING_ILLUSTRATION', {FLUSH_CACHE: true});
                                    } }">Continue</button>
                 Currently logged in as user 
                 <a href="" target="_blank" data-bind="text: stylist.storage.GITHUB_REPO.userDisplayName() +' ('+ stylist.storage.GITHUB_REPO.userLogin() +')',

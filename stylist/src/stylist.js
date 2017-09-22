@@ -2414,7 +2414,11 @@ function loadIllustrationList(backend, callback) {
         }
     });
 }
-function showIllustrationList( backend, currentOperation ) {
+function showIllustrationList( backend, currentOperation, options ) {
+    options = options || {FLUSH_CACHE: false};
+    if (options.FLUSH_CACHE) {
+        currentIllustrationList = null;
+    }
     if (currentIllustrationList) {
         // Show names and descriptions in a simple, general chooser
         var $chooser = $('#simple-chooser');
@@ -2493,11 +2497,10 @@ function showIllustrationList( backend, currentOperation ) {
                  *  - source
                  * N.B. In slot-based storage, `i` is the only source information
                  */
+                var storageLocation = match.source || i;
                 var $matchInfo = $('<div class="match"><div><span class="name"></span><span class="storage-location"></span></div><div class="description"></div></div>');
                 $matchInfo.find('.name').html(match.name || '<em>No name found</em>')
-                if (match.source) {
-                    $matchInfo.find('.storage-location').html(' ('+ match.source +')');
-                }
+                $matchInfo.find('.storage-location').html(' ('+ storageLocation +')');
                 $matchInfo.find('.description').html(match.description || '');
                 var $loadButton, $deleteButton, $replaceButton;
                 switch (currentOperation) {
@@ -2507,7 +2510,7 @@ function showIllustrationList( backend, currentOperation ) {
                                        +' style="margin-top: 6px; margin-left: 8px;"'
                                        +'>Load</button>');
                         $loadButton.click(function() {
-                            fetchAndLoadExistingIllustration( backend, (match.source || i));
+                            fetchAndLoadExistingIllustration( backend, storageLocation);
                             // close the modal chooser
                             $(this).closest('.modal-simple-chooser').find('.modal-header .close').click();
                         });
@@ -2517,10 +2520,9 @@ function showIllustrationList( backend, currentOperation ) {
                                          +'><i class="icon-white icon-remove"></i</button>');
                         $deleteButton.click(function() {
                             if (confirm("This will delete ALL information about this illustration. Are you sure?")) {
-                                // TODO: deleteExistingIllustration( backend, (match.source || i));
-                                console.log("Now I'd delete the illustration!");
-                                // close the modal chooser
-                                $(this).closest('.modal-simple-chooser').find('.modal-header .close').click();
+                                deleteIllustration( backend, storageLocation, function() {
+                                    showIllustrationList( backend, currentOperation, {FLUSH_CACHE: true} );
+                                });
                             }
                         });
                         $matchInfo.prepend($deleteButton);
@@ -2530,16 +2532,20 @@ function showIllustrationList( backend, currentOperation ) {
                         $replaceButton = $('<button class="btn btn-primary btn-mini pull-right"'
                                           +' style="margin-top: 6px; margin-left: 8px;"'
                                           +'>Replace</button>');
+                        $replaceButton.click(function() {
+                            saveCurrentIllustration( backend, storageLocation );
+                            // close the modal chooser
+                            $(this).closest('.modal-simple-chooser').find('.modal-header .close').click();
+                        });
                         $matchInfo.prepend($replaceButton);
                         $deleteButton = $('<button class="btn btn-danger btn-mini pull-right"'
                                          +' style="margin-top: 6px; margin-left: 8px;"'
                                          +'><i class="icon-white icon-remove"></i</button>');
                         $deleteButton.click(function() {
                             if (confirm("This will delete ALL information about this illustration. Are you sure?")) {
-                                // TODO: deleteExistingIllustration( backend, (match.source || i));
-                                console.log("Now I'd delete the illustration!");
-                                // close the modal chooser
-                                $(this).closest('.modal-simple-chooser').find('.modal-header .close').click();
+                                deleteIllustration( backend, storageLocation, function() {
+                                    showIllustrationList( backend, currentOperation, {FLUSH_CACHE: true} );
+                                });
                             }
                         });
                         $matchInfo.prepend($deleteButton);
@@ -2557,7 +2563,7 @@ function showIllustrationList( backend, currentOperation ) {
                 .outerHeight(resultsListHeight)
                 .css('visibility','visible');
         });
-        $chooser.find('.found-matches').css('visibility','hidden');
+        //$chooser.find('.found-matches').css('visibility','hidden');
         // (re)bind UI with Knockout
         var $boundElements = $chooser.find('.modal-body'); // add other elements?
         $.each($boundElements, function(i, el) {
@@ -2598,7 +2604,7 @@ function saveCurrentIllustration(backend, saveToLocation) {
         if (response.error) {
             console.error( response.error );
         } else {
-            currentIllustrationList = response.data;
+            //currentIllustrationList = response.data;
             // update last-saved info
             /* Confirm that the saveToLocation wasn't changed by the storage backend!
              * This probably means checking the illustration's returned metadata (if any).
@@ -2612,6 +2618,48 @@ function saveCurrentIllustration(backend, saveToLocation) {
             }
             /* TODO: Test saves to Jupyter notebook, so we can translate 'NEW' (stated intent) to an actual slot number! */
             updateLastSavedInfo(backend, saveToLocation);
+        }
+    });
+}
+function deleteIllustration(backend, deleteLocation, callback) {
+    /* N.B. We generally assume this is NOT the current (live) illustration,
+     * but another chosen from a storage popup!
+     */
+    console.log("deleteIllustration() CHECKING FOR SPECIFIED BACKEND+LOCATION...");
+    if (!backend || !deleteLocation) {
+        console.error("deleteIllustration() requires a storage backend and location!");
+        console.error("  backend: "+ backend +" <"+ typeof(backend) +">");
+        console.error("  location: "+ deleteLocation +" <"+ typeof(deleteLocation) +">");
+        return;
+    }
+
+    console.log("deleteIllustration() STARTING simple deletion...");
+    storage[ backend ].deleteIllustration(deleteLocation, function(response) {
+        // (re)load the saved illustration (or report any error)
+        if (response.error) {
+            console.error( response.error );
+        } else {
+            // update the list in UI, to show that it's really gone
+            console.log("deleteIllustration() gave this response (new illustration list? or simpler result?)");
+            console.log( response );
+            //currentIllustrationList = response.data;
+            // any cleanup?
+            switch (backend) {
+                case 'GITHUB_REPO':
+                    // Did we just delete the currently loaded illustration!?
+                    if (('url' in ill.metadata) && (ill.metadata.url().endsWith( '/'+ deleteLocation ))) {
+                        // Clear its internal 'url' and 'sha', to force 'Save As' behavior next time
+                        console.log("stylist.deleteIllustration(): clobbered live illustration! so clearing its SHA and URL...");
+                        ill.metadata.url('');
+                        ill.metadata.sha('');
+                        clearLastSavedInfo();
+                    }
+                    break;
+            }
+        }
+        if (typeof callback === 'function') {
+            // typically reloading an illustration list
+            callback();
         }
     });
 }
@@ -2872,6 +2920,7 @@ var api = [
     'loadArchiveFromChosenFile',
     'getDefaultArchiveFileName',
     'saveArchiveWithSuggestedName',
+    'clearLastSavedInfo',
     'view',
     //'jszip',
     //'FileSaver',

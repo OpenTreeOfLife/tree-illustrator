@@ -239,8 +239,8 @@ function getIllustrationList(callback) {
      */
     // Until we have a fast index, fetch the complete illustration list from the illustrations API
     // https://devapi.opentreeoflife.org/v3/illustrations/list_all
-    var resp = {};
     // 'callback' expects a single obj with 'data' or 'error' properties
+    var resp = {};
     $.ajax({
         type: 'GET',
         url: listAllIllustrations_url,
@@ -281,6 +281,7 @@ function getIllustrationList(callback) {
             } else {
                 console.error('=== invalid response! ===');
                 console.error(foundIllustrations);
+                resp.error = "Invalid response (illustration list): "+ foundIllustrations;
             }
         },
         error: function( jqXHR, textStatus, errorThrown ) {
@@ -290,28 +291,11 @@ function getIllustrationList(callback) {
             callback(resp);
         }
     });
-/* Here's a dummy list (for test purposes only)
-    callback({data: [
-        {
-            name: 'Example one',
-            description: 'This is something special!',
-            source: 'blah/foo'
-        },
-        {
-            name: 'Example two',
-            description: 'This is also something special!',
-            source: 'blah/foo2'
-        },
-        {
-            name: 'Example three',
-            description: 'This too is something special!',
-            source: 'blah/foo3'
-        }]
-    });
-*/
 }
 
 function loadIllustration(id, callback) {
+    // 'callback' expects a single obj with 'data' or 'error' properties
+    var resp = {};
     $.ajax({
         global: false,  // suppress web2py's aggressive error handling
         type: 'GET',
@@ -341,41 +325,41 @@ function loadIllustration(id, callback) {
              * and the rendering pipeline. It expects a response object with
              * 'data' or 'error'.
              */
-            var response = {};
             var ill = data['data'];  // illustration as JS object
             if (!ill) {  // TODO
-                response.error = "No illustration data found!";
-                console.error(response.error);
+                resp.error = "No illustration data found!";
+                console.error(resp.error);
             } else {
                 if (typeof(ill) === 'undefined') {
-                    response.error = "No illustration '"+ id +"' found!";
+                    resp.error = "No illustration '"+ id +"' found!";
                 } else {
-                    response.data = ill;
+                    resp.data = ill;
                 }
             }
-            callback( response );
         },
         error: function( data, textStatus, jqXHR ) {
             //hideModalScreen();
-            var errMsg;
             if ((typeof(jqXHR.responseText) !== 'string') || jqXHR.responseText.length === 0) {
-                errMsg = 'Sorry, there was an error loading this illustration. (No more information is available.)';
+                resp.error = 'Sorry, there was an error loading this illustration. (No more information is available.)';
             } else {
-                errMsg = 'Sorry, there was an error loading this illustration:\n\n '+ jqXHR.responseText;
+                resp.error = 'Sorry, there was an error loading this illustration:\n\n '+ jqXHR.responseText;
             }
-            alert(errMsg);
+        },
+        complete: function( jqXHR, textStatus ) {
+            callback(resp);
         }
     });
-    //callback(notImplementedResponse);
 }
 
 function saveIllustration(illustrationID, callback) {
-    // 'callback' should expect a single obj with 'data' or 'error' properties)
+    // 'callback' expects a single obj with 'data' or 'error' properties
+    var resp = {};
     // TODO: support save, save-as, copy?
-
     if (!userAuthToken) {
         // We can't save without a token; stop and prompt for login
         loginToGitHub();
+        resp.error = "User not logged into GitHub! Prompting for login now."
+        callback(resp);
         return;
     }
     // add this user to the authors list, if not found
@@ -391,12 +375,6 @@ function saveIllustration(illustrationID, callback) {
     // flatten the current illustration to simple JS using our 
     // Knockout mapping options
     var clonableIllustration = ko.mapping.toJS(stylist.ill);
-
-
-    //callback(notImplementedResponse);
-    callback({
-        error:"FOO (move this!)"
-    });
 
     // Are we creating a new one, or updating an existing one?
     var createOrUpdate;
@@ -460,24 +438,18 @@ function saveIllustration(illustrationID, callback) {
                 if (textStatus !== 'success') {
                     if (jqXHR.status >= 500) {
                         // major server-side error, just show raw response for tech support
-                        /*
-                        var errMsg = 'Sorry, there was an error saving this illustration. <a href="#" onclick="toggleFlashErrorDetails(this); return false;">Show details</a><pre class="error-details" style="display: none;">'+ jqXHR.responseText +'</pre>';
-                        hideModalScreen();
-                        showErrorMessage(errMsg);
-                        */
-                        alert("Sorry, there was an error saving this illustration:\n\n"+ jqXHR.responseText);
+                        resp.error = "Sorry, there was an error saving this illustration:\n\n"+ jqXHR.responseText;
+                        alert(resp.error);
+                        callback(resp);
                         return;
                     }
                     // Server blocked the save, probably due to validation errors!
                     var data = $.parseJSON(jqXHR.responseText);
                     // TODO: this should be properly parsed JSON, show it more sensibly
                     // (but for now, repeat the crude feedback used above)
-                    /*
-                    var errMsg = 'Sorry, there was an error in the study data. <a href="#" onclick="toggleFlashErrorDetails(this); return false;">Show details</a><pre class="error-details" style="display: none;">'+ jqXHR.responseText +'</pre>';
-                    hideModalScreen();
-                    showErrorMessage(errMsg);
-                    */
-                    alert("Sorry, there was an error in the illustration data:\n\n"+ jqXHR.responseText);
+                    resp.error = "Sorry, there was an error in the illustration data:\n\n"+ jqXHR.responseText;
+                    alert(resp.error);
+                    callback(resp);
                     return;
                 }
                 var putResponse = $.parseJSON(jqXHR.responseText);
@@ -492,12 +464,9 @@ function saveIllustration(illustrationID, callback) {
                 */
                 if (putResponse['merge_needed']) {
                     var errMsg = 'Your changes were saved, but an edit by another user prevented your edit from merging to the publicly visible location. In the near future, we hope to take care of this automatically. In the meantime, please <a href="mailto:info@opentreeoflife.org?subject=Illustration%20merge%20needed%20-%20'+ newCommitSHA +'">report this error</a> to the Open Tree of Life software team';
-                    /* TODO: make this a cleaner, more friendly display (with active mailto: hyperlink)
-                    hideModalScreen();
-                    showErrorMessage(errMsg);
-                    */
+                    /* TODO: make this a cleaner, more friendly display (with active mailto: hyperlink) */
                     alert(errMsg);
-                    return;
+                    // NB, we treat this as a warning, but not a save error; return the data as expected!
                 }
                 // presume success from here on
                 //hideModalScreen();
@@ -508,6 +477,8 @@ function saveIllustration(illustrationID, callback) {
                 disableSaveButton();
                 */
                 // TODO: update viz?
+                resp.data = putResponse;
+                callback(resp);
             }
         });
     } else {
@@ -529,11 +500,12 @@ function saveIllustration(illustrationID, callback) {
             success: function( data, textStatus, jqXHR ) {
                 // creation method should return either a redirect URL to the new illustration, or an error
                 //hideModalScreen();
-
                 console.log('saveIllustration(): done! textStatus = '+ textStatus);
                 // report errors or malformed data, if any
                 if (textStatus !== 'success') {
-                    alert('Sorry, there was an error creating this illustration.');
+                    resp.error = 'Sorry, there was an error creating this illustration.';
+                    alert(resp.error);
+                    callback(resp);
                     return;
                 }
 
@@ -550,16 +522,82 @@ function saveIllustration(illustrationID, callback) {
             },
             error: function( data, textStatus, jqXHR ) {
                 //hideModalScreen();
-                var errMsg;
                 if ((typeof(jqXHR.responseText) !== 'string') || jqXHR.responseText.length === 0) {
-                    errMsg = 'Sorry, there was an error creating this illustration. (No more information is available.)';
+                    resp.error = 'Sorry, there was an error creating this illustration. (No more information is available.)';
                 } else {
-                    errMsg = 'Sorry, there was an error creating this illustration:\n\n '+ jqXHR.responseText;
+                    resp.error = 'Sorry, there was an error creating this illustration:\n\n '+ jqXHR.responseText;
                 }
-                alert(errMsg);
+                alert(resp.error);
+            },
+            complete: function( data, textStatus, jqXHR ) {
+                callback(resp);
             }
         });
     }
+}
+
+
+function deleteIllustration(illustrationID, callback) {
+    // 'callback' should expect a single obj with 'data' or 'error' properties)
+    var resp = {};
+
+    if (!userAuthToken) {
+        // We can't save without a token; stop and prompt for login
+        loginToGitHub();
+        resp.error = "User not logged into GitHub! Prompting for login now."
+        callback(resp);
+        return;
+    }
+
+    if (!illustrationID || typeof(illustrationID) !== 'string') {
+        // we need this to clobber anything on GitHub
+        resp.error = "deleteIllustration() needs a proper location string, not "+ illustrationID +" <"+ typeof(illustrationID) +">!";
+        callback(resp);
+        return;
+    }
+
+    // Delete the chosen illustration
+    var deleteURL = deleteIllustration_DELETE_url.replace('{DOC_ID}', illustrationID);
+    $.ajax({
+        global: false,  // suppress web2py's aggressive error handling
+        type: 'DELETE',
+        dataType: 'json',
+        // crossdomain: true,
+        // contentType: "application/json; charset=utf-8",
+        url: deleteURL,
+        data: {
+            // misc identifying information (for auth)
+            'author_name': (userDisplayName() || ""),
+            'author_email': (userEmail() || ""),
+            'auth_token': (userAuthToken || ""),
+        },
+        success: function( data, textStatus, jqXHR ) {
+            // TODO: creation method should return ??? on success, or an error message
+            //hideModalScreen();
+            console.log('deleteIllustration(): done! textStatus = '+ textStatus);
+            // report errors or malformed data, if any
+            if (textStatus === 'success') {
+                /* NB the callback (below) should handle any cleanup, if e.g. we just
+                 * deleted the currently loaded illustration.
+                 */
+            } else {
+                resp.error = "Sorry, there was an error deleting this illustration.";
+                alert(resp.error);
+            }
+        },
+        error: function( data, textStatus, jqXHR ) {
+            //hideModalScreen();
+            if ((typeof(jqXHR.responseText) !== 'string') || jqXHR.responseText.length === 0) {
+                resp.error = 'Sorry, there was an error deleting this illustration. (No more information is available.)';
+            } else {
+                resp.error = 'Sorry, there was an error deleting this illustration:\n\n '+ jqXHR.responseText;
+            }
+            alert(resp.error);
+        },
+        complete: function( jqXHR, textStatus ) {
+            callback(resp);
+        }
+    });
 }
 
 // Get user-friendly list of available source data for trees, etc.?
@@ -598,6 +636,7 @@ var api = [
     'getIllustrationList',
     'loadIllustration',
     'saveIllustration',
+    'deleteIllustration',
     'getDefaultGitHubIllustrationID',
     'userHasStorageAccess',
     // auth information (specific to this backend?)

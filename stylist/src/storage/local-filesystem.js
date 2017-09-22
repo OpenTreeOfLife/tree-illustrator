@@ -126,6 +126,12 @@ function saveIllustration(id, callback) {
                   } );
 }
 
+function deleteIllustration(id, callback) {
+    // We really can't do this under current (2017) brower security rules!
+    console.error("deleteIllustration() is not possible in local filesystem!");
+    callback({error: "deleteIllustration() is not possible in local filesystem!"});
+}
+
 function serializeDataForSavedFile( data ) {
     // TODO: Test data for other suitable options like {base64: true}
     var serialized = {};
@@ -160,6 +166,7 @@ var api = [
     'getIllustrationList',  // always returns an empty list
     'loadIllustration',
     'saveIllustration',
+    'deleteIllustration',  // not really available, but required for standard backend API
     'userHasStorageAccess'
 ];
 $.each(api, function(i, methodName) {

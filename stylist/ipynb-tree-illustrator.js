@@ -565,6 +565,22 @@ function receiveMessage(e) {
             }); 
             break;
 
+        case 'deleteIllustration':
+            // call local function and send response to calling window
+            var targetSlotPosition = ('uniqueID' in msg.data) ? msg.data.uniqueID : currentSlotPosition;
+
+            deleteIllustration(targetSlotPosition, function( response ) {
+                // response is an object with 'data' or 'error' property
+                tiWindow.postMessage(
+                    {
+                        method: 'deleteIllustration_response',
+                        response: response
+                    },
+                    tiDomain
+                );
+            });
+            break;
+
         case 'listAllNotebookVars':
             // call local function and send response to calling window
             listAllNotebookVars(function( response ) {
@@ -868,12 +884,56 @@ function getIllustrationList(callback) {
     }
 }
 
+function deleteIllustration(slotPosition, callback) {
+    /* Clear the nth ordered slot in this notebook's metadata.
+     * TODO: If slotPosition is a non-existent slot position, ignore? or return an error?
+     *
+     * 'callback' is a function that expects a response object with 'data' or 'error'
+     *
+     * Typical response data should be an updated illustration list (as above).
+     */
+    var response = {};
+    if (!state || !('illustrations' in state)) {
+        response.error = "No illustration list found!";
+        console.error(response.error);
+    } else {
+        // Try to save to the nth slot (append if slot not found)
+        console.log("deleteIllustration() in slot "+ slotPosition +" <"+ typeof(slotPosition) +">");
+        var existingSlotContents = state.illustrations[slotPosition];
+        console.log("BEFORE:");
+        console.log(state.illustrations);
+        if (typeof(existingSlotContents) === 'undefined') {
+            // nothing more to do here
+        } else {
+            console.log("Found an existing slot, removing the illustration at "+ slotPosition);
+            state.illustrations[slotPosition] = null;
+        }
+        console.log("AFTER:");
+        console.log(state.illustrations);
+
+        // If there were no errors, return an updated illustration list (as above)
+        if (!('error' in response)) {
+            var illustrationListInfo = getIllustrationList();
+            if ('error' in illustrationListInfo) {
+                // return its error instead, if any
+                response.error = illustrationListInfo.data;
+            } else if ('data' in illustrationListInfo) {
+                response.data = illustrationListInfo.data;
+            }
+        }
+    }
+    callback( response );
+    // update the notebook's visible list
+    updateHomeCell();
+    IPython.notebook.save_notebook();
+}
+
 function saveIllustration(slotPosition, illustrationData, callback) {
     /* Save illustration data (JS object) to this notebook's metadata, in the
      * nth ordered slot. If slotPosition is 'NEW' (or any non-existent slot
      * position), append a new slot to hold this illustration.
      * TODO: Save everything (latest SVG, etc?), or just the main, monolithic JSON?
-     * 
+     *
      * 'callback' is a function that expects a response object with 'data' or 'error'
      *
      * Typical response data should be an updated illustration list (as above).
@@ -895,7 +955,7 @@ function saveIllustration(slotPosition, illustrationData, callback) {
         } else {
             console.log("Found an existing slot, replacing the illustration at "+ currentSlotPosition);
             state.illustrations[slotPosition] = illustrationData;
-            currentSlotPosition = slotPosition; 
+            currentSlotPosition = slotPosition;
         }
         console.log("AFTER:");
         console.log(state.illustrations);
