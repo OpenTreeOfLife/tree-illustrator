@@ -1295,7 +1295,8 @@
               />
               <span class="if-SAVING_ILLUSTRATION">
                  <input type="button" value="Save ZIP archive"
-                        data-bind="event: {click: stylist.saveArchiveWithSuggestedName }"
+                        Xdata-bind="event: {click: stylist.saveArchiveWithSuggestedName }"
+                        onclick="stylist.saveArchiveWithSuggestedName(); return false;" 
                  />
                  <span>with filename</span>
                  <input type="text" id="suggested-archive-filename"
