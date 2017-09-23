@@ -108,7 +108,7 @@
               <span class="pull-right">
                 <button class="btn btn-small" 
                         data-bind="enable: stylist.storage.lastSave.backend() && stylist.storage.lastSave.location()"
-                        onclick="stylist.saveCurrentIllustration(stylist.storage.lastSave.backend(), stylist.storage.lastSave.location()); return false;">Save</button>
+                        onclick="stylist.saveCurrentIllustration(stylist.storage.lastSave.backend(), stylist.storage.lastSave.location(), {REFRESH_LIST: false}); return false;">Save</button>
                 <button class="btn btn-small" onclick="stylist.showStorageOptions('SAVING_ILLUSTRATION'); return false;">Save illustration as...</button>
               </span>
             </div>
@@ -1192,7 +1192,7 @@
                     <span id="current-styleguide-source">&nbsp;</span>
                 </div>
             </div>
-            <div class="found-matches" style="overflow-y: auto;"></div>
+            <div class="found-matches"></div>
         </div>
         <div class="modal-footer">
           <a data-dismiss="modal" class="btn" >Close</a>
@@ -1222,22 +1222,34 @@
                           <br/>
                           <button class="btn Xbtn-primary btn-small pull-right"
                                   style="margin-top: 6px; margin-left: 8px;"
-                                  Xdata-bind="event: {click: stylist.storage.GITHUB_REPO.loginToGitHub}">Save as new illustration</button>
+                                  onclick="console.warn('AA');
+                                           stylist.ill.metadata.sha('');
+                                           var proposedID = stylist.storage.GITHUB_REPO.getDefaultGitHubIllustrationID();
+                                           stylist.saveCurrentIllustration('GITHUB_REPO', proposedID, {FORCE_NEW_DOC: true, REFRESH_LIST: true});
+                                           return false;"
+                          >Save as new illustration</button>
                           <button class="btn btn-primary btn-small pull-right"
                                   style="margin-top: 6px;"
-                                  Xdata-bind="event: {click: stylist.storage.GITHUB_REPO.loginToGitHub}">Update existing illustration</button>
+                                  onclick="console.warn('BB');
+                                           stylist.saveCurrentIllustration('GITHUB_REPO', stylist.storage.lastSave.location(), {REFRESH_LIST: true}); return false;"
+                          >Update existing illustration</button>
                       </div>
                       <div id="not-replacing-on-github" style="display: none;">
                           By default, this will create a new illustration. To replace an existing illustration, click <strong>Replace</strong>
                           in the list below.
                           <button class="btn btn-primary btn-small pull-right"
                                   style="margin-top: 6px; margin-left: 8px;"
-                                  Xdata-bind="event: {click: stylist.storage.GITHUB_REPO.loginToGitHub}">Save as new illustration</button>
+                                  onclick="console.warn('CC');
+                                           stylist.ill.metadata.sha('');
+                                           var proposedID = stylist.storage.GITHUB_REPO.getDefaultGitHubIllustrationID();
+                                           stylist.saveCurrentIllustration('GITHUB_REPO', proposedID, {FORCE_NEW_DOC: true, REFRESH_LIST: true});
+                                           return false;"
+                          >Save as new illustration</button>
                       </div>
                   </div>
                 </div>
             </div>
-            <div class="found-matches" style="overflow-y: auto; border-top: 1px solid #eee; border-bottom: 1px solid #eee;"></div>
+            <div class="found-matches"></div>
         </div>
         <div class="modal-footer">
           <a data-dismiss="modal" class="btn" >Close</a>

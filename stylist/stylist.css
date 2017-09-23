@@ -339,6 +339,12 @@ input[type=file] {
     font-weight: normal;
 }
 
+.modal-simple-chooser .found-matches {
+    max-height: 300px;
+    overflow-y: auto;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+}
 .modal-simple-chooser .match {
     clear: left;
     border-top: 1px solid #eee;
@@ -369,6 +375,10 @@ input[type=file] {
     padding-left: 0.8em;
 }
 
+#styleguide-chooser .found-matches {
+    max-height: 300px;
+    overflow-y: auto;
+}
 #styleguide-chooser .match {
     clear: left;
     border-top: 1px solid #eee;

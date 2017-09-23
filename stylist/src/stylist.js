@@ -2533,7 +2533,7 @@ function showIllustrationList( backend, currentOperation, options ) {
                                           +' style="margin-top: 6px; margin-left: 8px;"'
                                           +'>Replace</button>');
                         $replaceButton.click(function() {
-                            saveCurrentIllustration( backend, storageLocation );
+                            saveCurrentIllustration( backend, storageLocation, {REFRESH_LIST: true} );
                             // close the modal chooser
                             $(this).closest('.modal-simple-chooser').find('.modal-header .close').click();
                         });
@@ -2551,18 +2551,11 @@ function showIllustrationList( backend, currentOperation, options ) {
                         $matchInfo.prepend($deleteButton);
                         break;
                 }
-
                 $chooser.find('.found-matches').append($matchInfo);
             });
         }
-        $chooser.off('shown').on('shown', function() {
-            // size scrolling list to fit in the current DOI-lookup popup window
-            var $chooser = $('#simple-chooser');
-            var resultsListHeight = $chooser.find('.modal-body').height() - $chooser.find('.before-matches').height();
-            $chooser.find('.found-matches')
-                .outerHeight(resultsListHeight)
-                .css('visibility','visible');
-        });
+        $chooser.off('shown').on('shown', resizeIllustrationList);
+        ///USEFUL? $chooser.find('.found-matches').css('visibility','visible');
         //$chooser.find('.found-matches').css('visibility','hidden');
         // (re)bind UI with Knockout
         var $boundElements = $chooser.find('.modal-body'); // add other elements?
@@ -2571,6 +2564,7 @@ function showIllustrationList( backend, currentOperation, options ) {
             ko.applyBindings({},el);
         });
         $chooser.modal('show');
+        resizeIllustrationList();
     } else {
         // load the initial list, then return here
         loadIllustrationList(backend, function() {
@@ -2578,7 +2572,21 @@ function showIllustrationList( backend, currentOperation, options ) {
         });
     }
 }
-function saveCurrentIllustration(backend, saveToLocation) {
+function resizeIllustrationList() {
+/* N.B. this doesn't really apply unless we've locked the popup's height!
+    // size scrolling list to fit in the current DOI-lookup popup window
+    var $chooser = $('#simple-chooser');
+    var $matchListHolder = $chooser.find('.found-matches');
+    $matchListHolder
+        .css('visibility','hidden');
+    var resultsListHeight = $chooser.find('.modal-body').height() - $chooser.find('.before-matches').height();
+    $matchListHolder
+        .outerHeight(resultsListHeight);
+        .css('visibility','visible');
+*/
+}
+function saveCurrentIllustration(backend, saveToLocation, options) {
+    options = options || {FORCE_NEW_DOC: false, REFRESH_LIST: false};
     console.log("saveCurrentIllustration() CHECKING FOR SPECIFIED BACKEND+LOCATION...");
     if (!backend || !saveToLocation) {
         // not specified (e.g., we haven't saved the current illustration in this session)
@@ -2588,6 +2596,16 @@ function saveCurrentIllustration(backend, saveToLocation) {
     if ((backend === 'LOCAL_FILESYSTEM') && (saveToLocation === 'UNKNOWN')) {
         // propose an appropriate filename based on its internal name
         saveToLocation = getDefaultArchiveFileName();
+    }
+
+    if (options.FORCE_NEW_DOC) {
+        switch (backend) {
+            case 'GITHUB_REPO':
+                if (('sha' in ill.metadata) && (typeof(ill.metadata.sha) === 'function')) {
+                    ill.metadata.sha('');  // this forces new doc on GitHub
+                }
+                break;
+        }
     }
 
     console.log("saveCurrentIllustration() STARTING simple (re)save...");
@@ -2618,6 +2636,10 @@ function saveCurrentIllustration(backend, saveToLocation) {
             }
             /* TODO: Test saves to Jupyter notebook, so we can translate 'NEW' (stated intent) to an actual slot number! */
             updateLastSavedInfo(backend, saveToLocation);
+            // update the illustration list
+            if (options.REFRESH_LIST) {
+                showIllustrationList( backend, 'SAVING_ILLUSTRATION', {FLUSH_CACHE: true} );
+            }
         }
     });
 }
