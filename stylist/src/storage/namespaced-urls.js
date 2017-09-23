@@ -638,6 +638,7 @@ var api = [
     'saveIllustration',
     'deleteIllustration',
     'getDefaultGitHubIllustrationID',
+    'getIllustrationIDFromURL',
     'userHasStorageAccess',
     // auth information (specific to this backend?)
     'userDisplayName',

@@ -2625,15 +2625,28 @@ function saveCurrentIllustration(backend, saveToLocation, options) {
             /* Confirm that the saveToLocation wasn't changed by the storage backend!
              * This probably means checking the illustration's returned metadata (if any).
              */
-            var newMetadataLocation = ill.metadata.url();
-            console.warn("SAVED illustration metadata has this url/location: "+ newMetadataLocation);
-            if (!newMetadataLocation.endsWith(saveToLocation)) {
-                console.warn("MISMATCH, saveToLocation = "+ saveToLocation);
-                console.warn("MISMATCH! lastSave.location = "+ storage.lastSave.location());
-                // TODO: Stash one of these values into lastSave.location instead?
+            switch (backend) {
+                case 'GITHUB_REPO':
+                    var newMetadataLocation = ill.metadata.url();
+                    console.warn("SAVED illustration metadata has this url/location: "+ newMetadataLocation);
+                    var assignedID = storage.GITHUB_REPO.getIllustrationIDFromURL(newMetadataLocation);
+                    console.warn("SAVED illustration metadata has this assigned id: "+ assignedID);
+                    if (assignedID !== saveToLocation) {
+                        console.warn("MISMATCH, saveToLocation = "+ saveToLocation);
+                        console.warn("MISMATCH! lastSave.location = "+ storage.lastSave.location());
+                    }
+                    // always keep track of the assigned location, vs. what we intended
+                    updateLastSavedInfo(backend, assignedID);
+                    break;
+                case 'JUPYTER_NOTEBOOK':
+                    // TODO: Test saves to Jupyter notebook, so we can translate 'NEW' (stated intent) to an actual slot number!
+debugger;
+                    break;
+                case 'LOCAL_FILESYSTEM':
+                    // Nothing to do here. We can't see the new local filename!
+                    break;
             }
-            /* TODO: Test saves to Jupyter notebook, so we can translate 'NEW' (stated intent) to an actual slot number! */
-            updateLastSavedInfo(backend, saveToLocation);
+
             // update the illustration list
             if (options.REFRESH_LIST) {
                 showIllustrationList( backend, 'SAVING_ILLUSTRATION', {FLUSH_CACHE: true} );
