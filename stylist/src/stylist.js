@@ -2534,8 +2534,6 @@ function showIllustrationList( backend, currentOperation, options ) {
                                           +'>Replace</button>');
                         $replaceButton.click(function() {
                             saveCurrentIllustration( backend, storageLocation, {REFRESH_LIST: true} );
-                            // close the modal chooser
-                            $(this).closest('.modal-simple-chooser').find('.modal-header .close').click();
                         });
                         $matchInfo.prepend($replaceButton);
                         $deleteButton = $('<button class="btn btn-danger btn-mini pull-right"'
