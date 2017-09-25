@@ -1369,8 +1369,30 @@
             <h4 class="if-LOADING_ILLUSTRATION">Load from this Jupyter (IPython) notebook</h4>
             <h4 class="if-SAVING_ILLUSTRATION">Save in this Jupyter (IPython) notebook</h4>
             <p class="option-details">
-              Your illustration can be saved as data within the current Jupyter web notebook.
+                Your illustration can be saved as data within the current
+                Jupyter web notebook.  Saved trees are listed in the notebook,
+                along with any description text added in Tree Illustrator.
             </p>
+            <div class="notebook-storage-supported" style="margin-bottom: 0px;">
+                <span class="if-SAVING_ILLUSTRATION">
+                  Store the current illustration in this Jupyter notebook.
+                <span>
+                <button class="if-SAVING_ILLUSTRATION btn btn-primary btn-small pull-right"
+                        Xstyle="margin-top: 6px;"
+                        data-bind="event: {click: function() {
+                                       $('#storage-options-popup').modal('hide');
+                                       stylist.showIllustrationList('GITHUB_REPO', 'SAVING_ILLUSTRATION', {FLUSH_CACHE: true});
+                                   } }">Continue</button>
+                <span class="if-LOADING_ILLUSTRATION">
+                  Load a new illustration from this Jupyter notebook.
+                <span>
+                <button class="if-LOADING_ILLUSTRATION btn btn-primary btn-small pull-right"
+                        Xstyle="margin-top: 6px;"
+                        data-bind="event: {click: function() {
+                                       $('#storage-options-popup').modal('hide');
+                                       stylist.showIllustrationList('GITHUB_REPO', 'LOADING_ILLUSTRATION', {FLUSH_CACHE: true});
+                                   } }">Continue</button>
+            </div>
             <em class="notebook-storage-NOT-supported" style="color: #933;">
                This option is only available when Tree Illustrator is 
                <a href="#TODO" target="_blank">embedded in a live (editable) Jupyter web notebook</a>.
