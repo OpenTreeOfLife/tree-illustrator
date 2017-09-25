@@ -286,7 +286,7 @@ function updateAvailableTrees() {
              * TODO: Can we deal with multiple kernels in the newest notebooks?
              * TODO: Can we distinguish R-via-Python from the Python kernel?
              */
-            storage[ storageBackends.JUPYTER_NOTEBOOK ].getTreeSourceList(function(response) {
+            storage[ JUPYTER_NOTEBOOK ].getTreeSourceList(function(response) {
                 var notebookSourceList = ko.utils.arrayFirst(availableTrees(), function(item) {
                     return item.name() === 'From notebook kernel';
                 });
