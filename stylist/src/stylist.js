@@ -1453,9 +1453,10 @@ function initTreeIllustratorWindow() {
     var $rulerUnitsDisplay = $outerFrame.find('#fixed-ruler-units');
     var $topRuler = $outerFrame.find('#fixed-ruler-top');
     var $leftRuler = $outerFrame.find('#fixed-ruler-left');
-    //var scrollbarWidth = $scrollingViewport[0].offsetWidth - $scrollingViewport[0].clientWidth;
-    var topRulerAdjustedWidth = $scrollingViewport[0].clientWidth;
-    var leftRulerAdjustedHeight = $scrollingViewport[0].clientHeight;
+    var viewportElement = $scrollingViewport[0];
+    //var scrollbarWidth = .offsetWidth - viewportElement.clientWidth;
+    var topRulerAdjustedWidth = viewportElement ? viewportElement.clientWidth : $topRuler.width();
+    var leftRulerAdjustedHeight = viewportElement ? viewportElement.clientHeight : $topRuler.height();
 
     $rulerUnitsDisplay.css({
         'width': rulerWidth +"px",
