@@ -118,7 +118,7 @@ function loginToGitHub() {
                     }
                 });
                 if (!staleTokenID) {
-                    alert("Unknown error clearing old GitHub OAuth token. Please wait a moment and try again");
+                    console.warn("Unknown error clearing old GitHub OAuth token. Probably just a 404 error, no need for action.");
                     return;
                 }
                 $.ajax({
