@@ -1212,7 +1212,34 @@
                 <span class="if-LOADING_ILLUSTRATION">Click <strong>Load</strong> for any illustration in the list below.</span>
                 <!-- TODO: Allow loading from shared resources and templates. Also multi-author illustrations. -->
                 <div class="if-SAVING_ILLUSTRATION">
-                  <div class="if-JUPYTER_NOTEBOOK">
+                  <div class="if-JUPYTER_NOTEBOOK" style="margin-bottom: 8px; overflow: hidden;">
+                      <div id="if-replacing-in-notebook">
+                          By default, this will update slot <span class="storage-location" data-bind="text: stylist.storage.lastSave.location()">USERID/SLUG</span> below.
+                          You can also choose to save a new illustration, or click <strong>Replace</strong> to replace any illustration below.
+                          <br/>
+                          <button class="btn Xbtn-primary btn-small pull-right"
+                                  style="margin-top: 6px; margin-left: 8px;"
+                                  onclick="stylist.ill.metadata.sha('');
+                                           stylist.saveCurrentIllustration('JUPYTER_NOTEBOOK', 'NEW', {FORCE_NEW_DOC: true, REFRESH_LIST: true});
+                                           return false;"
+                          >Save as new illustration</button>
+                          <button class="btn btn-primary btn-small pull-right"
+                                  style="margin-top: 6px;"
+                                  onclick="stylist.saveCurrentIllustration('JUPYTER_NOTEBOOK', stylist.storage.lastSave.location(), {REFRESH_LIST: true}); return false;"
+                          >Update existing illustration</button>
+                      </div>
+                      <div id="not-replacing-in-notebook" style="display: none;">
+                          By default, this will create a new illustration. To replace an existing illustration, click <strong>Replace</strong>
+                          in the list below.
+                          <button class="btn btn-primary btn-small pull-right"
+                                  style="margin-top: 6px; margin-left: 8px;"
+                                  onclick="stylist.ill.metadata.sha('');
+                                           var proposedID = stylist.storage.GITHUB_REPO.getDefaultGitHubIllustrationID();
+                                           stylist.saveCurrentIllustration('GITHUB_REPO', proposedID, {FORCE_NEW_DOC: true, REFRESH_LIST: true});
+                                           return false;"
+                          >Save as new illustration</button>
+                      </div>
+  <!--
                       Click any slot below to update (or replace) a stored illustration.
                       <br/>
                       <button class="btn Xbtn-primary btn-small pull-right"
@@ -1225,6 +1252,7 @@
                               style="margin-top: 6px;"
                               onclick="stylist.saveCurrentIllustration('JUPYTER_NOTEBOOK', stylist.storage.lastSave.location(), {REFRESH_LIST: true}); return false;"
                       >Update existing illustration</button>
+  -->
                   </div>
                   <div class="if-GITHUB_REPO" style="margin-bottom: 8px; overflow: hidden;">
                       <div id="if-replacing-on-github">
