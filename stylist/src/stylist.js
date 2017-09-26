@@ -2587,7 +2587,7 @@ function resizeIllustrationList() {
 function saveCurrentIllustration(backend, saveToLocation, options) {
     options = options || {FORCE_NEW_DOC: false, REFRESH_LIST: false};
     console.log("saveCurrentIllustration() CHECKING FOR SPECIFIED BACKEND+LOCATION...");
-    if (!backend || !saveToLocation) {
+    if (!backend || (saveToLocation === null)) {
         // not specified (e.g., we haven't saved the current illustration in this session)
         showStorageOptions('SAVING_ILLUSTRATION');  // defer to the Save As... behavior
         return;
