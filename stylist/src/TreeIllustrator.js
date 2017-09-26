@@ -190,6 +190,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                 'authors': [ ],   // assign immediately to this user?
                 'tags': [ ],
                 'dois': [ ],
+                'FOOFOO': "BARBAR",
                 'date_created': new Date().toISOString()
             },
             'styleGuide': {
