@@ -2628,20 +2628,22 @@ function saveCurrentIllustration(backend, saveToLocation, options) {
              */
             switch (backend) {
                 case 'GITHUB_REPO':
+                    // check for new id assigned by backend (already changed in the illustration)
                     var newMetadataLocation = ill.metadata.url();
-                    console.warn("SAVED illustration metadata has this url/location: "+ newMetadataLocation);
                     var assignedID = storage.GITHUB_REPO.getIllustrationIDFromURL(newMetadataLocation);
-                    console.warn("SAVED illustration metadata has this assigned id: "+ assignedID);
-                    if (assignedID !== saveToLocation) {
-                        console.warn("MISMATCH, saveToLocation = "+ saveToLocation);
-                        console.warn("MISMATCH! lastSave.location = "+ storage.lastSave.location());
-                    }
-                    // always keep track of the assigned location, vs. what we intended
+                    // keep track of this *assigned* location, vs. what we intended
                     updateLastSavedInfo(backend, assignedID);
                     break;
                 case 'JUPYTER_NOTEBOOK':
-                    // TODO: Test saves to Jupyter notebook, so we can translate 'NEW' (stated intent) to an actual slot number!
-debugger;
+                    // Test saves to Jupyter notebook, so we can translate 'NEW' (stated intent) to an actual slot number!
+                    if (saveToLocation === 'NEW') {
+                        // N.B. response.data is the *new* illustration list
+                        var howManyIllustrations = response.data.length;
+                        var newSlotPosition = howManyIllustrations - 1;
+                        updateLastSavedInfo(backend, newSlotPosition);
+                    } else {
+                        updateLastSavedInfo(backend, saveToLocation);
+                    }
                     break;
                 case 'LOCAL_FILESYSTEM':
                     // Nothing to do here. We can't see the new local filename!
