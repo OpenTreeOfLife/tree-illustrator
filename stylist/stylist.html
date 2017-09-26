@@ -107,7 +107,7 @@
                 <button disabled class="btn btn-small">Create from template...</button><!-- TODO -->
               <span class="pull-right">
                 <button class="btn btn-small" 
-                        data-bind="enable: stylist.storage.lastSave.backend() && stylist.storage.lastSave.location()"
+                        data-bind="enable: stylist.storage.lastSave.backend() && (stylist.storage.lastSave.location() !== null)"
                         onclick="stylist.saveCurrentIllustration(stylist.storage.lastSave.backend(), stylist.storage.lastSave.location(), {REFRESH_LIST: false}); return false;">Save</button>
                 <button class="btn btn-small" onclick="stylist.showStorageOptions('SAVING_ILLUSTRATION'); return false;">Save illustration as...</button>
               </span>
