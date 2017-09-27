@@ -37,7 +37,7 @@ function loadIllustration(id, callback) {
     // in the filesystem, 'id' is a full path? or ignore it here?
 }
 
-function saveIllustration(id, callback) {
+function saveIllustration(id, callback, options) {
     /* In the filesystem, 'id' is just a suggested filename. 
      * NOTE that we have no control over where the browser will save a
      * downloaded file, and we have no direct knowledge of the filesystem.
@@ -50,6 +50,7 @@ function saveIllustration(id, callback) {
      *  Save As...  (by default, with a possibly munged/incremented filename)
      *  Copy  (sure, that's easy if we just allow renaming)
      */
+    options = options || {FULL_ARCHIVE: true};
 
     // TODO: add this user to the authors list, if not found?
     // (email and/or userid, so we can link to authors)
@@ -75,29 +76,27 @@ function saveIllustration(id, callback) {
     var archive = new JSZip();
     archive.file("main.json", JSON.stringify(clonableIllustration));
 
-    // TODO: offer a choice of "full" or "sparse" archive!
-    var buildingFullArchive = true; // TODO: check a widget? an observable? add an arg?
     // Test all input for repeatable provenance info; if any are lacking a
     // clear source, we should embed the source data here.
     var staticInputs = TreeIllustrator.gatherStaticInputData();
-    if (buildingFullArchive || (staticInputs.length > 0)) {
+    if (options.FULL_ARCHIVE || (staticInputs.length > 0)) {
         // add some or all input data for this illustration
         //var inputFolder = archive.folder('input');
-        var inputsToStore = buildingFullArchive ? TreeIllustrator.gatherAllInputData() : staticInputs;
+        var inputsToStore = options.FULL_ARCHIVE ? TreeIllustrator.gatherAllInputData() : staticInputs;
         $.each(inputsToStore, function(i, inputData) {
             var itsPath = inputData.path;
-            var serialized = serializeDataForSavedFile( inputData.value );
+            var serialized = utils.serializeDataForSavedFile( inputData.value );
             archive.file(itsPath, serialized.value, serialized.options);
         });
     }
 
     // add other cache entries (transformed data)
-    if (buildingFullArchive) {
+    if (options.FULL_ARCHIVE) {
         //var transformFolder = archive.folder('transform');
         var transformsToStore = TreeIllustrator.gatherAllTransformData();
         $.each(transformsToStore, function(i, transformData) {
             var itsPath = transformData.path;
-            var serialized = serializeDataForSavedFile( transformData.value );
+            var serialized = utils.serializeDataForSavedFile( transformData.value );
             archive.file(itsPath, serialized.value, serialized.options);
         });
     }
@@ -132,27 +131,6 @@ function deleteIllustration(id, callback) {
     callback({error: "deleteIllustration() is not possible in local filesystem!"});
 }
 
-function serializeDataForSavedFile( data ) {
-    // TODO: Test data for other suitable options like {base64: true}
-    var serialized = {};
-    switch (typeof data) {
-        case 'object':
-            try {
-                serialized.value = JSON.stringify(data);
-            } catch (e) {
-                console.error("Trouble converting object to JSON! Try another approach?");
-                serialized.value = data.toString();
-            }
-            break;
-        case 'string':
-            serialized.value = data;
-            break;
-        default:
-            serialized.value = data.toString();
-    }
-    serialized.options = {};
-    return serialized;
-}
 
 // Get user-friendly list of available source data for trees, etc.
 // TODO: Include JS variables, from window scope (or scope provided)?

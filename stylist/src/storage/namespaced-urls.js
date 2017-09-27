@@ -23,6 +23,8 @@
  * 'error' properties, but not both. Details for 'data' are specific to each
  * method.
  */
+var utils = require('../ti-utils'),
+    JSZip = require('jszip');
 
 // Return a sensible error from placeholder methods
 var notImplementedResponse = {
@@ -351,7 +353,8 @@ function loadIllustration(id, callback) {
     });
 }
 
-function saveIllustration(illustrationID, callback) {
+function saveIllustration(illustrationID, callback, options) {
+    options = options || {FULL_ARCHIVE: true};
     // 'callback' expects a single obj with 'data' or 'error' properties
     var resp = {};
     // TODO: support save, save-as, copy?
@@ -397,6 +400,32 @@ function saveIllustration(illustrationID, callback) {
         clonableIllustration.metadata.url = illustrationURLSplitterAPI + userLogin() +'/'+ nameSlug;
     }
     illustrationID = getIllustrationIDFromURL(clonableIllustration.metadata.url);
+
+    // create a Zip archive, add the core document and static input data
+    var archive = new JSZip();
+    archive.file("main.json", JSON.stringify(clonableIllustration));
+    // Test all input for repeatable provenance info; if any are lacking a
+    // clear source, we should embed the source data here.
+    var staticInputs = TreeIllustrator.gatherStaticInputData();
+    if (options.FULL_ARCHIVE || (staticInputs.length > 0)) {
+        // add some or all input data for this illustration
+        var inputsToStore = options.FULL_ARCHIVE ? TreeIllustrator.gatherAllInputData() : staticInputs;
+        $.each(inputsToStore, function(i, inputData) {
+            var itsPath = inputData.path;
+            var serialized = utils.serializeDataForSavedFile( inputData.value );
+            archive.file(itsPath, serialized.value, serialized.options);
+        });
+    }
+    if (options.FULL_ARCHIVE) {
+        // add other cache entries (transformed data)
+        ///var transformFolder = archive.folder('transform');
+        var transformsToStore = TreeIllustrator.gatherAllTransformData();
+        $.each(transformsToStore, function(i, transformData) {
+            var itsPath = transformData.path;
+            var serialized = utils.serializeDataForSavedFile( transformData.value );
+            archive.file(itsPath, serialized.value, serialized.options);
+        });
+    }
 
     if (createOrUpdate === 'UPDATE') {
         // Update the existing illustration

@@ -9,6 +9,30 @@ function jiggle( range ) {
     return Math.round(Math.random() * range * 2) - range; 
 }
 
+/*
+ * Prepare data from rendering pipeline for storage in ZIP archive or similar.
+ */
+function serializeDataForSavedFile( data ) {
+    // TODO: Test data for other suitable options like {base64: true}
+    var serialized = {};
+    switch (typeof data) {
+        case 'object':
+            try {
+                serialized.value = JSON.stringify(data);
+            } catch (e) {
+                console.error("Trouble converting object to JSON! Try another approach?");
+                serialized.value = data.toString();
+            }
+            break;
+        case 'string':
+            serialized.value = data;
+            break;
+        default:
+            serialized.value = data.toString();
+    }
+    serialized.options = {};
+    return serialized;
+}
 
 /* "Sniffers" to guess the format of user-entered tree data. 
  * N.B. these don't need to be fool-proof; they're just used to pre-select
@@ -140,6 +164,7 @@ function normalizeDegrees(d) {
 // export some members as a simple API
 var api = [
     'jiggle',
+    'serializeDataForSavedFile',
     'isProbablyNewick',
     'isProbablyNEXUS',
     'isProbablyNeXML',
