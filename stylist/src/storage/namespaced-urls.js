@@ -427,142 +427,175 @@ function saveIllustration(illustrationID, callback, options) {
         });
     }
 
-    if (createOrUpdate === 'UPDATE') {
-        // Update the existing illustration
-        var saveURL = updateIllustration_PUT_url.replace('{DOC_ID}', illustrationID);
-        /* TODO? gather commit message (if any) from pre-save popup
-        var commitMessage;
-        var firstLine = $('#save-comment-first-line').val();
-        var moreLines = $('#save-comment-more-lines').val();
-        if ($.trim(firstLine) === '') {
-            commitMessage = $.trim(moreLines);
-        } else if ($.trim(moreLines) === ''){
-            commitMessage = $.trim(firstLine);
-        } else {
-            commitMessage = $.trim(firstLine) +"\n\n"+ $.trim(moreLines);
-        }
-        */
+    var uploadIllustrationBlob = function (blob) {
+        // use FormData to send "pure" binary data
+        var formData = new FormData();
+        formData.append('archive', blob, 'update.zip');
 
-        // add non-Nexson values to the query string
-        var qsVars = $.param({
-            author_name: userDisplayName(),
-            author_email: userEmail(),
-            auth_token: userAuthToken,
-            starting_commit_SHA: stylist.ill.metadata.sha(),
-            commit_msg: 'Saved from Tree Illustrator'       // add version?
-        });
-        saveURL += ('?'+ qsVars);
+        var saveURL;
+        if (createOrUpdate === 'UPDATE') {
+            // Update the existing illustration
+            saveURL = updateIllustration_PUT_url.replace('{DOC_ID}', illustrationID);
+            /* TODO? gather commit message (if any) from pre-save popup
+            var commitMessage;
+            var firstLine = $('#save-comment-first-line').val();
+            var moreLines = $('#save-comment-more-lines').val();
+            if ($.trim(firstLine) === '') {
+                commitMessage = $.trim(moreLines);
+            } else if ($.trim(moreLines) === ''){
+                commitMessage = $.trim(firstLine);
+            } else {
+                commitMessage = $.trim(firstLine) +"\n\n"+ $.trim(moreLines);
+            }
+            */
 
-        $.ajax({
-            global: false,  // suppress web2py's aggressive error handling
-            type: 'PUT',
-            dataType: 'json',
-            // crossdomain: true,
-            contentType: "application/json; charset=utf-8",
-            url: saveURL,
-            processData: false,
-            data: ('{"json":'+ JSON.stringify(clonableIllustration) +'}'),  // TODO: move auth info to this wrapper?
-            complete: function( jqXHR, textStatus ) {
-                // report errors or malformed data, if any
-                if (textStatus !== 'success') {
-                    if (jqXHR.status >= 500) {
-                        // major server-side error, just show raw response for tech support
-                        resp.error = "Sorry, there was an error saving this illustration:\n\n"+ jqXHR.responseText;
+            // add non-Nexson values to the query string
+            var qsVars = $.param({
+                author_name: userDisplayName(),
+                author_email: userEmail(),
+                auth_token: userAuthToken,
+                starting_commit_SHA: stylist.ill.metadata.sha(),
+                commit_msg: 'Saved from Tree Illustrator'       // add version?
+            });
+            saveURL += ('?'+ qsVars);
+
+            $.ajax({
+                global: false,  // suppress web2py's aggressive error handling
+                type: 'PUT',
+                dataType: 'json',
+                // crossdomain: true,
+                processData: false,
+                contentType: false,   // FormData will send as 'multipart/form-data'
+                url: saveURL,
+                data: formData,
+                complete: function( jqXHR, textStatus ) {
+                    // report errors or malformed data, if any
+                    if (textStatus !== 'success') {
+                        if (jqXHR.status >= 500) {
+                            // major server-side error, just show raw response for tech support
+                            resp.error = "Sorry, there was an error saving this illustration:\n\n"+ jqXHR.responseText;
+                            alert(resp.error);
+                            callback(resp);
+                            return;
+                        }
+                        // Server blocked the save, probably due to validation errors!
+                        var data = $.parseJSON(jqXHR.responseText);
+                        // TODO: this should be properly parsed JSON, show it more sensibly
+                        // (but for now, repeat the crude feedback used above)
+                        resp.error = "Sorry, there was an error in the illustration data:\n\n"+ jqXHR.responseText;
                         alert(resp.error);
                         callback(resp);
                         return;
                     }
-                    // Server blocked the save, probably due to validation errors!
-                    var data = $.parseJSON(jqXHR.responseText);
-                    // TODO: this should be properly parsed JSON, show it more sensibly
-                    // (but for now, repeat the crude feedback used above)
-                    resp.error = "Sorry, there was an error in the illustration data:\n\n"+ jqXHR.responseText;
-                    alert(resp.error);
+                    var putResponse = $.parseJSON(jqXHR.responseText);
+                    var newCommitSHA = putResponse['sha'];
+                    if (newCommitSHA) {
+                        stylist.ill.metadata.sha(newCommitSHA);
+                    }
+                    /* TODO: add 'versions' or 'metadata.versions' to record these commits?
+                    if ('versionHistory' in putResponse) {
+                        stylist.ill.metadata.versions(putResponse['versionHistory'] || [ ]);
+                    }
+                    */
+                    if (putResponse['merge_needed']) {
+                        var errMsg = 'Your changes were saved, but an edit by another user prevented your edit from merging to the publicly visible location. In the near future, we hope to take care of this automatically. In the meantime, please <a href="mailto:info@opentreeoflife.org?subject=Illustration%20merge%20needed%20-%20'+ newCommitSHA +'">report this error</a> to the Open Tree of Life software team';
+                        /* TODO: make this a cleaner, more friendly display (with active mailto: hyperlink) */
+                        alert(errMsg);
+                        // NB, we treat this as a warning, but not a save error; return the data as expected!
+                    }
+                    // presume success from here on
+                    //hideModalScreen();
+                    //showSuccessMessage('Study saved to remote storage.');
+                    /* TODO: Block page-exit on unsaved changes?
+                    popPageExitWarning('UNSAVED_STUDY_CHANGES');
+                    studyHasUnsavedChanges = false;
+                    disableSaveButton();
+                    */
+                    // TODO: update viz?
+                    resp.data = putResponse;
                     callback(resp);
-                    return;
                 }
-                var putResponse = $.parseJSON(jqXHR.responseText);
-                var newCommitSHA = putResponse['sha'];
-                if (newCommitSHA) {
-                    stylist.ill.metadata.sha(newCommitSHA);
-                }
-                /* TODO: add 'versions' or 'metadata.versions' to record these commits?
-                if ('versionHistory' in putResponse) {
-                    stylist.ill.metadata.versions(putResponse['versionHistory'] || [ ]);
-                }
-                */
-                if (putResponse['merge_needed']) {
-                    var errMsg = 'Your changes were saved, but an edit by another user prevented your edit from merging to the publicly visible location. In the near future, we hope to take care of this automatically. In the meantime, please <a href="mailto:info@opentreeoflife.org?subject=Illustration%20merge%20needed%20-%20'+ newCommitSHA +'">report this error</a> to the Open Tree of Life software team';
-                    /* TODO: make this a cleaner, more friendly display (with active mailto: hyperlink) */
-                    alert(errMsg);
-                    // NB, we treat this as a warning, but not a save error; return the data as expected!
-                }
-                // presume success from here on
-                //hideModalScreen();
-                //showSuccessMessage('Study saved to remote storage.');
-                /* TODO: Block page-exit on unsaved changes?
-                popPageExitWarning('UNSAVED_STUDY_CHANGES');
-                studyHasUnsavedChanges = false;
-                disableSaveButton();
-                */
-                // TODO: update viz?
-                resp.data = putResponse;
-                callback(resp);
-            }
-        });
-    } else {
-        // Store the new illustration
-        $.ajax({
-            global: false,  // suppress web2py's aggressive error handling
-            type: 'POST',
-            dataType: 'json',
-            // crossdomain: true,
-            // contentType: "application/json; charset=utf-8",
-            url: createIllustration_POST_url,
-            data: {
-                // misc identifying information
-                'author_name': (userDisplayName() || ""),
-                'author_email': (userEmail() || ""),
-                'auth_token': (userAuthToken || ""),
-                'json': JSON.stringify(clonableIllustration)
-            },
-            success: function( data, textStatus, jqXHR ) {
-                // creation method should return either a redirect URL to the new illustration, or an error
-                //hideModalScreen();
-                console.log('saveIllustration(): done! textStatus = '+ textStatus);
-                // report errors or malformed data, if any
-                if (textStatus !== 'success') {
-                    resp.error = 'Sorry, there was an error creating this illustration.';
-                    alert(resp.error);
-                    callback(resp);
-                    return;
-                }
+            });
+        } else {  // i.e. createOrUpdate === 'CREATE'
+            // Store the new illustration
+            saveURL = createIllustration_POST_url;
+            // add non-Nexson values to the query string
+            var qsVars = $.param({
+                author_name: userDisplayName(),
+                author_email: userEmail(),
+                auth_token: userAuthToken,
+                commit_msg: 'Saved from Tree Illustrator'       // add version?
+            });
+            saveURL += ('?'+ qsVars);
 
-                // update the internal 'url' of the live illustration to match what was assigned
-                // (API ensures uniqueness, typically by incrementing duplicate ids)
-                // EXAMPLE:  https://api.opentreeoflife.org/v3/illustration/jimallman/my-illustration
-                var assignedURL = data.resource_url;
-                stylist.ill.metadata.url( assignedURL );
-                var newCommitSHA = data['sha'];
-                if (newCommitSHA) {
-                    stylist.ill.metadata.sha(newCommitSHA);
+            $.ajax({
+                global: false,  // suppress web2py's aggressive error handling
+                type: 'POST',
+                dataType: 'json',
+                // crossdomain: true,
+                processData: false,
+                contentType: false,   // FormData will send as 'multipart/form-data'
+                url: saveURL,
+                /*
+                data: {
+                    // misc identifying information
+                    'author_name': (userDisplayName() || ""),
+                    'author_email': (userEmail() || ""),
+                    'auth_token': (userAuthToken || ""),
+                    'json': JSON.stringify(clonableIllustration)
+                },
+                 */
+                data: formData,
+                success: function( data, textStatus, jqXHR ) {
+                    // creation method should return either a redirect URL to the new illustration, or an error
+                    //hideModalScreen();
+                    console.log('saveIllustration(): done! textStatus = '+ textStatus);
+                    // report errors or malformed data, if any
+                    if (textStatus !== 'success') {
+                        resp.error = 'Sorry, there was an error creating this illustration.';
+                        alert(resp.error);
+                        callback(resp);
+                        return;
+                    }
+
+                    // update the internal 'url' of the live illustration to match what was assigned
+                    // (API ensures uniqueness, typically by incrementing duplicate ids)
+                    // EXAMPLE:  https://api.opentreeoflife.org/v3/illustration/jimallman/my-illustration
+                    var assignedURL = data.resource_url;
+                    stylist.ill.metadata.url( assignedURL );
+                    var newCommitSHA = data['sha'];
+                    if (newCommitSHA) {
+                        stylist.ill.metadata.sha(newCommitSHA);
+                    }
+                    // TODO: add 'versions' or 'metadata.versions' to record these commits?
+                },
+                error: function( data, textStatus, jqXHR ) {
+                    //hideModalScreen();
+                    if ((typeof(jqXHR.responseText) !== 'string') || jqXHR.responseText.length === 0) {
+                        resp.error = 'Sorry, there was an error creating this illustration. (No more information is available.)';
+                    } else {
+                        resp.error = 'Sorry, there was an error creating this illustration:\n\n '+ jqXHR.responseText;
+                    }
+                    alert(resp.error);
+                },
+                complete: function( data, textStatus, jqXHR ) {
+                    callback(resp);
                 }
-                // TODO: add 'versions' or 'metadata.versions' to record these commits?
-            },
-            error: function( data, textStatus, jqXHR ) {
-                //hideModalScreen();
-                if ((typeof(jqXHR.responseText) !== 'string') || jqXHR.responseText.length === 0) {
-                    resp.error = 'Sorry, there was an error creating this illustration. (No more information is available.)';
-                } else {
-                    resp.error = 'Sorry, there was an error creating this illustration:\n\n '+ jqXHR.responseText;
-                }
-                alert(resp.error);
-            },
-            complete: function( data, textStatus, jqXHR ) {
-                callback(resp);
-            }
-        });
-    }
+            });
+        } // end of if/else (CREATE vs. UPDATE)
+    };
+
+    archive.generateAsync( {type:"blob"},
+                           function updateCallback(metadata) {
+                               // TODO: Show progress as demonstrated in
+                               // https://stuk.github.io/jszip/documentation/examples/downloader.html
+                               console.log( metadata.percent.toFixed(2) + " % complete" );
+                           } )
+           .then( uploadIllustrationBlob,   // success callback
+                  function (err) {
+                      // failure callback
+                      alert('ERROR generating this ZIP archive:\n'+ err);
+                  } );
 }
 
 
