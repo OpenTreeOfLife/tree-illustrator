@@ -302,25 +302,7 @@ function loadIllustration(id, callback) {
         global: false,  // suppress web2py's aggressive error handling
         type: 'GET',
         cache: false,
-        ///dataType: 'text',    // makes a corrupted ZIP! (missing 92 bytes)
         dataType: 'binary',     // now has a proper binary transport
-        ///dataType: 'text/plain; charset=x-user-defined',  // fails (missing converter)
-        ///dataType: 'zipfile',  // suppress any encoding?
-		accepts: {  // set HTTP accepts header
-			zipfile: 'application/zip'
-		},
-		// Instructions for how to deserialize a `mycustomtype`
-		converters: {
-			'text zipfile': function(result) {
-				// anything we can do here?
-                var blob = new Blob([result], {
-                    type: 'application/zip'
-                })
-                return blob;
-			}
-		},
-        // crossdomain: true,
-        // contentType: "application/json; charset=utf-8",
         url: loadIllustration_GET_url.replace('{DOC_ID}', id),
         data: {
             // misc identifying information
@@ -332,12 +314,6 @@ function loadIllustration(id, callback) {
             // fetch method should return either the new illustration as a ZIP archive, or an error
             //hideModalScreen();
 
-            // report errors or malformed data, if any
-            if (textStatus !== 'success') {
-                alert('Sorry, there was an error loading this illustration.');
-                return;
-            }
-
             // TODO: Add version history or other metadata?
             /* The callback provided will replace stylist.ill and rebind UI
              * and the rendering pipeline. It expects a response object with
@@ -346,12 +322,11 @@ function loadIllustration(id, callback) {
             var jsonData, ill, archive;
             try {
                 jsonData = JSON.parse(data);
-                console.warn("loadIllustration(): Response parsed as JSON");
+                console.log("loadIllustration(): Response parsed as JSON");
                 ill = jsonData['data'];  // illustration as JS object 
             } catch(e) {
                 console.warn("loadIllustration(): Response is not JSON, trying as a ZIP archive");
                 var archive = new JSZip();
-                ///archive.loadAsync(data, {base64: true})   // nope, failed validation
                 var zipOptions = {
                     //base64: true,                 // nope, fails validation
                     //checkCRC32: true              // still reports missing bytes
