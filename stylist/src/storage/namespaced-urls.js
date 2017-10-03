@@ -38,7 +38,7 @@ var notImplementedResponse = {
 var illustrationAPIBaseURL = "https://devapi.opentreeoflife.org";
 var listAllIllustrations_url = illustrationAPIBaseURL + '/v3/illustrations/list_all';
 var createIllustration_POST_url = illustrationAPIBaseURL + '/v3/illustration';
-var loadIllustration_GET_url = illustrationAPIBaseURL + '/v3/illustration/{DOC_ID}';
+var loadIllustration_GET_url = illustrationAPIBaseURL + '/v3/illustration/{DOC_ID}.zip';
 var updateIllustration_PUT_url = illustrationAPIBaseURL + '/v3/illustration/{DOC_ID}';
 var deleteIllustration_DELETE_url = illustrationAPIBaseURL + '/v3/illustration/{DOC_ID}';
 /* Manage sub-resources (opaque files) within complex types, e.g. supporting
@@ -301,7 +301,24 @@ function loadIllustration(id, callback) {
     $.ajax({
         global: false,  // suppress web2py's aggressive error handling
         type: 'GET',
-        dataType: 'json',
+        cache: false,
+        ///dataType: 'text',    // makes a corrupted ZIP! (missing 92 bytes)
+        ///dataType: 'binary',  // fails on attempted conversion
+        ///dataType: 'text/plain; charset=x-user-defined',  // fails (missing converter)
+        dataType: 'zipfile',  // suppress any encoding?
+		accepts: {  // set HTTP accepts header
+			zipfile: 'application/zip'
+		},
+		// Instructions for how to deserialize a `mycustomtype`
+		converters: {
+			'text zipfile': function(result) {
+				// anything we can do here?
+                var blob = new Blob([result], {
+                    type: 'application/zip'
+                })
+                return blob;
+			}
+		},
         // crossdomain: true,
         // contentType: "application/json; charset=utf-8",
         url: loadIllustration_GET_url.replace('{DOC_ID}', id),
@@ -312,10 +329,9 @@ function loadIllustration(id, callback) {
             'auth_token': (userAuthToken || "")
         },
         success: function( data, textStatus, jqXHR ) {
-            // fetch method should return either the new illustration JSON, or an error
+            // fetch method should return either the new illustration as a ZIP archive, or an error
             //hideModalScreen();
 
-            console.log('loadIllustration(): done! textStatus = '+ textStatus);
             // report errors or malformed data, if any
             if (textStatus !== 'success') {
                 alert('Sorry, there was an error loading this illustration.');
@@ -327,7 +343,37 @@ function loadIllustration(id, callback) {
              * and the rendering pipeline. It expects a response object with
              * 'data' or 'error'.
              */
-            var ill = data['data'];  // illustration as JS object
+            var jsonData, ill, archive;
+            try {
+                jsonData = JSON.parse(data);
+                console.warn("loadIllustration(): Response parsed as JSON");
+                ill = jsonData['data'];  // illustration as JS object 
+            } catch(e) {
+                console.warn("loadIllustration(): Response is not JSON, trying as a ZIP archive");
+                var archive = new JSZip();
+                ///archive.loadAsync(data, {base64: true})   // nope, failed validation
+                var zipOptions = {
+                    //base64: true,                 // nope, fails validation
+                    //checkCRC32: true              // still reports missing bytes
+                    //optimizedBinaryString: true   // still reports missing bytes
+                }
+                archive.loadAsync(data, zipOptions)
+                       .then(function(zip) {
+                            // you now have every files contained in the loaded zip
+                            //archive.file("hello.txt").async("string"); // a promise of "Hello World\n"
+                            console.log(zip.files);
+debugger;
+                            var mainJSON = zip.file('main.json').async("string");
+                            try {
+                                jsonData = JSON.parse(data);
+                                console.warn("loadIllustration(): Response parsed as JSON");
+                                ill = jsonData['data'];  // illustration as JS object 
+                            } catch(e) {
+                            }
+                        });
+            }
+return;
+
             if (!ill) {  // TODO
                 resp.error = "No illustration data found!";
                 console.error(resp.error);
@@ -338,6 +384,7 @@ function loadIllustration(id, callback) {
                     resp.data = ill;
                 }
             }
+            callback(resp);
         },
         error: function( data, textStatus, jqXHR ) {
             //hideModalScreen();
@@ -346,8 +393,6 @@ function loadIllustration(id, callback) {
             } else {
                 resp.error = 'Sorry, there was an error loading this illustration:\n\n '+ jqXHR.responseText;
             }
-        },
-        complete: function( jqXHR, textStatus ) {
             callback(resp);
         }
     });
