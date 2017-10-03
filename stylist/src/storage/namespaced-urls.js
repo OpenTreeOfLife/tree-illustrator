@@ -303,9 +303,9 @@ function loadIllustration(id, callback) {
         type: 'GET',
         cache: false,
         ///dataType: 'text',    // makes a corrupted ZIP! (missing 92 bytes)
-        ///dataType: 'binary',  // fails on attempted conversion
+        dataType: 'binary',     // now has a proper binary transport
         ///dataType: 'text/plain; charset=x-user-defined',  // fails (missing converter)
-        dataType: 'zipfile',  // suppress any encoding?
+        ///dataType: 'zipfile',  // suppress any encoding?
 		accepts: {  // set HTTP accepts header
 			zipfile: 'application/zip'
 		},
@@ -359,20 +359,26 @@ function loadIllustration(id, callback) {
                 }
                 archive.loadAsync(data, zipOptions)
                        .then(function(zip) {
-                            // you now have every files contained in the loaded zip
-                            //archive.file("hello.txt").async("string"); // a promise of "Hello World\n"
-                            console.log(zip.files);
-debugger;
-                            var mainJSON = zip.file('main.json').async("string");
-                            try {
-                                jsonData = JSON.parse(data);
-                                console.warn("loadIllustration(): Response parsed as JSON");
-                                ill = jsonData['data'];  // illustration as JS object 
-                            } catch(e) {
-                            }
+                            // find and parse the JSON core file in this archive
+                            ///console.log(zip.files);
+                            zip.file('main.json')
+                                .async("string")
+                                .then(function(data) {
+                                    try {
+                                        // no metadata wrapper here...
+                                        ill = JSON.parse(data);
+                                        console.warn("loadIllustration(): Response parsed as JSON");
+                                        resp.data = ill;
+                                    } catch(e) {
+                                        resp.error = "Unable to parse 'main.json'!";
+                                        console.error(resp.error);
+                                    } finally {
+                                        callback(resp);
+                                    }
+                                });
                         });
+                return;  // bail out of outer function (we handle callbacks above)
             }
-return;
 
             if (!ill) {  // TODO
                 resp.error = "No illustration data found!";
