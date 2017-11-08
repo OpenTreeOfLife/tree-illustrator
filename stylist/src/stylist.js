@@ -16,7 +16,8 @@ var $ = require('jquery'),
     pluckTransform = require('./vg.data.pluck.js');
     nexsonTransform = require('./vg.data.nexson.js');
     phylogramTransform = require('./vg.data.phylogram.js');
-    assert = require('assert');
+    assert = require('assert'),
+    TreeSS = require('./TreeSS.js');
 
 // expose TreeIllustrator to JS in the main UI 
 global.TreeIllustrator = TreeIllustrator;
@@ -2960,6 +2961,7 @@ var api = [
     'view',
     //'jszip',
     //'FileSaver',
+    'TreeSS',  // TODO: REMOVE THIS
     'utils',
     'storage'
 ];
