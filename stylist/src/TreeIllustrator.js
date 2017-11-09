@@ -303,8 +303,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     'bottom': 0,
                     'right': 0
                 },
-                'data': [ ],
-                'style': { }
+                'data': [ ]
             }
         };
         /* TODO: Apply optional modifications?
@@ -1153,7 +1152,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                             }
                         },
                         "marks": [
-                            { /* pathsfor tree edges 
+                            { /* paths for tree edges 
                                  N.B. This expects pre-existing links with 'source' and 'target' properties! The 'link' transform is 
                                  just to provide a rendered path of the desired type. */
                               "type": "path",
