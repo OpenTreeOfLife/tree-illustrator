@@ -131,7 +131,6 @@ function deleteIllustration(id, callback) {
     callback({error: "deleteIllustration() is not possible in local filesystem!"});
 }
 
-
 // Get user-friendly list of available source data for trees, etc.
 // TODO: Include JS variables, from window scope (or scope provided)?
 // TODO: Support multiple kernels (Python, Julia, etc) if available?

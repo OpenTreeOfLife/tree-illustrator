@@ -8,7 +8,7 @@ var $ = require('jquery'),
     utils = require('./ti-utils'),
     jszip = require('jszip'),
     FileSaver = require('file-saver'),
-    Blob = require('blob-polyfill'),
+    //Blob = require('blob-polyfill'),
     md5 = require('spark-md5'),
     vg = require('vega'),
     TreeIllustrator = require('./TreeIllustrator.js'),
@@ -2301,46 +2301,106 @@ var disallowedMIMETypes = {
     'Ornament': allTypes
 };
 
-function handleChosenLocalFile( illElement, event ) {
-    console.log('handleChosenLocalFile STARTING...');
+function handleChosenTreeSSFile( illElement, event ) {
+    console.log('handleChosenTreeSSFile STARTING...');
+    handleChosenLocalFile( illElement, event, 'LOADING_TREESS_STYLESHEET' );
+}
+function handleChosenTreeSourceFile( illElement, event ) {
+    console.log('handleChosenTreeSourceFile STARTING...');
+    handleChosenLocalFile( illElement, event, 'LOADING_TREE_DATA' );
+}
+function handleChosenDatasetFile( illElement, event ) {
+    console.log('handleChosenDatasetFile STARTING...');
+    handleChosenLocalFile( illElement, event, 'LOADING_DATASET' );
+}
+
+
+function handleChosenLocalFile( illElement, event, currentOperation ) {
+    console.log('handleChosenLocalFile ('+ currentOperation +') STARTING...');
     var fileList = event.target.files;      // a FileList
     // For now, we expect just one file!
     var chosenFile = fileList[0];           // a File
+    var reader = new FileReader();
+    var $panel,             // UI panel that shows file details
+        readFileContents,   // how to read this type of file
+        handleFileContents; // once read, what to do with data?
+    switch( currentOperation ) {
+        case 'LOADING_TREESS_STYLESHEET':
+            // Expecting a `.treess` file, which will not report any known MIME type.
+            // For now, we'll also accept the .css extension.
+            if (!chosenFile.name.match(/\.(treess|css)$/)) {
+                alert("Sorry, I expected a file with a .treess (or .css) extension!");
+                return;
+            }
 
-    // Warn/reject if not an appropriate MIME-type for this element?
-    var expectedTypes = expectedMIMETypes[ illElement.metadata.type() ];
-    var disallowedTypes = disallowedMIMETypes[ illElement.metadata.type() ];
-    if (chosenFile.type.match(expectedTypes)) {
-        // This is an expected content type, carry on...
-    } else if (chosenFile.type.match(disallowedTypes)) {
-        alert("Files of MIME-type '"+ chosenFile.type +"' are not allowed for "+ illElement.metadata.type() +" elements.");
-        return;
-    } else {
-        // This content type is not in either list. Accept for now?
-        console.warn("Tentatively allowing MIME-type '"+ chosenFile.type +"' for this "+ illElement.metadata.type());
+            $panel = $('#ti-panel-styles');
+            readFileContents = reader.readAsText.bind(reader); // avoid 'Illegal invocation' error
+            handleFileContents = function(theFile) {
+                return function(e) {
+                    var r = e.target;  // i.e., this FileReader
+                    var treess = r.result;  // should be TreeSS text
+                    if (!$.trim(treess)) { // empty or missing
+                        console.warn("Ignoring empty (or missing) stylesheet.");
+                        return;
+                    }
+                    TreeSS.applyStylesheetToCurrentStyle(treess);
+                };
+            };
+            break;
+        case 'LOADING_TREE_DATA':
+        case 'LOADING_DATASET':
+            // Warn/reject if not an appropriate MIME-type for this element?
+            var expectedTypes = expectedMIMETypes[ illElement.metadata.type() ];
+            var disallowedTypes = disallowedMIMETypes[ illElement.metadata.type() ];
+            if (chosenFile.type.match(expectedTypes)) {
+                // This is an expected content type, carry on...
+            } else if (chosenFile.type.match(disallowedTypes)) {
+                alert("Files of MIME-type '"+ chosenFile.type +"' are not allowed for "+ illElement.metadata.type() +" elements.");
+                return;
+            } else {
+                // This content type is not in either list. Accept for now?
+                console.warn("Tentatively allowing MIME-type '"+ chosenFile.type +"' for this "+ illElement.metadata.type());
+            }
+
+            // Reject dataset files for now
+            if (currentOperation === 'LOADING_DATASET') {
+                console.warn("Loading datasets not yet implemented!");
+                return;
+            }
+
+            $panel = getAccordionPanelForElement( illElement );
+            readFileContents = reader.readAsArrayBuffer.bind(reader); // avoid 'Illegal invocation' error
+            handleFileContents = function(theFile) {
+                return function(e) {
+                    var r = e.target;  // i.e., this FileReader
+                    console.log("FileReader result for tree data '"+ escape(theFile.name) +"':\n"+ r.result);
+                    //debugger;
+                };
+            };
+            break;
+        default:
+            console.warn("Unknown operation ["+ currentOperation +"] for handling local files!");
+            return;
     }
 
     // Show file information in its accordion element
-    var $panel = getAccordionPanelForElement( illElement );
     $panel.find('.chosen-file-name').text(chosenFile.name);
     $panel.find('.chosen-file-type').html(chosenFile.type || '<em>Unknown</em>');
     $panel.find('.chosen-file-size').text(chosenFile.size);
     $panel.find('.chosen-file-last-mod-date').text(chosenFile.lastModifiedDate.toLocaleString());
 
-    // create a URL to this File
-    var reader = new FileReader();
     // closure to capture the file information.
-    reader.onload = (function(theFile) {
-        return function(e) {
-            var r = e.target;  // i.e., this FileReader
-            console.log("FileReadr result for '"+ escape(theFile.name) +"':\n"+ r.result);
-            //debugger;
-        };
-    })(chosenFile);
+    reader.onload = handleFileContents(chosenFile);
+
     //reader.readAsDataURL(chosenFile);       // result is 'data:;base64,KEEsKEIsKEMsRCkpKTs='
     //reader.readAsBinaryString(chosenFile);  // result is '(A,(B,(C,D)));'
     //reader.readAsText(chosenFile);          // result is '(A,(B,(C,D)));'
-    reader.readAsArrayBuffer(chosenFile);     // result is '[object ArrayBuffer]', more to do here obviously
+    //reader.readAsArrayBuffer(chosenFile);   // result is '[object ArrayBuffer]', more to do here obviously
+    if (!readFileContents) {
+        console.error("No file-reading method was specified!");
+        return;
+    }
+    readFileContents(chosenFile);   // will trigger the `onload` callback above
 }
 
 function applyChosenStyleGuide(clicked) {
@@ -2899,6 +2959,23 @@ function saveArchiveWithSuggestedName() {
     $('#local-filesystem-warning').slideDown();
 }
 
+
+function saveTreeSSToLocalFile() {
+    /* ASSUME we have no knowledge of the chosen save path, or the prior
+     * existence of the specified filename in that location.
+     */
+    var treess = TreeSS.currentStyleToStylesheet();  // returns a string
+    var blob = new Blob([treess], {type: "text/plain;charset=utf-8"});
+    // TODO: Consider saving this as 'text/css' instead?
+    var suggestedFileName = (stylist.ill.metadata.name() || "UNTITLED_ILLUSTRATION") +".treess";
+    try {
+        FileSaver.saveAs(blob, suggestedFileName);
+        alert("Stylesheet saved! Check your local filesystem for its name and location.");
+    } catch (err) {
+        alert('ERROR saving this stylesheet:\n'+ err);
+    }
+}
+
 // Expose some members to outside code (eg, Knockout bindings, onClick
 // attributes...)
 var api = [
@@ -2947,7 +3024,9 @@ var api = [
     'showAccordionPanel',
     'showAccordionPanelForElement',
     'applyChosenStyleGuide',
-    'handleChosenLocalFile',
+    'handleChosenTreeSSFile',
+    'handleChosenTreeSourceFile',
+    'handleChosenDatasetFile',
     'enterFullScreen',
     'exitFullScreen',
     'ill',
@@ -2958,6 +3037,7 @@ var api = [
     'getDefaultArchiveFileName',
     'saveArchiveWithSuggestedName',
     'clearLastSavedInfo',
+    'saveTreeSSToLocalFile',
     'view',
     //'jszip',
     //'FileSaver',

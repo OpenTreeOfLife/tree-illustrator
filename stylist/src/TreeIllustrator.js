@@ -150,8 +150,9 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         // clear provenance
         var filtered = {};
         $.each(cache, function(cachePath, itemInfo) {
+            debugger;
             if(cachePath.match(/^input\/.*/) &&
-               itemInfo.src === '') {
+               !(itemInfo.src)) {   // 'src' is missing or empty string
                 filtered[ cachePath ] = itemInfo;
             }
         });

@@ -253,6 +253,39 @@
             </div>
 
             <div class="control-group">
+                <label class="control-label" for="#import-treess-upload">
+                    Import <a href="https://github.com/TreeViz/metastyle/wiki/TreeSS-is-not-(quite)-CSS" target="_blank">TreeSS</a>
+                </label> 
+                <div class="controls">
+                    <input type="file"
+                           id="import-treess-upload"
+                           style="margin-top: 6px;"
+                           data-bind="visible: stylist.utils.browserSupportsFileAPI(),
+                                      event: {change: stylist.handleChosenTreeSSFile}" />
+                    <em data-bind="visible: !(stylist.utils.browserSupportsFileAPI())"
+                        style="color: #933;">File APIs not supported in this browser!</em>
+                    <!--
+                    <label for="clobber-old-styles">
+                        <input type="checkbox" id="clobber-old-styles">
+                        Clear current style on import
+                    </label>
+                    -->
+                    <div class="mini-form" style="margin-left: 4px; margin-top: -10px; color: #777;">
+                        <label>File name:</label> &nbsp; <span class="chosen-file-name">&mdash;</span>
+                        <br/>
+                        <label>Content type:</label> &nbsp; <span class="chosen-file-type">&mdash;</span>
+                        <br/>
+                        <label>Size (bytes):</label> &nbsp; <span class="chosen-file-size">&mdash;</span>
+                        <br/>
+                        <label>Last modified:</label> &nbsp; <span class="chosen-file-last-mod-date">&mdash;</span>
+                    </div>
+                    <button class="btn btn-small"
+                            onclick="stylist.saveTreeSSToLocalFile(); return false;"
+                    >Export current style as TreeSS</button>
+                </div>
+            </div>
+
+            <div class="control-group">
                 <label class="control-label" for="#style-docsize-chooser">Document size</label> 
                 <div class="controls">
                     <select id="style-docsize-chooser" style="margin-bottom: 0;"
@@ -565,7 +598,7 @@
                         <input type="file"
                                data-bind="visible: stylist.utils.browserSupportsFileAPI(),
                                           attr: {id: id() +'-datasource-upload'},
-                                          event: {change: stylist.handleChosenLocalFile}" />
+                                          event: {change: stylist.handleChosenDatasetFile}" />
                         <em data-bind="visible: !(stylist.utils.browserSupportsFileAPI())"
                             style="color: #933;">File APIs not supported in this browser!</em>
 <!--
