@@ -372,14 +372,20 @@ function centimetersToPixels( cm, ppi ) {
 }
 
 function pixelsToPhysicalUnits( px, ppi ) {
-    if (ill.style['illustration'].printSize.units() === TreeIllustrator.units.INCHES) {
+    var docRule = ill.style().find(function(rule, i) {
+        return (rule.selector() === 'illustration');
+    });
+    if (docRule.declarations.printSize.units() === TreeIllustrator.units.INCHES) {
         return pixelsToInches( px, ppi );
     } else {
         return pixelsToCentimeters( px, ppi );
     }
 }
 function physicalUnitsToPixels( units, ppi ) {
-    if (ill.style['illustration'].printSize.units() === TreeIllustrator.units.INCHES) {
+    var docRule = ill.style().find(function(rule, i) {
+        return (rule.selector() === 'illustration');
+    });
+    if (docRule.declarations.printSize.units() === TreeIllustrator.units.INCHES) {
         return inchesToPixels( units, ppi );
     } else {
         return centimetersToPixels( units, ppi );
@@ -1480,7 +1486,10 @@ function initTreeIllustratorWindow() {
     $scrollingViewport.css('margin-right', -(rulerWidth+1)+"px");
 
     // reset units display; clear old rulers
-    $rulerUnitsDisplay.text( ill.style.printSize.units() === TreeIllustrator.units.INCHES ? "in" : "cm" );
+    var docRule = ill.style().find(function(rule, i) {
+        return (rule.selector() === 'illustration');
+    });
+    $rulerUnitsDisplay.text( docRule.declarations.printSize.units() === TreeIllustrator.units.INCHES ? "in" : "cm" );
 
     // adjust viewport/viewbox to reflect current magnification (display_ppi)
     updateViewportViewbox( $scrollingViewport );
@@ -1510,7 +1519,7 @@ function initTreeIllustratorWindow() {
     var topRuler = d3.select("#fixed-ruler-top svg")
         .attr("width", viewportWidth+"px")
         .attr("height", rulerWidth+"px");
-    drawRuler(topRuler, 'HORIZONTAL', ill.style.printSize.units(), topRulerScale);
+    drawRuler(topRuler, 'HORIZONTAL', docRule.declarations.printSize.units(), topRulerScale);
 
     var leftRulerScale = d3.scale.linear()
         .domain([
@@ -1524,7 +1533,7 @@ function initTreeIllustratorWindow() {
     var leftRuler = d3.select("#fixed-ruler-left svg")
         .attr("width", rulerWidth+"px")
         .attr("height", viewportHeight+"px");
-    drawRuler(leftRuler, 'VERTICAL', ill.style.printSize.units(), leftRulerScale);
+    drawRuler(leftRuler, 'VERTICAL', docRule.declarations.printSize.units(), leftRulerScale);
 
     enableViewportMask();
 }
@@ -1900,11 +1909,14 @@ function enableViewportMask() {
         .attr('width', viewbox.width)
         .attr('height', viewbox.height);
     // match the mask's illustration-bounds to the current illustration size
+    var docRule = ill.style().find(function(rule, i) {
+        return (rule.selector() === 'illustration');
+    });
     d3.select("#illustration-bounds")
         .attr('x', 0)
         .attr('y', 0)
-        .attr('width', physicalUnitsToPixels(ill.style.printSize.width(), internal_ppi))
-        .attr('height', physicalUnitsToPixels(ill.style.printSize.height(), internal_ppi));
+        .attr('width', physicalUnitsToPixels(docRule.declarations.printSize.width(), internal_ppi))
+        .attr('height', physicalUnitsToPixels(docRule.declarations.printSize.height(), internal_ppi));
 
     // assign the mask to the main viewport (fades stuff outside the print area)
     viewportSVG.attr('mask', 'url(#viewport-mask)');
@@ -1975,8 +1987,11 @@ function showPrintingCropMarks() {
     // adjust placement of marks to match for illustration size
     var printTopEdge = 0;  // no need to set these
     var printLeftEdge = 0;
-    var printBottomEdge = physicalUnitsToPixels(ill.style.printSize.height(), internal_ppi);
-    var printRightEdge = physicalUnitsToPixels(ill.style.printSize.width(), internal_ppi);
+    var docRule = ill.style().find(function(rule, i) {
+        return (rule.selector() === 'illustration');
+    });
+    var printBottomEdge = physicalUnitsToPixels(docRule.declarations.printSize.height(), internal_ppi);
+    var printRightEdge = physicalUnitsToPixels(docRule.declarations.printSize.width(), internal_ppi);
     d3.select('#crop-mark-top-right')
         .attr('transform', "translate("+ printRightEdge +", 0)");
     d3.select('#crop-mark-bottom-left')
@@ -2251,16 +2266,19 @@ function doNothing() {
 function getPrintAreaLandmarks() {
     // gather interesting coordinates in internal pixels
     if (ill) {
-        var docStyles = ill.style['illustration'];
+        var docRule = ill.style().find(function(rule, i) {
+            return (rule.selector() === 'illustration');
+        });
+        var docStyles = docRule.declarations;
         return {
-            width: physicalUnitsToPixels(docStyles.printSize.width(), internal_ppi),
-            height: physicalUnitsToPixels(docStyles.printSize.height(), internal_ppi),
+            width: physicalUnitsToPixels( docStyles.printSize.width(), internal_ppi ),
+            height: physicalUnitsToPixels( docStyles.printSize.height(), internal_ppi ),
             leftX: 0,
-            centerX: physicalUnitsToPixels(docStyles.printSize.width() / 2.0, internal_ppi),
-            rightX: physicalUnitsToPixels(docStyles.printSize.width(), internal_ppi),
+            centerX: physicalUnitsToPixels( docStyles.printSize.width() / 2.0, internal_ppi ),
+            rightX: physicalUnitsToPixels( docStyles.printSize.width(), internal_ppi ),
             topY: 0,
-            centerY: physicalUnitsToPixels(docStyles.printSize.height() / 2.0, internal_ppi),
-            bottomY: physicalUnitsToPixels(docStyles.printSize.height(), internal_ppi)
+            centerY: physicalUnitsToPixels( docStyles.printSize.height() / 2.0, internal_ppi ),
+            bottomY: physicalUnitsToPixels( docStyles.printSize.height(), internal_ppi )
         };
     }
     // return placeholder values

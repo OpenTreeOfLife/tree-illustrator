@@ -191,7 +191,6 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                 'authors': [ ],   // assign immediately to this user?
                 'tags': [ ],
                 'dois': [ ],
-                'FOOFOO': "BARBAR",
                 'date_created': new Date().toISOString()
             },
             'styleGuide': {
@@ -284,6 +283,10 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                  * the illustration (the n-th tree, or the clade labeled
                  * "dolphins") for styling, as in CSS. We start with a simple
                  * set of global defaults.
+                 *
+                 * TODO: For each of these rules, add during KO mapping:
+                 *  - a callable gathering function (based on selector)
+                 *  - cached list of matching elements (cleared when illustration changes)
                  */
                 {
                     selector: 'illustration',  // or 'root'? 'canvas'? let's see what TreeSS settles on...
@@ -731,6 +734,22 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             }
         }
 
+        /* TODO: Move this to TreeSS.js? */
+        var buildGatheringFunction = function(selector) {
+            /* Convert a TreeSS selector string into a function for gathering
+             * the matching elements in an Illustration.
+             *
+             * For best performance, we should cache the latest list of
+             * elements, but also allow easy clearing as the illustration
+             * changes).
+             */
+            var gatherer = function() {
+                return [ ]; // always empty for now
+            }
+            gatherer.cachedResult = null;  // ad-hoc property allowed here?
+            return gatherer;
+        }
+
         /* Instead of explicitly defining all possible members, let's
          * trust the ko.mapping plugin to handle loading and saving 
          * illustration data from JS(ON), with mapping options to handle
@@ -751,7 +770,24 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             'include': [ ],
             'copy': [ 'vegaSpec' ],
             // 'observe': [ ], // WARNING: using this flips default mapping!
-            'elements': {
+            'style': {  // refers to the `style` property in our JSON
+                'create': function(options) {
+                    // create each rule with as object instances
+                    var data = options.data;
+                    var dataParent = options.parent;
+                    var _illustration = self;
+                    // These are simple objects with a couple of extra tricks
+                    data.gatherMatchingElements = buildGatheringFunction(data.selector);
+                    //data.cachedMatchingElements = null;
+                    // recurse to apply normal mapping to substructures
+                    return ko.mapping.fromJS(data);
+                },
+                'key': function(data) {
+                    // use 'selector' attribute to pin these?
+                    return ko.utils.unwrapObservable(data.selector);
+                }
+            },
+            'elements': {  // refers to the `elements` property in our JSON
                 'create': function(options) {
                     // create these as object instances
                     var data = options.data;
@@ -910,8 +946,9 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
 
         /* For a given element (eg, a tree, node, edge, ornament, or the
          * illustration itself), get the most "local" matching style value for
-         * the specified property. By default, this should conform to the 
-         * illustration itself, or its active style guide.
+         * the specified property. By default, this should conform to the
+         * illustration itself, based on user-chosen styles or defaults from
+         * the active style guide.
          */
         getEffectiveStyle: function(obj, propName) {
             var self = this;
@@ -924,15 +961,24 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                 var propNameSeries = propName.split('.');  // typically an array of one
                 // pop the first container or value from style object
                 var testObj = obj.style;
-                $.each(propNameSeries, function(pn, i) {
+                console.log('=====');
+                console.log(propNameSeries);
+                console.log('testObj: <'+ typeof(testObj)  +'>:');
+                console.log(testObj);
+                $.each(propNameSeries, function(i, pn) {
                     // unpack any remaining names...
-                    if (!propName in testObj) {
+                    console.log('  i: <'+ typeof(i)  +'>: '+ i);
+                    console.log('  pn: <'+ typeof(pn)  +'>: '+ pn);
+                    if (!pn in ko.utils.unwrapObservable(testObj)) {
                         console.error("getEffectiveStyle(): member '"+ pn +"' not found for style '"+ propName +"'");
                         console.error(obj.style);
                         return;
                     }
-                    rawValue = ko.utils.unwrapObservable(testObj[pn]);
+                    rawValue = ko.utils.unwrapObservable(testObj)[pn];
                     testObj = rawValue;  // in case we're going deeper
+                    console.log('NEW testObj: <'+ typeof(testObj)  +'>:');
+                    console.log(testObj);
+                    console.log('-----');
                 });
                 var constrainedValue = self.getConstrainedStyle(propName, rawValue);
                 return constrainedValue;
