@@ -277,22 +277,63 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     'nodeShape': 'circle'  // TODO: should be an enumerated  value
                 }
             },
-            'style': {
-                // choices and overrides from the style guide above
-                'printSize': {
-                    'units': units.INCHES,  // OR units.CENTIMETERS
-                    'width': 8.5,  // in physical units
-                    'height': 11,   // in physical units
+            'style': [
+                /* `Illustration.style` is a central list of ordered style
+                 * rules, each with a TreeSS selector and associated
+                 * declarations. This lets us target certain elements within
+                 * the illustration (the n-th tree, or the clade labeled
+                 * "dolphins") for styling, as in CSS. We start with a simple
+                 * set of global defaults.
+                 */
+                {
+                    selector: 'illustration',  // or 'root'? 'canvas'? let's see what TreeSS settles on...
+                    declarations: {
+                        // choices and overrides from the style guide above
+                        'printSize': {
+                            'units': units.INCHES,  // OR units.CENTIMETERS
+                            'width': 8.5,  // in physical units
+                            'height': 11,   // in physical units
+                        },
+                        'fontFamily': "Times New Roman, Times, serif",
+                        'backgroundColor': "#fdd",
+                        'border': "none",
+                        // add default tree/node styles here? or below?
+                        'edgeColor': "#777",
+                        'edgeThickness': 0.8,
+                        'nodeColor': "#339",
+                        'nodeShape': 'circle'  // TODO: should be an enumerated  value
+                    }
+                }
+                /* Other rules would override the named styles in matching
+                 * elements, like so:
+                 *
+                {
+                    selector: 'tree:eq(1)',
+                    declarations: {
+                        // choices and overrides from the style guide above
+                        'nodeColor': "#ff6",
+                        'nodeShape': 'diamond'
+                    }
                 },
-                'fontFamily': "Times New Roman, Times, serif",
-                'backgroundColor': "#fdd",
-                'border': "none",
-                // add default line color, thickness, node shape/size, etc.
-                'edgeColor': "#777",
-                'edgeThickness': 0.8,
-                'nodeColor': "#339",
-                'nodeShape': 'circle'  // TODO: should be an enumerated  value
-            },
+                {
+                    selector: 'clade:name("dolphins") node',
+                    comment: "Highlight dolphins in bright green.",
+                    declarations: {
+                        // choices and overrides from the style guide above
+                        'nodeColor': "#0f0"
+                        'nodeShape': "dot"
+                    }
+                },
+                {
+                    selector: 'clade:name("dolphins") node:leaf',
+                    declarations: {
+                        // choices and overrides from the style guide above
+                        'nodeShape': "star"
+                    }
+                },
+                ...
+                */
+            ],
             'elements': [
             ],
             'vegaSpec': {
@@ -349,15 +390,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             'tipsAlignment': alignments.RIGHT,
             'rootX': landmarks.centerX + utils.jiggle(5),   // TODO: use a bounding box instead?
             'rootY': landmarks.centerY + utils.jiggle(5),
-            'nodeLabelField': 'ottTaxonName',         // matches the placeholder tree
-            'style': {
-                // incl. only deviations from the style guide above?
-/*
-                'edgeThickness': 1.0,  
-                'edgeColor': '#999',
-                'labelTextHeight': illustration.styleGuide.constraints.minimumTextSize()
-*/
-            },
+            'nodeLabelField': 'ottTaxonName'         // matches the placeholder tree
         };
         /* TODO: Apply optional modifications?
         if (options.BLAH) {
@@ -379,10 +412,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                 'description': "",
                 'dois': [ ]
             },
-            'data': { },
-            'style': {
-                // incl. only deviations from the style guide above?
-            },
+            'data': { }
         };
         /* TODO: Apply optional modifications?
         if (options.BLAH) {
@@ -403,10 +433,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                 'name': "Untitled ("+ newID +")",
                 'description': ""
             },
-            'data': { },
-            'style': {
-                // incl. only deviations from the style guide above?
-            },
+            'data': { }
         };
         /* TODO: Apply optional modifications?
         if (options.BLAH) {
@@ -879,7 +906,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                 return preferredText;
             }
             return '';
-       },
+        },
 
         /* For a given element (eg, a tree, node, edge, ornament, or the
          * illustration itself), get the most "local" matching style value for
@@ -889,18 +916,32 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         getEffectiveStyle: function(obj, propName) {
             var self = this;
             if ('style' in obj) {
-                if (propName in obj.style) {
-                    // handle observables or simple values
-                    var rawValue = ko.utils.unwrapObservable(obj.style[propName]);
-                    var constrainedValue = self.getConstrainedStyle(propName, rawValue);
-                    return constrainedValue;
-                }
+                /* Get its value (whether it's a KO observable or simple value)
+                 * N.B. We also need to handle nested properties, e.g. if
+                 * propName is 'printSize.height', we might find a nested
+                 * object `printSize` with a `height` property.
+                 */
+                var propNameSeries = propName.split('.');  // typically an array of one
+                // pop the first container or value from style object
+                var testObj = obj.style;
+                $.each(propNameSeries, function(pn, i) {
+                    // unpack any remaining names...
+                    if (!propName in testObj) {
+                        console.error("getEffectiveStyle(): member '"+ pn +"' not found for style '"+ propName +"'");
+                        console.error(obj.style);
+                        return;
+                    }
+                    rawValue = ko.utils.unwrapObservable(testObj[pn]);
+                    testObj = rawValue;  // in case we're going deeper
+                });
+                var constrainedValue = self.getConstrainedStyle(propName, rawValue);
+                return constrainedValue;
             }
-            // property wasn't found locally; check the next "innermost" context 
+            // The requested property wasn't found locally; check the next "innermost" context 
             if (obj instanceof IllustratedTree) {
-                return self.getEffectiveStyle(self, propName);
+                return self.getEffectiveStyle(self, propName);  // check the Illustration itself
             } else if (obj instanceof Illustration) {
-                console.error("getEffectiveStyle(): style '"+ propName +"' not found in this tree's style:");
+                console.error("getEffectiveStyle(): style '"+ propName +"' not found in this illustration's style:");
                 console.error(obj.style);
                 return;
             } else if (obj instanceof SupportingDataset) {
@@ -909,6 +950,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             } else if (obj instanceof Ornament) {
                 console.error("getEffectiveStyle(): Ornament is not yet supported!");
                 return;
+            // TODO: ADD cases for node, edge, clade, node label?
             } else {
                 console.error("getEffectiveStyle(): unexpected context object:");
                 console.error(obj);
@@ -940,8 +982,8 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             // clear all groups and marks, and restore the empty illustration-elements group
             spec.marks = [ ];
             // reckon the current width and height as internal px
-            var pxPrintWidth = stylist.physicalUnitsToPixels(self.style.printSize.width(), stylist.internal_ppi);
-            var pxPrintHeight = stylist.physicalUnitsToPixels(self.style.printSize.height(), stylist.internal_ppi);
+            var pxPrintWidth = stylist.physicalUnitsToPixels(self.getEffectiveStyle(self, 'printSize.width'), stylist.internal_ppi);
+            var pxPrintHeight = stylist.physicalUnitsToPixels(self.getEffectiveStyle(self, 'printSize.height'), stylist.internal_ppi);
             var illustrationElementsGroup = {
                 "type": "group",
                 "name": "illustration-elements",  // becomes marker class .illustration-elements

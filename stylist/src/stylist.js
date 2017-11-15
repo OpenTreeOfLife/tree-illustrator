@@ -372,14 +372,14 @@ function centimetersToPixels( cm, ppi ) {
 }
 
 function pixelsToPhysicalUnits( px, ppi ) {
-    if (ill.style.printSize.units() === TreeIllustrator.units.INCHES) {
+    if (ill.style['illustration'].printSize.units() === TreeIllustrator.units.INCHES) {
         return pixelsToInches( px, ppi );
     } else {
         return pixelsToCentimeters( px, ppi );
     }
 }
 function physicalUnitsToPixels( units, ppi ) {
-    if (ill.style.printSize.units() === TreeIllustrator.units.INCHES) {
+    if (ill.style['illustration'].printSize.units() === TreeIllustrator.units.INCHES) {
         return inchesToPixels( units, ppi );
     } else {
         return centimetersToPixels( units, ppi );
@@ -2251,15 +2251,16 @@ function doNothing() {
 function getPrintAreaLandmarks() {
     // gather interesting coordinates in internal pixels
     if (ill) {
+        var docStyles = ill.style['illustration'];
         return {
-            width: physicalUnitsToPixels(ill.style.printSize.width(), internal_ppi),
-            height: physicalUnitsToPixels(ill.style.printSize.height(), internal_ppi),
+            width: physicalUnitsToPixels(docStyles.printSize.width(), internal_ppi),
+            height: physicalUnitsToPixels(docStyles.printSize.height(), internal_ppi),
             leftX: 0,
-            centerX: physicalUnitsToPixels(ill.style.printSize.width() / 2.0, internal_ppi),
-            rightX: physicalUnitsToPixels(ill.style.printSize.width(), internal_ppi),
+            centerX: physicalUnitsToPixels(docStyles.printSize.width() / 2.0, internal_ppi),
+            rightX: physicalUnitsToPixels(docStyles.printSize.width(), internal_ppi),
             topY: 0,
-            centerY: physicalUnitsToPixels(ill.style.printSize.height() / 2.0, internal_ppi),
-            bottomY: physicalUnitsToPixels(ill.style.printSize.height(), internal_ppi)
+            centerY: physicalUnitsToPixels(docStyles.printSize.height() / 2.0, internal_ppi),
+            bottomY: physicalUnitsToPixels(docStyles.printSize.height(), internal_ppi)
         };
     }
     // return placeholder values
