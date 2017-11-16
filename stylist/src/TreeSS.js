@@ -9,7 +9,8 @@ var utils = require('./ti-utils.js'),
     //postcss = require('postcss-js'),  // limited parsing of AST only
     postcss = require('postcss'),
     prefixer = require('autoprefixer')
-    treess = require('./postcss-treess.js');
+    treess = require('./postcss-treess.js'),
+    TreeIllustrator = require('./TreeIllustrator.js');
 
 var TreeSS = function(window, document, $, ko, stylist) {
 
@@ -35,7 +36,7 @@ var TreeSS = function(window, document, $, ko, stylist) {
 
     /* Here we can share information among all classes and instances */
 
-    /* Which illustration style properties are currently supported in TreeSS? 
+    /* Which illustration style properties are currently supported in TreeSS?
      * (We support multiple possible TreeSS names, in case there are variants.)
      */
     var stylePropertiesToTreeSSNames = {
@@ -198,6 +199,126 @@ var TreeSS = function(window, document, $, ko, stylist) {
         .use(treess);
         // list more plugins here?
 
+    /*
+     * Support functions to interpret TreeSS selectors in Tree Illustrator
+     */
+    var buildGatheringFunction = function(selector) {
+        /* Convert a TreeSS selector string into a function for gathering
+         * the matching elements in an Illustration.
+         *
+         * For best performance, we should cache the latest list of
+         * elements, but also allow easy clearing as the illustration
+         * changes).
+         */
+        // Check for possible *multiple* selectors whose results must be joined
+        var selectors = selector.split(',');
+        // TODO: Use PostCSS selector plugin to do this more safely?
+        var gatherer = function() {
+
+            // return just the Illustration
+            return [stylist.ill];  // TODO: remove this!
+
+            /*
+            var resultSets = [ ];
+            $.each(selectors, function(i, selector) {
+                resultSets.push(matchingElements);
+            });
+            return resultSets.joinedorsomething; // always empty for now
+            */
+        }
+        gatherer.cachedResult = null;  // ad-hoc property allowed here?
+        return gatherer;
+    }
+    var getMatchingStyleRules = function(element) {
+        /* Which rules will select this tree/node/whatever? */
+        var matchingRules = [ ];
+        $.each( stylist.ill.style(), function(i, rule) {
+            var selectedElements = rule.gatherMatchingElements();
+            if ($.inArray(element, selectedElements) !== -1) {
+                matchingRules.push(rule);
+            }
+        });
+        // N.B. that their relative order is preserved.
+        return matchingRules;
+    }
+    var getParentIllustrationElement = function(element) {
+        /* Walk "upward" from node to tree, tree to illustration, etc.
+         * according to the logic used in TreeSS.
+         *
+         * TODO: Should we also check all intermediate nodes/clades?
+         */
+        if (element instanceof TreeIllustrator.Illustration) {
+            console.warn("getParentIllustrationElement(): Illustration has no parent!");
+            return null;
+        }
+        if (element instanceof TreeIllustrator.IllustratedTree) {
+            // return its parent Illustration
+            return (stylist.ill);
+        }
+        if (obj instanceof TreeIllustrator.SupportingDataset) {
+            // return its parent Illustration
+            return (stylist.ill);
+        }
+        if (obj instanceof TreeIllustrator.Ornament) {
+            // return its parent Illustration
+            return (stylist.ill);
+        }
+        // TODO: ADD cases for node, edge, clade, node label?
+
+        console.error("getParentIllustrationElement(): unexpected context element <"+ typeof(element) +">:");
+        console.error(element);
+        return null;
+    }
+    var getValueFromStyleDeclarations = function(propPath, styleInfo) {
+        /* Fetch the value found (if any) at the specified property name or
+         * dot-delimited path. In the latter case, we expect to find nested
+         * objects with our desired value at some arbitrary depth, so we'll
+         * need to unpack each in turn.
+         *
+         * N.B. `styleInfo` is a set of declarations (values, keyed to
+         * property names), typically under a style rule. But this should
+         * also work on a similar structure that might be cached directly
+         * under an element, e.g. a node might have a `style` property that
+         * holds all its effective styles, for example:
+         *   foundStyleValue = getValueFromStyleDeclarations( myProp, el.style );
+         *
+         * TODO: Return raw or constrained (by styleguide) value?
+         */
+        var propNameSeries = propPath.split('.');  // typically an array of one
+        // pop the first container or value from style object
+        var testObj = ko.utils.unwrapObservable(styleInfo);
+        /*
+        console.log('=====');
+        console.log(propNameSeries);
+        console.log('testObj: <'+ typeof(testObj)  +'>:');
+        console.log(testObj);
+        */
+        $.each(propNameSeries, function(i, pn) {
+            // unpack any remaining names...
+            /*
+            console.log('  i: <'+ typeof(i)  +'>: '+ i);
+            console.log('  pn: <'+ typeof(pn)  +'>: '+ pn);
+            */
+            if (!pn in testObj) {
+                console.error("getValueFromStyleDeclarations =(): member '"+ pn +"' not found for style '"+ propPath +"'");
+                console.error(obj.style);
+                return;
+            }
+            rawValue = ko.utils.unwrapObservable(testObj[pn]);
+            testObj = rawValue;  // in case we're going deeper
+            /*
+            console.log('NEW testObj? <'+ typeof(testObj)  +'>:');
+            console.log(testObj);
+            console.log('?????');
+            */
+        });
+        var constrainedValue = stylist.ill.getConstrainedStyle(propPath, rawValue);
+        /*
+        console.log('RETURNING constrainedValue <'+ typeof(constrainedValue) +'>:');
+        console.log(constrainedValue);
+        */
+        return constrainedValue;
+    }
     /* TODO: Capture piecemeal style decisions (from UI? or Vega spec?) as TreeSS
      *  - capture everything we can as TreeSS (no guarantees!)
      *  - build on existing TreeSS sheet/cascade, if found
@@ -211,7 +332,11 @@ var TreeSS = function(window, document, $, ko, stylist) {
         getIllustrationStylePropertyForTreeSSName: getIllustrationStylePropertyForTreeSSName,
         applyStylesheetToCurrentStyle: applyStylesheetToCurrentStyle,
         currentStyleToStylesheet: currentStyleToStylesheet,
-        postcss: postcss  // TODO: REMOVE THIS
+        postcss: postcss,  // TODO: REMOVE THIS
+        buildGatheringFunction: buildGatheringFunction,
+        getMatchingStyleRules: getMatchingStyleRules,
+        getParentIllustrationElement: getParentIllustrationElement,
+        getValueFromStyleDeclarations: getValueFromStyleDeclarations
     };
 }(window, document, $, ko, stylist);
 

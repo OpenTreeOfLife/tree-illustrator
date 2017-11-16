@@ -2477,6 +2477,17 @@ function userIsLoggedIn(callback) {
     return true;  // treat as "true" by default, e.g. Jupyter notebook
 }
 
+var illustrationJSONIsDeprecated = function(illustrationJSON) {
+    /* Test illustration JSON (prior to loading and KO mapping!) to see if it
+     * conforms to the current format.
+     */
+    if (! $.isArray(illustrationJSON.style)) {
+        // older format (before ordered style rules) used a simple object
+        return true;
+    }
+    return false;
+}
+
 // manage illustrations (using an adapter with API methods, already loaded)
 var currentIllustrationList = null;
     // keep the latest ordered array (with positions, names, descriptions)
@@ -2844,23 +2855,6 @@ function toggleSaveOptionDetails(clicked) {
     $currentOptionPanel.find('.option-details').toggle();
 }
 
-/*
-function gatherStaticInputData() {
-    // TODO: Return an array of objects with .path, .value, other sensible properties
-    return [ ];
-}
-
-function gatherAllInputData() {
-    // TODO: Return an array of objects with .path, .value, other sensible properties
-    return [ ];
-}
-
-function gatherAllTransformData() {
-    // TODO: Return an array of objects with .path, .value, other sensible properties
-    return [ ];
-}
-*/
-
 function loadArchiveFromChosenFile( vm, evt ) {
     // First param (corresponding view-model data) is probably empty; focus on the event!
     // ASSUME we're in the storage-options popup.
@@ -2932,8 +2926,16 @@ function loadArchiveFromChosenFile( vm, evt ) {
                                                    initialCache[ zipEntry.name ] = data;
                                            }
                                            if (zipEntriesToLoad === 0) {
-                                               // we've read in all the ZIP data! open this illustration
-                                               // (setting its initial cache) and close this popup
+                                               /* We've read in all the ZIP data! Test the illustration
+                                                * to see if it complies with this version of Tree  Illustrator.
+                                                */
+                                               if (illustrationJSONIsDeprecated(mainIllustrationJSON)) {
+                                                   // Explain to the user and abort.
+                                                   alert("Sorry, this illustration uses an older format that is no longer supported.");
+                                                   $('#storage-options-popup').modal('hide');
+                                                   return;
+                                               }
+                                               // Load the illustration (setting its initial cache) and close this popup
                                                loadIllustrationData( mainIllustrationJSON, initialCache, 'EXISTING');
                                                // update last-saved info
                                                //updateLastSavedInfo('LOCAL_FILESYSTEM', 'UNKNOWN');
@@ -3049,9 +3051,6 @@ var api = [
     'enterFullScreen',
     'exitFullScreen',
     'ill',
-    //'gatherStaticInputData',
-    //'gatherAllInputData',
-    //'gatherAllTransformData',
     'loadArchiveFromChosenFile',
     'getDefaultArchiveFileName',
     'saveArchiveWithSuggestedName',

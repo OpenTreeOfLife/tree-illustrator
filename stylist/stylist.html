@@ -301,14 +301,14 @@
                     <label for="#style-printsize-width-field">width</label> 
                     <input id="style-printsize-width-field" type="text" value="?"
                            style="width: 3.0em;"
-                           data-bind="value: style.printSize.width,
+                           data-bind="value: getEffectiveStyle($data, 'printSize.width'),
                                       valueUpdate: ['afterkeydown','input'],
                                       event: {keyup: updatePrintSizeChooser, change: updatePrintSizeChooser}" />&nbsp;
 
                     <label for="#style-printsize-height-field">height</label> 
                     <input id="style-printsize-height-field" type="text" value="?"
                            style="width: 3.0em;"
-                           data-bind="value: style.printSize.height,
+                           data-bind="value: getEffectiveStyle($data, 'printSize.height'),
                                       valueUpdate: ['afterkeydown','input'],
                                       event: {keyup: updatePrintSizeChooser, change: updatePrintSizeChooser}" />
 
@@ -322,7 +322,7 @@
                                       ],
                                       optionsText: 'label',
                                       optionsValue: 'value',
-                                      value: style.printSize.units,
+                                      value: getEffectiveStyle($data, 'printSize.units'),
                                       event: {change: updatePrintSizeChooser}" >
                     </select>
 

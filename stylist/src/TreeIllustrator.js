@@ -3,7 +3,8 @@
  */
 
 var utils = require('./ti-utils.js'),
-    stylist = require('./stylist.js');
+    stylist = require('./stylist.js'),
+    TreeSS = require('./TreeSS.js');
 
 //global.stylist = stylist;
 
@@ -150,7 +151,6 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         // clear provenance
         var filtered = {};
         $.each(cache, function(cachePath, itemInfo) {
-            debugger;
             if(cachePath.match(/^input\/.*/) &&
                !(itemInfo.src)) {   // 'src' is missing or empty string
                 filtered[ cachePath ] = itemInfo;
@@ -542,9 +542,13 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             }
             if (selectedSize.units) {
                 // Custom size should retain current settings
-                self.style.printSize.width( selectedSize.width() );
-                self.style.printSize.height( selectedSize.height() );
-                self.style.printSize.units( selectedSize.units() );
+                var docRule = self.style().find(function(rule, i) {
+                    return (rule.selector() === 'illustration');
+                });
+                var docStyles = docRule.declarations;
+                docStyles.printSize.width( selectedSize.width() );
+                docStyles.printSize.height( selectedSize.height() );
+                docStyles.printSize.units( selectedSize.units() );
             }
 
             // update visible canvas and d3 viz
@@ -557,9 +561,9 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                 function(o) {
                     if (!('units' in o)) return false; // 'Custom size' never matches
                     // NOTE use of != instead of !== below, because "11" == 11
-                    if (o.units() != self.style.printSize.units()) return false;
-                    if (o.width() != self.style.printSize.width()) return false;
-                    if (o.height() != self.style.printSize.height()) return false;
+                    if (o.units() != self.getEffectiveStyle(self, 'printSize.units')) return false;
+                    if (o.width() != self.getEffectiveStyle(self, 'printSize.width')) return false;
+                    if (o.height() != self.getEffectiveStyle(self, 'printSize.height')) return false;
                     return true;
                 }
             )[0];
@@ -584,7 +588,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             return matchingSize;
         }
         self.unitsFullName = ko.computed(function() {
-            switch( self.style.printSize.units() ) {
+            switch( self.getEffectiveStyle(self, 'printSize.units') ) {
                 case units.INCHES:
                     return "inches"
                 case units.CENTIMETERS:
@@ -592,7 +596,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             }
         }, self, {deferEvaluation:true});
         self.unitsDisplayAbbreviation = ko.computed(function() {
-            switch( self.style.printSize.units() ) {
+            switch( self.getEffectiveStyle(self, 'printSize.units') ) {
                 case units.INCHES:
                     return "in."
                 case units.CENTIMETERS:
@@ -600,7 +604,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             }
         }, self, {deferEvaluation:true});
         self.unitsCssSuffix = ko.computed(function() {
-            switch( self.style.printSize.units() ) {
+            switch( self.getEffectiveStyle(self, 'printSize.units') ) {
                 case units.INCHES:
                     return "in"
                 case units.CENTIMETERS:
@@ -666,11 +670,12 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             } else {
                 // echo the new size (in pt) as inches/cm
                 chosenSize = parseFloat(chosenSize);
-                var convertedSize = self.style.printSize.units() === units.INCHES ?
+                var currentUnits = self.getEffectiveStyle(self, 'printSize.units');
+                var convertedSize = currentUnits === units.INCHES ?
                     stylist.pointsToInches( chosenSize ) :
                     stylist.pointsToCentimeters( chosenSize );
                 convertedSize = convertedSize.toFixed(2);
-                var unitSuffix = self.style.printSize.units() === units.INCHES ?
+                var unitSuffix = currentUnits === units.INCHES ?
                     'inches' : 'cm';
                 html = 'pt &nbsp;('+ convertedSize +' '+ unitSuffix +')';
             }
@@ -687,11 +692,12 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             } else {
                 // echo the new size (in pt) as inches/cm
                 chosenSize = parseFloat(chosenSize);
-                var convertedSize = self.style.printSize.units() === units.INCHES ?
+                var currentUnits = self.getEffectiveStyle(self, 'printSize.units');
+                var convertedSize = currentUnits === units.INCHES ?
                     stylist.pointsToInches( chosenSize ) :
                     stylist.pointsToCentimeters( chosenSize );
                 convertedSize = convertedSize.toFixed(2);
-                var unitSuffix = self.style.printSize.units() === units.INCHES ?
+                var unitSuffix = currentUnits === units.INCHES ?
                     'inches' : 'cm';
                 html = 'pt &nbsp;('+ convertedSize +' '+ unitSuffix +')';
             }
@@ -734,22 +740,6 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             }
         }
 
-        /* TODO: Move this to TreeSS.js? */
-        var buildGatheringFunction = function(selector) {
-            /* Convert a TreeSS selector string into a function for gathering
-             * the matching elements in an Illustration.
-             *
-             * For best performance, we should cache the latest list of
-             * elements, but also allow easy clearing as the illustration
-             * changes).
-             */
-            var gatherer = function() {
-                return [ ]; // always empty for now
-            }
-            gatherer.cachedResult = null;  // ad-hoc property allowed here?
-            return gatherer;
-        }
-
         /* Instead of explicitly defining all possible members, let's
          * trust the ko.mapping plugin to handle loading and saving 
          * illustration data from JS(ON), with mapping options to handle
@@ -777,7 +767,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     var dataParent = options.parent;
                     var _illustration = self;
                     // These are simple objects with a couple of extra tricks
-                    data.gatherMatchingElements = buildGatheringFunction(data.selector);
+                    data.gatherMatchingElements = TreeSS.buildGatheringFunction(data.selector);
                     //data.cachedMatchingElements = null;
                     // recurse to apply normal mapping to substructures
                     return ko.mapping.fromJS(data);
@@ -951,57 +941,41 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
          * the active style guide.
          */
         getEffectiveStyle: function(obj, propName) {
-            var self = this;
-            if ('style' in obj) {
-                /* Get its value (whether it's a KO observable or simple value)
-                 * N.B. We also need to handle nested properties, e.g. if
-                 * propName is 'printSize.height', we might find a nested
-                 * object `printSize` with a `height` property.
-                 */
-                var propNameSeries = propName.split('.');  // typically an array of one
-                // pop the first container or value from style object
-                var testObj = obj.style;
-                console.log('=====');
-                console.log(propNameSeries);
-                console.log('testObj: <'+ typeof(testObj)  +'>:');
-                console.log(testObj);
-                $.each(propNameSeries, function(i, pn) {
-                    // unpack any remaining names...
-                    console.log('  i: <'+ typeof(i)  +'>: '+ i);
-                    console.log('  pn: <'+ typeof(pn)  +'>: '+ pn);
-                    if (!pn in ko.utils.unwrapObservable(testObj)) {
-                        console.error("getEffectiveStyle(): member '"+ pn +"' not found for style '"+ propName +"'");
-                        console.error(obj.style);
-                        return;
-                    }
-                    rawValue = ko.utils.unwrapObservable(testObj)[pn];
-                    testObj = rawValue;  // in case we're going deeper
-                    console.log('NEW testObj: <'+ typeof(testObj)  +'>:');
-                    console.log(testObj);
-                    console.log('-----');
-                });
-                var constrainedValue = self.getConstrainedStyle(propName, rawValue);
-                return constrainedValue;
+            var self = this;  // ie, the current Illustration
+            var docRule = self.style().find(function(rule, i) {
+                return (rule.selector() === 'illustration');
+            });
+            var docStyles = docRule.declarations;
+            // Test for cached "local" styles on the element
+            var cachedStyleValue = null;
+            if ('cachedStyle' in obj) {
+                // Fetch the cached value for this property
+                cachedValue = TreeSS.getValueFromStyleDeclarations( propName, obj.cachedStyle );
+                if (cachedValue !== null) {
+                    return cachedValue;
+                }
             }
-            // The requested property wasn't found locally; check the next "innermost" context 
-            if (obj instanceof IllustratedTree) {
-                return self.getEffectiveStyle(self, propName);  // check the Illustration itself
-            } else if (obj instanceof Illustration) {
-                console.error("getEffectiveStyle(): style '"+ propName +"' not found in this illustration's style:");
-                console.error(obj.style);
-                return;
-            } else if (obj instanceof SupportingDataset) {
-                console.error("getEffectiveStyle(): SupportingDataset is not yet supported!");
-                return;
-            } else if (obj instanceof Ornament) {
-                console.error("getEffectiveStyle(): Ornament is not yet supported!");
-                return;
-            // TODO: ADD cases for node, edge, clade, node label?
-            } else {
-                console.error("getEffectiveStyle(): unexpected context object:");
-                console.error(obj);
+            // No cached value found! Check the current style rules for best match...
+
+            /* Check each style rule to see if this element is selected.
+             * N.B. in our simple implementation, the last matching style rule
+             * wins (vs. a smart test for the "most specific" selector).
+             */
+            var matchingRules = TreeSS.getMatchingStyleRules(obj);
+            var foundStyleValue = null;
+            $.each(matchingRules, function(i, rule) {
+                foundStyleValue = TreeSS.getValueFromStyleDeclarations( propName, rule.declarations );
+            });
+            if (foundStyleValue) {
+                return foundStyleValue;
+            }
+            // still here? move to parent element and try again!
+            var parentElement = TreeSS.getParentIllustrationElement(obj);
+            if (!parentElement) {
+                console.error("getEffectiveStyle(): style '"+ propName +"' not found in this illustration!");
                 return;
             }
+            return self.getEffectiveStyle(parentElement, propName);
         },
         getConstrainedStyle: function (propName, rawValue) {
             var self = this;
