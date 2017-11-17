@@ -210,14 +210,27 @@ var TreeSS = function(window, document, $, ko, stylist) {
          * elements, but also allow easy clearing as the illustration
          * changes).
          */
+        var cachedResult = null;
         // Check for possible *multiple* selectors whose results must be joined
         var selectors = selector.split(',');
         // TODO: Use PostCSS selector plugin to do this more safely?
-        var gatherer = function() {
+        var gatherer = function(options) {
+            options = options || {CLEAR_CACHE: false};
 
-            // return just the Illustration
-            return [stylist.ill];  // TODO: remove this!
+            // Clear cache on demand (and abort without new result)
+            if (options.CLEAR_CACHE) {
+                cachedResult = null;
+                // TODO: Continue and return fresh result?
+                return null;
+            }
 
+            // Return cached result, if any (else refresh this now)
+            if ($.isArray(cachedResult)) {
+                return cachedResult;
+            }
+
+            // Build (and cache) the list of matching elements
+            var matches = [stylist.ill];  // TODO: should start empty!
             /*
             var resultSets = [ ];
             $.each(selectors, function(i, selector) {
@@ -225,8 +238,10 @@ var TreeSS = function(window, document, $, ko, stylist) {
             });
             return resultSets.joinedorsomething; // always empty for now
             */
+
+            cachedResult = matches;
+            return cachedResult;
         }
-        gatherer.cachedResult = null;  // ad-hoc property allowed here?
         return gatherer;
     }
     var getMatchingStyleRules = function(element) {
