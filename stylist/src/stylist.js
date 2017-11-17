@@ -2477,6 +2477,20 @@ function userIsLoggedIn(callback) {
     return true;  // treat as "true" by default, e.g. Jupyter notebook
 }
 
+var fixUpOlderIllustration = function(illustrationJSON) {
+    // Look for old-style JSON and update, if possible
+    if (! $.isArray(illustrationJSON.style)) {
+        // older format (before ordered style rules) used a simple object
+        var oldStyleObject = illustrationJSON.style;
+        // convert this to an array with just one (global) style rule
+        var docRule = {
+            selector: "illustration",
+            declarations: oldStyleObject
+        };
+        illustrationJSON.style = [docRule];
+    }
+}
+
 var illustrationJSONIsDeprecated = function(illustrationJSON) {
     /* Test illustration JSON (prior to loading and KO mapping!) to see if it
      * conforms to the current format.
@@ -2929,6 +2943,7 @@ function loadArchiveFromChosenFile( vm, evt ) {
                                                /* We've read in all the ZIP data! Test the illustration
                                                 * to see if it complies with this version of Tree  Illustrator.
                                                 */
+                                               fixUpOlderIllustration(mainIllustrationJSON);
                                                if (illustrationJSONIsDeprecated(mainIllustrationJSON)) {
                                                    // Explain to the user and abort.
                                                    alert("Sorry, this illustration uses an older format that is no longer supported.");
