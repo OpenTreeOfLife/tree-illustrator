@@ -244,6 +244,18 @@ var TreeSS = function(window, document, $, ko, stylist) {
         }
         return gatherer;
     }
+    var clearAllStyleCaches = function() {
+        // Walk the style rules, clearing all cached results 
+        $.each( stylist.ill.style(), function(i, rule) {
+            // Clear per-element `cachedStyle` object, if any
+            var oldMatches = rule.gatherMatchingElements();
+            $.each(oldMatches, function(i, el) {
+                delete el.cachedStyle;
+            });
+            // Clear cached result from its "gathering" function
+            rule.gatherMatchingElements({CLEAR_CACHE: true});
+        });
+    }
     var getMatchingStyleRules = function(element) {
         /* Which rules will select this tree/node/whatever? */
         var matchingRules = [ ];
@@ -349,6 +361,7 @@ var TreeSS = function(window, document, $, ko, stylist) {
         currentStyleToStylesheet: currentStyleToStylesheet,
         postcss: postcss,  // TODO: REMOVE THIS
         buildGatheringFunction: buildGatheringFunction,
+        clearAllStyleCaches: clearAllStyleCaches,
         getMatchingStyleRules: getMatchingStyleRules,
         getParentIllustrationElement: getParentIllustrationElement,
         getValueFromStyleDeclarations: getValueFromStyleDeclarations
