@@ -8,7 +8,8 @@ var utils = require('./ti-utils.js'),
     stylist = require('./stylist.js'),
     //postcss = require('postcss-js'),  // limited parsing of AST only
     postcss = require('postcss'),
-    prefixer = require('autoprefixer')
+    prefixer = require('autoprefixer'),
+    selectorparser = require('postcss-selector-parser'),
     treess = require('./postcss-treess.js'),
     TreeIllustrator = require('./TreeIllustrator.js');
 
@@ -196,13 +197,24 @@ var TreeSS = function(window, document, $, ko, stylist) {
     var treessProcessor = postcss()
         .use(prefixer)
         //.use(treess({illustration: stylist.ill}))   // TODO: set plugin defaults?
+        //.use(selectorparser, {updateSelector: true})
         .use(treess);
         // list more plugins here?
+
+    /* Use PostCSS for smarter parsing of our style selectors */
+    var selectorProcessor = selectorparser();
+    /* Do we need to modify these selectors? (N.B. this is not required for
+     * deep parsing of selectors.)
+    var transform = function(selectors) {
+        console.log(selectors);
+    };
+    var selectorProcessor = selectorparser(transform);  // options
+     */
 
     /*
      * Support functions to interpret TreeSS selectors in Tree Illustrator
      */
-    var buildGatheringFunction = function(selector) {
+    var buildGatheringFunction = function(selectorString) {
         /* Convert a TreeSS selector string into a function for gathering
          * the matching elements in an Illustration.
          *
@@ -211,39 +223,179 @@ var TreeSS = function(window, document, $, ko, stylist) {
          * changes).
          */
         var cachedResult = null;
-        // Check for possible *multiple* selectors whose results must be joined
-        var selectors = selector.split(',');
+        var ast = selectorProcessor.astSync(selectorString);
         // TODO: Use PostCSS selector plugin to do this more safely?
         var gatherer = function(options) {
             options = options || {CLEAR_CACHE: false};
 
+            console.log(">>> GATHERING elements that match '"+ selectorString +"'...");
             // Clear cache on demand (and abort without new result)
             if (options.CLEAR_CACHE) {
                 cachedResult = null;
                 // TODO: Continue and return fresh result?
+                console.log("    CLEARING CACHE for this selector");
                 return null;
             }
 
             // Return cached result, if any (else refresh this now)
             if ($.isArray(cachedResult)) {
+                console.log("    USING CACHED VALUE for this selector");
                 return cachedResult;
             }
 
-            // Build (and cache) the list of matching elements
-            var matches = [stylist.ill];  // TODO: should start empty!
-            /*
-            var resultSets = [ ];
-            $.each(selectors, function(i, selector) {
-                resultSets.push(matchingElements);
+            // Build (and cache) the list of elements matching this rule.
+            // N.B. there might be *multiple* selectors whose results must be joined!
+            var ruleMatchingElements = [ ];
+            console.log("    WALKING the AST to find elements...");
+            ast.each(function(item, i) {
+                console.log("      AST item, a "+ item.type +" in position ("+ i +")...");
+                /*
+                console.log("      position: "+ i);
+                console.log(item);
+                */
+                if (item.type == 'selector') {
+                    //item.walk(function(i2, node) {...}
+                    /* Avoid `<selector>.walk()` methods here, since they won't distinguish
+                     * between superficial and "deeper" selectors, e.g. within
+                     * a Pseudo element like ":tree(3)"
+                     */
+                    var selMatchingElements = [ ],  // conclusive matches only
+                        contextElements = null,     // while walking, these have matched so far...
+                        activeCombinator = null;    // keep track of some nuances as we loop
+                        //activeQualifier = null;
+                    $.each(item.nodes, function(i2, node) {
+                        if ($.isArray(contextElements) && (contextElements.length === 0)) {
+                            // nothing matched the prior step; bail out w/ no new matches
+                            return false;
+                        }
+                        if (!$.isArray(contextElements)) {
+                            // just staring with this selector; create the empty array now 
+                            contextElements = [ ];
+                        }
+                        console.log("          SELECTOR CHILD, a "+ node.type +" in position ("+ i +")...");
+                        /* Handle all element types, see https://github.com/postcss/postcss-selector-parser/blob/master/API.md#nodetype
+                         * See also https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors
+                         *
+                         * N.B. that some container types (root, selector,
+                         * pseudo) have their own `nodes` collection.
+                         */
+                        console.log("            its value: "+ node.value);
+                        /*
+                        contextElements = processSelectorNode(
+                            contextElements, 
+                            node, 
+                            activeCombinator
+                        );
+                        */
+                        /*
+                        if (activeCombinator) {
+                            contextElements = applyCombinator(contextElements, activeCombinator);
+                        } else {
+                            contextElements = applyFilter(contextElements, node, activeCombinator);
+                        }
+                        */
+                        switch( node.type ) {
+                            case 'tag':         // `illustration`, `tree`, `node`
+                                var elementType = node.value;
+                                /*
+                                contextElements = processSelectorNode( elementType, contextElements );
+                                contextElements = applyFilter(contextElements, );
+                                contextElements = applyCombinator(contextElements, );
+                                */
+                                switch( elementType ) {
+                                    case 'illustration':
+                                            contextElements = [ ];
+                                        break;
+                                    case 'tree':
+                                        if (contextElements) {
+                                            // nested illustrations aren't possible
+                                            return getDescendants();
+                                        } else {
+                                            return [stylist.ill];
+                                        }
+                                        break;
+                                    case 'clade':
+                                        break;
+                                    case 'node':
+                                        break;
+                                    default:
+                                }
+                                break;
+                            case 'attribute':   // `[posterior-support >= 0.75]`
+                            case 'class':       // `.highlight-3`
+                            case 'comment':
+                            case 'root':        // a simple container of nodes
+                            case 'universal':   // `*` (matches any element)
+                            case 'string':      // found in quoted args `:bar(3, "A")`
+                            case 'id':          // `#foo`
+                            case 'selector':    // appears *within* a Pseudo with parens/args
+                                console.warn('!!! not-yet-implemented AST type: '+ node.type);
+                                break;
+                            case 'combinator':  // `>`, `+`, `{NON-EMPTY WHITESPACE}`
+                                // stash this and keep going to the next item...
+                                activeCombinator = node;
+                                console.log('... NEW activeCombinator: ');
+                                console.log(node);
+                                break;
+                            case 'pseudo':      // `:tree(2)`, `::adaxial-leaf`
+                                // filter the current matches that match this test
+                                //activeQualifier = node;
+                                //console.log('... NEW activeQualifier: ');
+                                console.log('... filtering with this qualifier: ');
+                                console.log(node);
+                                break;
+                            case 'nesting':
+                                // Not currently supporte! See https://tabatkins.github.io/specs/css-nesting/#motivation
+                                console.warn('!!! unsupported AST type: '+ node.type);
+                                break;
+                            default:
+                                console.warn('!!! unknown AST type: '+ node.type);
+                        }
+                    })
+                    // Append all matching elements to our main collection (incl. dupes)
+                    // N.B. this modifies the first array in place.
+                    $.merge(ruleMatchingElements, selMatchingElements);
+                }
             });
-            return resultSets.joinedorsomething; // always empty for now
-            */
+            // Remove any duplicate elements (modifies array in place)
+            $.unique(ruleMatchingElements);
 
-            cachedResult = matches;
+            // Update my cache and return
+            cachedResult = ruleMatchingElements;
             return cachedResult;
         }
         return gatherer;
     }
+    /* More primitive support functions for element selection */
+    var processSelectorNode = function(contextElements, node) {
+        //options = options || {};
+        switch (node.type === 'combinator') {
+        }
+        if (activeCombinator) {
+            // return matching children/descendants/siblings of context elements
+            switch(activeCombinator.value) {
+                case '>':       // return matching children (direct children only!)
+                    break;
+                case '+':
+                    break;
+                case '~':
+                    break;
+                case ' ':       // return matching 
+                default:
+            }
+        } else {
+            // filter the current context elements, return a subset
+        }
+    }
+    var applyFilter = function(contextElements, filter) {
+        var matches = [ ];
+        return matches; 
+    }
+    var applyCombinator = function(contextElements, combinator) {
+        var matches = [ ];
+        return matches; 
+    }
+
     var clearAllStyleCaches = function() {
         // Walk the style rules, clearing all cached results 
         $.each( stylist.ill.style(), function(i, rule) {
@@ -360,6 +512,7 @@ var TreeSS = function(window, document, $, ko, stylist) {
         applyStylesheetToCurrentStyle: applyStylesheetToCurrentStyle,
         currentStyleToStylesheet: currentStyleToStylesheet,
         postcss: postcss,  // TODO: REMOVE THIS
+        selectorProcessor: selectorProcessor,  // TODO: REMOVE THIS
         buildGatheringFunction: buildGatheringFunction,
         clearAllStyleCaches: clearAllStyleCaches,
         getMatchingStyleRules: getMatchingStyleRules,
