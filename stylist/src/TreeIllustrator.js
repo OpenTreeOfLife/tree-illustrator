@@ -970,7 +970,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                 return foundStyleValue;
             }
             // still here? move to parent element and try again!
-            var parentElement = TreeSS.getParentIllustrationElement(obj);
+            var parentElement = TreeSS.getStyleParent(obj);
             if (!parentElement) {
                 console.error("getEffectiveStyle(): style '"+ propName +"' not found in this illustration!");
                 return;

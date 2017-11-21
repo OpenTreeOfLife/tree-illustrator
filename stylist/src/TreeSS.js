@@ -47,7 +47,7 @@ var TreeSS = function(window, document, $, ko, stylist) {
     };
 
     /*
-     * Class methods 
+     * Class methods
      */
 
     /* Use the mappings above to find correspondences between TreeSS and
@@ -123,7 +123,7 @@ var TreeSS = function(window, document, $, ko, stylist) {
                          * Illustration model, and attach it to this rule in the
                          * PostCSS AST (unless there's one already here).
                          */
-                        rule.selectMatchingElements = filterFromTreeSSSelector( rule.selector );  // TODO: parse/normalize this string?
+                        rule.selectMatchingElements = filterFromTreeSSSelector( rule.selector );
                     } else {
                         console.log("FOUND an existing selector function!");
                     }
@@ -254,95 +254,95 @@ var TreeSS = function(window, document, $, ko, stylist) {
                 console.log(item);
                 */
                 if (item.type == 'selector') {
-                    //item.walk(function(i2, node) {...}
+                    //item.walk(function(nodePos, node) {...}
                     /* Avoid `<selector>.walk()` methods here, since they won't distinguish
                      * between superficial and "deeper" selectors, e.g. within
                      * a Pseudo element like ":tree(3)"
                      */
-                    var selMatchingElements = [ ],  // conclusive matches only
-                        contextElements = null,     // while walking, these have matched so far...
-                        activeCombinator = null;    // keep track of some nuances as we loop
-                        //activeQualifier = null;
-                    $.each(item.nodes, function(i2, node) {
-                        if ($.isArray(contextElements) && (contextElements.length === 0)) {
-                            // nothing matched the prior step; bail out w/ no new matches
-                            return false;
-                        }
-                        if (!$.isArray(contextElements)) {
-                            // just staring with this selector; create the empty array now 
-                            contextElements = [ ];
-                        }
+                    var selMatchingElements = [ ];  // this list is shaped along the way
+                    $.each(item.nodes, function(nodePos, node) {
                         console.log("          SELECTOR CHILD, a "+ node.type +" in position ("+ i +")...");
+                        console.log("            its value: "+ node.value);
                         /* Handle all element types, see https://github.com/postcss/postcss-selector-parser/blob/master/API.md#nodetype
                          * See also https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors
                          *
                          * N.B. that some container types (root, selector,
                          * pseudo) have their own `nodes` collection.
+                         *
+                         * Most node types will just winnow down the current
+                         * set of matched elements. Combinators will instead
+                         * move to their descendants/siblings/etc.
                          */
-                        console.log("            its value: "+ node.value);
-                        /*
-                        contextElements = processSelectorNode(
-                            contextElements, 
-                            node, 
+
+                        /* Helper methods needed? Or do it all inline below?
+                         *
+                        selMatchingElements = processSelectorNode(
+                            selMatchingElements,
+                            node,
                             activeCombinator
                         );
-                        */
-                        /*
                         if (activeCombinator) {
-                            contextElements = applyCombinator(contextElements, activeCombinator);
+                            selMatchingElements = applyCombinator(selMatchingElements, activeCombinator);
                         } else {
-                            contextElements = applyFilter(contextElements, node, activeCombinator);
+                            selMatchingElements = applyFilter(selMatchingElements, node, activeCombinator);
                         }
+
+                        selMatchingElements = processSelectorNode( elementType, selMatchingElements );
+                        selMatchingElements = applyFilter(selMatchingElements, );
+                        selMatchingElements = applyCombinator(selMatchingElements, );
                         */
+
                         switch( node.type ) {
                             case 'tag':         // `illustration`, `tree`, `node`
+                                // Filter to just the elements of the specified type
                                 var elementType = node.value;
-                                /*
-                                contextElements = processSelectorNode( elementType, contextElements );
-                                contextElements = applyFilter(contextElements, );
-                                contextElements = applyCombinator(contextElements, );
-                                */
                                 switch( elementType ) {
                                     case 'illustration':
-                                            contextElements = [ ];
-                                        break;
-                                    case 'tree':
-                                        if (contextElements) {
-                                            // nested illustrations aren't possible
-                                            return getDescendants();
+                                        if (selMatchingElements.length === 0) {
+                                            // auto-select the current illustration
+                                            selMatchingElements = [stylist.ill];
                                         } else {
-                                            return [stylist.ill];
+                                            // nothing else makes sense; select nothing
+                                            selMatchingElements = [ ];
                                         }
                                         break;
+                                    case 'tree':
+                                        selMatchingElements = selMatchingElements.filter(function(el) {
+                                            return (el instanceof TreeIllustrator.IllustratedTree);
+                                        });
+                                        break;
                                     case 'clade':
-                                        break;
                                     case 'node':
-                                        break;
                                     default:
+                                        console.error('!!! not-yet-implemented TAG SELECTOR: '+ node.value);
+                                        break;
                                 }
+                                break;
+                            case 'universal':   // `*` (matches any element)
+                                // This filter is a no-op; keep going with same selected elements!
+                                break;
+                            case 'combinator':  // `>`, `+`, `{NON-EMPTY WHITESPACE}`
+                                // stash this and keep going to the next item...
+                                console.log('... applying this combinator: ');
+                                console.log(node);
+                                selMatchingElements = applyCombinator(selMatchingElements, node);
+                                break;
+                            case 'pseudo':      // `:tree(2)`, `::adaxial-leaf`
+                                // filter the current matches that match this test
+                                console.log('... filtering with this qualifier: ');
+                                console.log(node);
+                                selMatchingElements = selMatchingElements.filter(function(el) {
+                                    return testElementAgainstQualifier(el, node);
+                                });
                                 break;
                             case 'attribute':   // `[posterior-support >= 0.75]`
                             case 'class':       // `.highlight-3`
                             case 'comment':
                             case 'root':        // a simple container of nodes
-                            case 'universal':   // `*` (matches any element)
                             case 'string':      // found in quoted args `:bar(3, "A")`
                             case 'id':          // `#foo`
                             case 'selector':    // appears *within* a Pseudo with parens/args
                                 console.warn('!!! not-yet-implemented AST type: '+ node.type);
-                                break;
-                            case 'combinator':  // `>`, `+`, `{NON-EMPTY WHITESPACE}`
-                                // stash this and keep going to the next item...
-                                activeCombinator = node;
-                                console.log('... NEW activeCombinator: ');
-                                console.log(node);
-                                break;
-                            case 'pseudo':      // `:tree(2)`, `::adaxial-leaf`
-                                // filter the current matches that match this test
-                                //activeQualifier = node;
-                                //console.log('... NEW activeQualifier: ');
-                                console.log('... filtering with this qualifier: ');
-                                console.log(node);
                                 break;
                             case 'nesting':
                                 // Not currently supporte! See https://tabatkins.github.io/specs/css-nesting/#motivation
@@ -351,7 +351,13 @@ var TreeSS = function(window, document, $, ko, stylist) {
                             default:
                                 console.warn('!!! unknown AST type: '+ node.type);
                         }
-                    })
+                        if (selMatchingElements.length === 0) {
+                            // Nothing matches after this step; bail out now w/ empty list!
+                            return false;
+                        }
+                        console.log('... NEW matching elements');
+                        console.log(selMatchingElements);
+                    });
                     // Append all matching elements to our main collection (incl. dupes)
                     // N.B. this modifies the first array in place.
                     $.merge(ruleMatchingElements, selMatchingElements);
@@ -367,70 +373,70 @@ var TreeSS = function(window, document, $, ko, stylist) {
         return gatherer;
     }
     /* More primitive support functions for element selection */
+    var testElementAgainstQualifier = function( el, selectorNode ) {
+        /* Return true if the specified element passes the qualifying test
+         * defined in selectorNode, false otherwise. Typically this node is a
+         * pseudo-selector, possibly with provided arguments, e.g. `:depth(3)`
+         *
+         * TODO: Interpret this based on element type and the semantics of our
+         * expected pseudo-selectors!
+         */
+        return true; // TODO
+    }
+
     var processSelectorNode = function(contextElements, node) {
         //options = options || {};
         switch (node.type === 'combinator') {
         }
         if (activeCombinator) {
-            // return matching children/descendants/siblings of context elements
-            switch(activeCombinator.value) {
-                case '>':       // return matching children (direct children only!)
-                    break;
-                case '+':
-                    break;
-                case '~':
-                    break;
-                case ' ':       // return matching 
-                default:
-            }
         } else {
             // filter the current context elements, return a subset
         }
     }
+    /*
     var applyFilter = function(contextElements, filter) {
         var matches = [ ];
-        return matches; 
+        return matches;
     }
-    var applyCombinator = function(contextElements, combinator) {
-        var matches = [ ];
-        return matches; 
-    }
-
-    var clearAllStyleCaches = function() {
-        // Walk the style rules, clearing all cached results 
-        $.each( stylist.ill.style(), function(i, rule) {
-            // Clear per-element `cachedStyle` object, if any
-            var oldMatches = rule.gatherMatchingElements();
-            $.each(oldMatches, function(i, el) {
-                delete el.cachedStyle;
-            });
-            // Clear cached result from its "gathering" function
-            rule.gatherMatchingElements({CLEAR_CACHE: true});
-        });
-    }
-    var getMatchingStyleRules = function(element) {
-        /* Which rules will select this tree/node/whatever? */
-        var matchingRules = [ ];
-        $.each( stylist.ill.style(), function(i, rule) {
-            var selectedElements = rule.gatherMatchingElements();
-            if ($.inArray(element, selectedElements) !== -1) {
-                matchingRules.push(rule);
+    */
+    var applyCombinator = function(contextElements, combinatorNode) {
+        var matchingElements = [ ];
+        // return matching children/descendants/siblings of all context elements
+        $.each( contextElements, function(i, el) {
+            switch(activeCombinator.value) {
+                case '>':       // return any children (direct children only!)
+                    $.merge( matchingElements, getStyleChildren(el) );
+                    break;
+                case '+':       // return next adjacent sibling, if any
+                    // Hm, 'next sibling' is probably not a useful concept in trees...
+                    console.warn("!!! Unsupported combinator (+) in TreeSS");
+                    break;
+                case '~':       // return any siblings (regardless of relative position)
+                    $.merge( matchingElements, getStyleSiblings(el) );
+                    break;
+                case ' ':       // [any whitespace] return all descendants
+                default:
+                    matchingElements = getStyleDescendants(el, matchingElements);
             }
         });
-        // N.B. that their relative order is preserved.
-        return matchingRules;
+        return matchingElements;
     }
-    var getParentIllustrationElement = function(element) {
+
+    /*
+     * Support methods for gathering elements for TreeSS
+     */
+    function getStyleParent(el) {
         /* Walk "upward" from node to tree, tree to illustration, etc.
          * according to the logic used in TreeSS.
          *
-         * TODO: Should we also check all intermediate nodes/clades?
+         * TODO: If starting from a node or similar, should we respond with
+         * intermediate nodes/clades?
          */
-        if (element instanceof TreeIllustrator.Illustration) {
-            console.warn("getParentIllustrationElement(): Illustration has no parent!");
+        if (el instanceof TreeIllustrator.Illustration) {
+            console.warn("getStyleParent(): Illustration has no parent!");
             return null;
         }
-        if (element instanceof TreeIllustrator.IllustratedTree) {
+        if (el instanceof TreeIllustrator.IllustratedTree) {
             // return its parent Illustration
             return (stylist.ill);
         }
@@ -444,10 +450,95 @@ var TreeSS = function(window, document, $, ko, stylist) {
         }
         // TODO: ADD cases for node, edge, clade, node label?
 
-        console.error("getParentIllustrationElement(): unexpected context element <"+ typeof(element) +">:");
-        console.error(element);
+        console.error("getStyleParent(): unexpected context element <"+ typeof(el) +">:");
+        console.error(el);
         return null;
     }
+    function getStyleChildren(el, elementList) {
+        /* Gather the elements considered my "children" by TreeSS.  This might
+         * include instances of IllustratedTree, or more ephemeral tree features like
+         * e.g. nodes and clades.
+         *
+         * Append these to an existing array, if provided, and return it.
+         */
+        var children = elementList || [ ];
+        if (el instanceof TreeIllustrator.Illustration) {
+            // Add all visible items from my elements list?
+            var visibleChildren = $.filterl(el.elements, function(child) {
+                return (child instanceof TreeIllustrator.IllustratedTree);
+            });
+            return $.merge( children, visibleChildren );
+        }
+        if (el instanceof TreeIllustrator.IllustratedTree) {
+            // TODO: Add root node/clade
+            var rootNode = null;
+            return $.merge( children, [ rootNode ] );
+        }
+        if (el instanceof TreeIllustrator.SupportingDataset) {
+            // don't add to the original list
+            return children;
+        }
+        if (el instanceof TreeIllustrator.Ornament) {
+            // don't add to the original list
+            return children;
+        }
+        // TODO: ADD cases for node, edge, clade, node label?
+
+        console.error("getStyleChildren(): unexpected parent element <"+ typeof(el) +">:");
+        console.error(el);
+        return children;
+    }
+    function getStyleDescendants(el, elementList) {
+        /* Gather all my contained elements (all levels), based on the TreeSS
+         * "DOM". Append these to an existing array, if provided, and return it.
+         */
+        var descendants = elementList || [ ];
+        var children = getStyleChildren(el);
+        $.each(children, function(i, childElement) {
+            $.merge( descendants, getStyleDescendants(childElement) );
+        });
+        // Remove any duplicate elements 
+        // N.B. This also mangles their order in the array!
+        return $.unique(descendants);
+    }
+    function getStyleSiblings(el, elementList) {
+        /* Gather any sibling elements, based on the TreeSS "DOM". Append these
+         * to an existing array, if provided, and return it.
+         */
+        var siblings = elementList || [ ];
+        var parent = getStyleParent(el);
+        if (parent) {
+            $.merge( siblings, getStyleChildren(parent) );
+        }
+        return siblings;
+    }
+
+    var clearAllStyleCaches = function() {
+        // Walk the style rules, clearing all cached results
+        $.each( stylist.ill.style(), function(i, rule) {
+            // Clear per-element `cachedStyle` object, if any
+            var oldMatches = rule.gatherMatchingElements();
+            $.each(oldMatches, function(i, el) {
+                delete el.cachedStyle;
+            });
+            // Clear cached result from its "gathering" function
+            rule.gatherMatchingElements({CLEAR_CACHE: true});
+        });
+    }
+
+    var getMatchingStyleRules = function(element) {
+        /* Which rules will select this tree/node/whatever? */
+        var matchingRules = [ ];
+        $.each( stylist.ill.style(), function(i, rule) {
+            var selectedElements = rule.gatherMatchingElements();
+            if ($.inArray(element, selectedElements) !== -1) {
+                matchingRules.push(rule);
+            }
+        });
+        // N.B. that their relative order is preserved.
+        return matchingRules;
+    }
+
     var getValueFromStyleDeclarations = function(propPath, styleInfo) {
         /* Fetch the value found (if any) at the specified property name or
          * dot-delimited path. In the latter case, we expect to find nested
@@ -516,7 +607,7 @@ var TreeSS = function(window, document, $, ko, stylist) {
         buildGatheringFunction: buildGatheringFunction,
         clearAllStyleCaches: clearAllStyleCaches,
         getMatchingStyleRules: getMatchingStyleRules,
-        getParentIllustrationElement: getParentIllustrationElement,
+        getStyleParent: getStyleParent,
         getValueFromStyleDeclarations: getValueFromStyleDeclarations
     };
 }(window, document, $, ko, stylist);
