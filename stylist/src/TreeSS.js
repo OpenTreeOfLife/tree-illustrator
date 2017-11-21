@@ -75,17 +75,6 @@ var TreeSS = function(window, document, $, ko, stylist) {
         return $.trim(possibleNames[0]);
     }
 
-    /* Translate a TreeSS selector (if possible) into a filter function that
-     * will gather all matching elements in the current Illustration.
-     */
-    var filterFromTreeSSSelector = function(selector) {
-        // TODO: Parse/split/tokenize the selector and return an equivalent function
-        return function() {
-            console.log("Now I'd select elements matching ["+ selector +"] in this Illustration:");
-            console.log(stylist.ill);
-        }
-    }
-
     /* Apply incoming TreeSS string to the current illustration.  N.B. this
      * creates a AST, but treats it as a disposable source of styles for
      * translation into our "native" properties in `<Illustration>.style`.
@@ -99,70 +88,85 @@ var TreeSS = function(window, document, $, ko, stylist) {
         var ast;  // the abstract syntax tree for the resulting styles
         treessProcessor.process(treess, options).then(function(ast) {
             console.log("=== modified AST ===");
-            // show modified AST as a JavaScript object
-            console.log(ast);
+            ///console.log(ast);       // show modified AST as JS object
+            ///console.log(ast.css);   // show modified AST as CSS
             // any warnings to report?
             ast.warnings().forEach(function (warn) {
                 console.warn(warn.toString());
             });
-            // show modified AST again, rendered as CSS
-            console.log(ast.css);
-
             // Look for styles we can apply to the illustration
             ast.root.walkDecls(
                 //options,    // anything useful to pass along here?
                 function(decl, i) {
                     var testStyle = getIllustrationStylePropertyForTreeSSName( decl.prop );
-                    if (!testStyle) { return; }  // we ignore this property name
-                    // OK, this property is interesting. To which elements does it apply?
-                    var rule = decl.parent;
-                    console.log("SELECTOR: "+ rule.selector);
-                    if (!rule.selectMatchingElements) {
-                        console.log("ATTACHING a selector function here...");
-                        /* Create a function that culls selected elements in our
-                         * Illustration model, and attach it to this rule in the
-                         * PostCSS AST (unless there's one already here).
-                         */
-                        rule.selectMatchingElements = filterFromTreeSSSelector( rule.selector );
-                    } else {
-                        console.log("FOUND an existing selector function!");
+                    ///console.log("TESTING for illustration style? "+ decl.prop +" => "+ testStyle);
+                    if (!testStyle) {
+                        // we ignore this property name
+                        ///console.log("..NOT FOUND! skipping ahead to the next...");
+                        return;
                     }
-                    /* Should this just be a chain of filter funcs? e.g.
-                     *   var matchFilter = [ getRootElement, function() {return matchNodesByID('ott2968')}, getNodeNameElement ];
-                     * ... or should we keep the normalized(?) selector string
-                     * as our key, and read/parse it each time we run the
-                     * selector? (maybe it's fast!)
+                    // OK, this property is interesting. To which elements does it apply?
+                    var treessRule = decl.parent;
+                    ///console.log("..FOUND! parent selector is '"+ treessRule.selector +"'");
+                    /* If our illustration's style already includes a rule with
+                     * this selector, add or overwrite the specified style using
+                     * a proper name and value.
                      *
-                     * I mention "key" above since it would be nice to re-unite
-                     * all the property changes tied to the same selector. This
-                     * means we can select once and run several rules, rather
-                     * than repeating the work. Or should we just cache these
-                     * results alongside the filter functions?
+                     * OR, we could simply append new rules with the selector
+                     * provided, even if it's redundant, and populate it with
+                     * translated styles. For now, let's try the former.
                      *
-                     * Maybe we keep the PostCSS AST around after all, just as
-                     * an ordered ruleset that we can use to attach only the
-                     * relevant filters and property changes. If not, we need
-                     * to recreate it in a sparse, skeletal form to support
-                     * frequent, deterministic styling operations.
+                     * Why don't we keep this PostCSS AST around and use it for
+                     * styling? Because the styles that can be expressed in TreeSS
+                     * are a limited subset of Tree Illustrator's styling
+                     * options, so TreeSS is strictly for interchange and
+                     * its parsed rules should disappear once read or written.
                      *
-                     * On second thought, this is not the right approach. As a
-                     * limited subset of Tree Illustrator's styling options,
-                     * TreeSS is strictly for interchange and should disappear
-                     * once read or written. Instead, it would make more sense
-                     * to build on our existing `Illustration.style` object,
-                     * using Knockout to add callable functions (one per
-                     * rule/selector) and any cached elements. Of course, both would
-                     * be dropped when serializing an Illustration back to
-                     * JSON, but the selector strings will be preserved. So of
-                     * course we'll need to be able to translate back and forth
-                     * between selector strings and gathering functions (or at
-                     * least be able to recreate each function based on its
-                     * selector string).
+                     * Instead, we should build on our existing
+                     * `Illustration.style` object, using Knockout(?) to add
+                     * callable functions (one per rule/selector) and any
+                     * cached elements. Of course, both these would be dropped
+                     * when serializing an Illustration back to JSON, but the
+                     * selector strings will be preserved. So each time we load
+                     * an illustration, we'll need to be able to recreate each
+                     * rule's "gathering" function based on its selector
+                     * string.
                      */
+                    var matchingExistingRules = stylist.ill.style().filter(function(existingRule) {
+                        return (existingRule.selector === treessRule.selector);
+                    });
+                    if (matchingExistingRules.length > 1) {
+                        console.error("Not expecting this selector to match more than one rule!");
+                        console.log(matchingExistingRules);
+                    }
+                    var illustrationStyleRule;
+                    if (matchingExistingRules.length === 0) {
+                        // Add a new rule to our live style, and transcribe our compatible TreeSS declarations
+                        //illustrationStyleRule = {};
+                        //stylist.ill.style.push(illustrationStyleRule);
+                        illustrationStyleRule = ko.mapping.fromJS(
+                            { // wrap in 'style' to trigger proper wrapping
+                                style: {
+                                    selector: treessRule.selector,
+                                    declarations: { }
+                                }
+                            },
+                            TreeIllustrator.mappingOptions
+                        ).style;    // ... and unwrap before adding it
+                        stylist.ill.style.push(illustrationStyleRule);
+                    } else {
+                        // Transcribe our compatible TreeSS declarations to the first matching rule
+                        illustrationStyleRule = matchingExistingRules[0];
+                    }
+                    // Add (or overwrite) our "native" element-style property
+                    illustrationStyleRule.declarations[ testStyle ] = ko.observable(decl.value);
+                    // TODO: Translate non-obvious values? Consider units, calculations...
                 }
+
             );
+            ///console.log("AFTER, illustration style:");
+            ///console.log(stylist.ill.style());
         });
-        debugger;
     }
 
     // TODO: Capture the current illustration's style as a TreeSS string
@@ -497,7 +501,7 @@ var TreeSS = function(window, document, $, ko, stylist) {
         $.each(children, function(i, childElement) {
             $.merge( descendants, getStyleDescendants(childElement) );
         });
-        // Remove any duplicate elements 
+        // Remove any duplicate elements
         // N.B. This also mangles their order in the array!
         return $.unique(descendants);
     }
