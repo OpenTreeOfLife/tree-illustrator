@@ -179,6 +179,70 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         return filtered;
     }
 
+    /* When mapping Illustrations, etc. from existing JS objects, we needn't
+     * explicitly define all possible members. Instead, trust the
+     * ko.mapping plugin to handle loading and saving illustration data from
+     * JS(ON), with these mapping options to handle exceptional stuff.
+     */
+    var mappingOptions = {
+        /* Use to handle special cases:
+         *  'ignore' to keep some clutter out of the saved model
+         *  'include' to force view-model properties to be saved
+         *  'copy' to keep simple values simple (vs. observable)
+         *  'observe' ONLY if it's easier to whitelist the observables
+         *  'create' map some elements to object classes
+         *  'update'? convert Dates to ISO date-strings, ints to floats
+         *  'key': pin elements to specified keys
+         * See http://knockoutjs.com/documentation/plugins-mapping.html
+         */
+        'ignore': [ 'constructor' ],
+        'include': [ ],
+        'copy': [ 'vegaSpec' ],
+        // 'observe': [ ], // WARNING: using this flips default mapping!
+        'style': {  // refers to the `style` property in our JSON
+            'create': function(options) {
+                // create each rule with as object instances
+                var data = options.data;
+                var dataParent = options.parent;
+                var _illustration = self;
+                // These are simple objects with a couple of extra tricks
+                data.gatherMatchingElements = TreeSS.buildGatheringFunction(data.selector);
+                //data.cachedMatchingElements = null;
+                // recurse to apply normal mapping to substructures
+                return ko.mapping.fromJS(data);
+            },
+            'key': function(data) {
+                // use 'selector' attribute to pin these?
+                return ko.utils.unwrapObservable(data.selector);
+            }
+        },
+        'elements': {  // refers to the `elements` property in our JSON
+            'create': function(options) {
+                // create these as object instances
+                var data = options.data;
+                var dataParent = options.parent;
+                var _illustration = self;
+                switch(data.metadata.type) {
+                    // pass illustration to get IDs as needed
+                    case 'IllustratedTree':
+                        return new IllustratedTree(_illustration, data);
+                    case 'SupportingDataset':
+                        return new SupportingDataset(_illustration, data);
+                    case 'Ornament':
+                        return new Ornament(_illustration, data);
+                }
+                // keep it simple by default
+                console.warn("Unexpected element type '"+ data.metadata.type +"'! Creating a generic observable...");
+                return ko.observable(data);
+            },
+            'key': function(data) {
+                // use 'id' attribute to pin these
+                return ko.utils.unwrapObservable(data.id);
+            }
+        }
+    };
+
+
     /* Return the data model for a new illustration (our JSON representation) */
     var getNewIllustrationModel = function(options) {
         if (!options) options = {};
@@ -740,68 +804,6 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             }
         }
 
-        /* Instead of explicitly defining all possible members, let's
-         * trust the ko.mapping plugin to handle loading and saving 
-         * illustration data from JS(ON), with mapping options to handle
-         * any exceptional stuff.
-         */
-        var mappingOptions = {
-            /* Use to handle special cases:
-             *  'ignore' to keep some clutter out of the saved model
-             *  'include' to force view-model properties to be saved
-             *  'copy' to keep simple values simple (vs. observable)
-             *  'observe' ONLY if it's easier to whitelist the observables
-             *  'create' map some elements to object classes
-             *  'update'? convert Dates to ISO date-strings, ints to floats
-             *  'key': pin elements to specified keys
-             * See http://knockoutjs.com/documentation/plugins-mapping.html
-             */
-            'ignore': [ 'constructor' ],
-            'include': [ ],
-            'copy': [ 'vegaSpec' ],
-            // 'observe': [ ], // WARNING: using this flips default mapping!
-            'style': {  // refers to the `style` property in our JSON
-                'create': function(options) {
-                    // create each rule with as object instances
-                    var data = options.data;
-                    var dataParent = options.parent;
-                    var _illustration = self;
-                    // These are simple objects with a couple of extra tricks
-                    data.gatherMatchingElements = TreeSS.buildGatheringFunction(data.selector);
-                    //data.cachedMatchingElements = null;
-                    // recurse to apply normal mapping to substructures
-                    return ko.mapping.fromJS(data);
-                },
-                'key': function(data) {
-                    // use 'selector' attribute to pin these?
-                    return ko.utils.unwrapObservable(data.selector);
-                }
-            },
-            'elements': {  // refers to the `elements` property in our JSON
-                'create': function(options) {
-                    // create these as object instances
-                    var data = options.data;
-                    var dataParent = options.parent;
-                    var _illustration = self;
-                    switch(data.metadata.type) {
-                        // pass illustration to get IDs as needed
-                        case 'IllustratedTree':
-                            return new IllustratedTree(_illustration, data);
-                        case 'SupportingDataset':
-                            return new SupportingDataset(_illustration, data);
-                        case 'Ornament':
-                            return new Ornament(_illustration, data);
-                    }
-                    // keep it simple by default
-                    console.warn("Unexpected element type '"+ data.metadata.type +"'! Creating a generic observable...");
-                    return ko.observable(data);
-                },
-                'key': function(data) {
-                    // use 'id' attribute to pin these
-                    return ko.utils.unwrapObservable(data.id);
-                }
-            }
-        };
         /* Map incoming data from a JS object. NOTE that we can also do 
          * this piecemeal to (for example) apply new styles to an illustration.
          *
@@ -835,7 +837,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
 
         applyStyleGuide: function(data) {
             var self = this;
-            ko.mapping.fromJS(data, Illustration.mappingOptions, self.styleGuide);
+            ko.mapping.fromJS(data, mappingOptions, self.styleGuide);
 
             /* Some properties are *forced* (rather then suggested) to comply
              * with the active style guide. 
@@ -1416,7 +1418,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         self.physicalRootX = wrapFieldWithPhysicalUnits(self, 'rootX');
         self.physicalRootY = wrapFieldWithPhysicalUnits(self, 'rootY');
 
-        ko.mapping.fromJS(data, Illustration.mappingOptions, self);
+        ko.mapping.fromJS(data, mappingOptions, self);
 
         // (Un)bundle 'startAngle' and 'endAngle' values used in radialArc
         self.startAngle = ko.computed({
@@ -1768,7 +1770,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
 
         // safely refer to this instance
         var self = this;
-        ko.mapping.fromJS(data, Illustration.mappingOptions, self);
+        ko.mapping.fromJS(data, mappingOptions, self);
 
         // TODO: Based on the element type, offer appropriate styles and constraints
         // TODO: Include options to map selected data to visual style
@@ -2024,7 +2026,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
 
         // safely refer to this instance
         var self = this;
-        ko.mapping.fromJS(data, Illustration.mappingOptions, self);
+        ko.mapping.fromJS(data, mappingOptions, self);
 
         // TODO: Based on the element type, offer appropriate styles and constraints
         // TODO: Include options to map selected data to visual style
@@ -2190,6 +2192,8 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         versionTypes: versionTypes,
         hostApplications: hostApplications,
         storageBackends: storageBackends,
+
+        mappingOptions: mappingOptions,
         cache: cache,
         setCachedData: setCachedData,
         getCachedData: getCachedData,
