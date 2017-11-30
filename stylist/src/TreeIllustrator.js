@@ -954,10 +954,12 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                 // Fetch the cached value for this property
                 cachedValue = TreeSS.getValueFromStyleDeclarations( propName, obj.cachedStyle );
                 if (cachedValue !== null) {
+                    console.log('FOUND cachedValue for style '+ propName +': '+ cachedValue );
                     return cachedValue;
                 }
             }
             // No cached value found! Check the current style rules for best match...
+            console.log('NO cachedValue for style '+ propName );
 
             /* Check each style rule to see if this element is selected.
              * N.B. in our simple implementation, the last matching style rule
@@ -966,16 +968,21 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
             var matchingRules = TreeSS.getMatchingStyleRules(obj);
             var foundStyleValue = null;
             $.each(matchingRules, function(i, rule) {
-                foundStyleValue = TreeSS.getValueFromStyleDeclarations( propName, rule.declarations );
+                // N.B. the last matching rule always wins! (We don't capture rule specificity yet.)
+                var matchingValue = TreeSS.getValueFromStyleDeclarations( propName, rule.declarations );
+                if (matchingValue !== null) {
+                    foundStyleValue = matchingValue;
+                }
             });
-            if (foundStyleValue) {
+            if (foundStyleValue !== null) {
+                // N.B. we want to capture 0 and other "empty" values here, so we check for null only.
                 return foundStyleValue;
             }
             // still here? move to parent element and try again!
             var parentElement = TreeSS.getStyleParent(obj);
             if (!parentElement) {
-                console.error("getEffectiveStyle(): style '"+ propName +"' not found in this illustration!");
-                return;
+                console.error("getEffectiveStyle(): style '"+ propName +"' not found ANYWHERE in this illustration!");
+                return null;
             }
             return self.getEffectiveStyle(parentElement, propName);
         },

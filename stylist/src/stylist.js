@@ -2338,6 +2338,10 @@ function handleChosenLocalFile( illElement, event, currentOperation ) {
     console.log('handleChosenLocalFile ('+ currentOperation +') STARTING...');
     var fileList = event.target.files;      // a FileList
     // For now, we expect just one file!
+    if (fileList.length === 0) {
+        console.log('... but no file was chosen (canceling)');
+        return;     // user cancelled without choosing a file
+    }
     var chosenFile = fileList[0];           // a File
     var reader = new FileReader();
     var $panel,             // UI panel that shows file details
@@ -3003,7 +3007,7 @@ function saveTreeSSToLocalFile() {
     var treess = TreeSS.currentStyleToStylesheet();  // returns a string
     var blob = new Blob([treess], {type: "text/plain;charset=utf-8"});
     // TODO: Consider saving this as 'text/css' instead?
-    var suggestedFileName = (stylist.ill.metadata.name() || "UNTITLED_ILLUSTRATION") +".treess";
+    var suggestedFileName = (stylist.ill.metadata.name() || "UNTITLED_ILLUSTRATION") +".css";
     try {
         FileSaver.saveAs(blob, suggestedFileName);
         alert("Stylesheet saved! Check your local filesystem for its name and location.");
