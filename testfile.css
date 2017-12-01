@@ -1,0 +1,57 @@
+illustration {
+  background-color: #eee;
+}
+tree {
+  edge-color: #333;
+}
+tree:eq(0) {
+  edge-color: #f33; /* red */
+  edge-thickness: 20px;
+}
+tree:eq(1) {
+  edge-color: #33f; /* blue */
+  edge-thickness: 2px;
+}
+:clade(1, test, "foo") {
+  edge-color: #cc3; /* orange */
+}
+tree:eq(0) node label:primary {
+  proximal-margin: 8px; /* vs center of adjacent node */
+  distal-margin: 3px;   /* distance from peripheral data table */
+  /* padding only matters if we're using bg or borders */
+  proximal-padding: 8px ;
+  distal-padding: 4px;
+  background-color: #ffd; /* pale yellow */
+}
+data-table {
+  proximal-margin: 6px;
+  distal-margin: 3px;
+  proximal-padding: 8px ;
+  distal-padding: 4px;
+  transverse-margin: 7px;  /* ASSUMES even padding on both "sides" */
+  transverse-padding: 9px;
+  /* Do we need something more granular? following text orientation?
+      transverse-margin-top
+      margin-top
+      margin-bottom
+      padding-top
+      padding-bottom
+   */
+}
+
+/* 
+ * More exotic selectors, just to test the `postcss-selector-parser` AST 
+div.bar span.foo {
+  font-weight: bold;
+  color: #616;
+}
+div.bar > span.foo {
+  color: #f99;
+}
+tree :clade(1, test, "foo") {
+  color: silver;
+}
+*.foo, div#BAR :baz(1) {
+  color: purple;
+}
+ */
