@@ -531,7 +531,7 @@ prototype.transform = function(input) {
 
     $.each(data.phyloNodes, function(i, node) {
         // Add misc. properties and all possible labels
-        node.metadata = {type: 'node'};
+        node.metadata = {type: 'phylonode'};
         if (illustrationElementID) {
             node.metadata.illustratedTreeID = illustrationElementID;
         }
@@ -544,7 +544,7 @@ prototype.transform = function(input) {
     data.phyloEdges = layout.links(data.phyloNodes);
     $.each(data.phyloEdges, function(i, edge) {
         // Add misc. properties
-        edge.metadata = {type: 'edge'};
+        edge.metadata = {type: 'phyloedge'};
         if (illustrationElementID) {
             edge.metadata.illustratedTreeID = illustrationElementID;
         }

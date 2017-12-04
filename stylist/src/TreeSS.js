@@ -560,8 +560,8 @@ console.log(matchingElements);
          * intermediate clades (and/or nodes?)
          */
         switch( ko.utils.unwrapObservable(el.metadata.type) ) {
-            case 'node':
-            case 'edge':
+            case 'phylonode':
+            case 'phyloedge':
                 // it's an edge, return... its tree?
                 return getParentTree(el);
                 break;
@@ -679,7 +679,7 @@ console.log(matchingElements);
             var selectedElements = rule.gatherMatchingElements();
             // Try to match nodes and edges as well...
             switch( ko.utils.unwrapObservable(element.metadata.type) ) {
-                case 'node':
+                case 'phylonode':
                     // Determine its tree, then see if this node matches the rule
                     /*
                     if ($.inArray(parentTree, selectedElements) !== -1) {
@@ -691,7 +691,7 @@ console.log(matchingElements);
                     }
                     */
                     break;
-                case 'edge':
+                case 'phyloedge':
                     // Determine its tree, then see if this edge matches the rule
                     /*
                     if ($.inArray(parentTree, selectedElements) !== -1) {
@@ -719,8 +719,8 @@ console.log(matchingElements);
         // This is mainly used to tie a node or edge (lightweight subtype) to
         // its respective IllustratedTree.
         switch( ko.utils.unwrapObservable(el.metadata.type) ) {
-            case 'node':
-            case 'edge':
+            case 'phylonode':
+            case 'phyloedge':
                 // it's an edge, return... its tree?
                 return stylist.ill.getElementByID(el.metadata.illustratedTreeID);
                 break;
@@ -903,9 +903,11 @@ console.log(matchingElements);
             return constrainedValue;  // TODO: Check for errors or null response here?
 
         } catch(e) {  // probably a ParserError, e.g. for unclosed parentheses
+            /*
             console.warn("getValueFromStyleDeclarations(): unable to parse this style value!\n"
                         +"  Returning its raw value <"+ typeof(lastFoundValue)  +">:");
             console.warn(lastFoundValue);
+            */
             /*
             console.warn("  error details:");
             console.warn(e);

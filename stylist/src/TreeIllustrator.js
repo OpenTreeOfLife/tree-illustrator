@@ -248,6 +248,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         if (!options) options = {};
         var obj = {
             'metadata': {
+                'type': 'Illustration',
                 'name': "Untitled illustration",
                 'url': "",  // source URL on GitHub (GitHub storage only)
                 'sha': "",  // latest SHA on GitHub (GitHub storage only)
@@ -944,10 +945,6 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
          */
         getEffectiveStyle: function(obj, propName) {
             var self = this;  // ie, the current Illustration
-            var docRule = self.style().find(function(rule, i) {
-                return (rule.selector() === 'illustration');
-            });
-            var docStyles = docRule.declarations;
             // Test for cached "local" styles on the element
             var cachedStyleValue = null;
             if ('cachedStyle' in obj) {

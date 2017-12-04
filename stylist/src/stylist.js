@@ -1088,6 +1088,10 @@ function refreshViz(options) {
         view = chart({el:"#viz-outer-frame", renderer:"svg"});
         // export the new view
         exports.view = view;
+
+        console.log("CLEARING style caches before adding phylonodes+edges");
+        TreeSS.clearAllStyleCaches();
+
         view.update();
 
         if (options.SHOW_ALL) {
@@ -2932,7 +2936,7 @@ function loadArchiveFromChosenFile( vm, evt ) {
                                     $hintArea.html(msg).show();
                                  })
                                  .then(function success(data) {
-                                           console.log("Success unzipping "+ zipEntry.name +":\n"+ data);
+                                           ///console.log("Success unzipping "+ zipEntry.name +":\n"+ data);
                                            zipEntriesToLoad--;
                                            // parse and stash the main JSON data; cache the rest
                                            switch (zipEntry.name) {
