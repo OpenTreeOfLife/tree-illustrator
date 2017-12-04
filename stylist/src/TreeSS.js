@@ -297,7 +297,7 @@ var TreeSS = function(window, document, $, ko, stylist) {
 
             // Return cached result, if any (else refresh this now)
             if ($.isArray(cachedResult)) {
-                console.log("    USING CACHED VALUE for selector '"+ selectorString +"'");
+                ///console.log("    USING CACHED VALUE for selector '"+ selectorString +"'");
                 return cachedResult;
             }
 
@@ -450,52 +450,50 @@ var TreeSS = function(window, document, $, ko, stylist) {
                "testElementAgainstQualifier() is for Pseudo nodes, not type '"+ pseudoNode.type +"'!");
         // curry any supplied arguments (packaged for easy use below)
         var args = [];
-        console.log("*** here come its arguments: ***");
-        assert(pseudoNode.nodes.length === 1,
-               "Expecting just one child Selector node in Pseudo filter!"); 
-        assert(pseudoNode.nodes[0].type === 'selector',
-               "Expecting the only child node in Pseudo filter to be a Selector!"); 
-        var innerSelector = pseudoNode.nodes[0];
-        assert(innerSelector.nodes.length > 0,
-               "Expecting the Selector node in Pseudo filter to have child nodes!"); 
-        $.each(innerSelector.nodes, function(i, node) {
-            console.log(i, node.type, node.value);
-            switch(node.type) {
-                case 'number':
-                    // Try to coerce numeric string to a proper number, preserve units
-                    var num = {
-                        value: Number(node.value),
-                        unit: node.unit  // default is ""
-                    };
-                    if (isNaN(num.value)) {
-                        console.warn("Pseudo arg "+ i +" in this node should be a number!");
+        $.each(pseudoNode.nodes, function(i, node) {
+            assert(node.type === 'selector',
+                   "Expecting only Selector children inside a Pseudo filter!");
+            var innerSelector = node;
+            assert(innerSelector.nodes.length > 0,
+                   "Expecting the Selector node in Pseudo filter to have child nodes!");
+            $.each(innerSelector.nodes, function(i, node) {
+                //console.log(i, node.type, node.value);
+                switch(node.type) {
+                    case 'number':
+                        // Try to coerce numeric string to a proper number, preserve units
+                        var num = {
+                            value: Number(node.value),
+                            unit: node.unit  // default is ""
+                        };
+                        if (isNaN(num.value)) {
+                            console.warn("Pseudo arg "+ i +" in this node should be a number!");
+                            console.warn(node);
+                        } else {
+                            args.push(num);
+                        }
+                        break;
+                    case 'tag':
+                        /* Preserve these as strings here, since we can't be
+                         * certain of the author's intent.
+                         */
+                        args.push(node.value);
+                        break;
+                    default:
+                        console.warn("Unable to handle args of type '"+ node.type +"'!");
                         console.warn(node);
-                    } else {
-                        args.push(num);
-                    }
-                    break;
-                case 'tag':
-                    /* Preserve these as strings here, since we can't be
-                     * certain of the author's intent.
-                     */
-                    args.push(node.value);
-                    break;
-                default:
-                    console.warn("Unable to handle args of type '"+ node.type +"'!");
+                }
+                if (node.nodes) {
+                    console.warn("! This arg also has "+ node.nodes.length +" inner nodes:");
                     console.warn(node);
-            }
-            if (node.nodes) {
-                console.warn("! This arg also has "+ node.nodes.length +" inner nodes:");
-                console.warn(node);
-            }
+                }
+            });
         });
 
         // handle our expected filters only!
         switch(pseudoNode.value) {
             case ':eq':
+                // Keep only the n-th of our current set of matching elements
                 // EXAMPLE: `tree:eq(1)` keeps only the SECOND tree found
-                console.log("Now I'd filter for :eq!");
-                // keep only the n-th of our current set of matching elements
                 var matchingPosition = Number(args[0]);
                 if (isNaN(matchingPosition)) {
                     console.error("First argument to :eq() must be an integer!");
@@ -504,6 +502,9 @@ var TreeSS = function(window, document, $, ko, stylist) {
                 return ($.inArray(el, matchingElementsSoFar) === matchingPosition);
             case ':selected':  // TODO?
                 console.log("Now I'd filter for :selected!");
+                break;
+            case ':clade':  // TODO?
+                console.log("Now I'd filter for :clade!");
                 break;
             default:
                 throw new Error("Unknown filter <"+ pseudoNode.value +"> found in this selector!");
@@ -555,28 +556,26 @@ console.log(matchingElements);
         /* Walk "upward" from node to tree, tree to illustration, etc.
          * according to the logic used in TreeSS.
          *
-         * TODO: If starting from a node or similar, should we respond with
-         * intermediate nodes/clades?
+         * TODO: If starting from a node or similar, we should include
+         * intermediate clades (and/or nodes?)
          */
-        if (el instanceof TreeIllustrator.Illustration) {
-            console.warn("getStyleParent(): Illustration has no parent!");
-            return null;
+        switch( ko.utils.unwrapObservable(el.metadata.type) ) {
+            case 'node':
+            case 'edge':
+                // it's an edge, return... its tree?
+                return getParentTree(el);
+                break;
+            case 'Illustration':
+                console.warn("getStyleParent(): Illustration has no parent!");
+                return null;
+            case 'IllustratedTree':
+            case 'SupportingDataset':
+            case 'Ornament':
+                // return its parent Illustration
+                return (stylist.ill);
         }
-        if (el instanceof TreeIllustrator.IllustratedTree) {
-            // return its parent Illustration
-            return (stylist.ill);
-        }
-        if (obj instanceof TreeIllustrator.SupportingDataset) {
-            // return its parent Illustration
-            return (stylist.ill);
-        }
-        if (obj instanceof TreeIllustrator.Ornament) {
-            // return its parent Illustration
-            return (stylist.ill);
-        }
-        // TODO: ADD cases for node, edge, clade, node label?
 
-        console.error("getStyleParent(): unexpected context element <"+ typeof(el) +">:");
+        console.error("getStyleParent(): unexpected context element <"+ ko.utils.unwrapObservable(el.metadata.type) +">:");
         console.error(el);
         return null;
     }
@@ -675,14 +674,59 @@ console.log(matchingElements);
     var getMatchingStyleRules = function(element) {
         /* Which rules will select this tree/node/whatever? */
         var matchingRules = [ ];
+        var parentTree = getParentTree(element);
         $.each( stylist.ill.style(), function(i, rule) {
             var selectedElements = rule.gatherMatchingElements();
-            if ($.inArray(element, selectedElements) !== -1) {
-                matchingRules.push(rule);
+            // Try to match nodes and edges as well...
+            switch( ko.utils.unwrapObservable(element.metadata.type) ) {
+                case 'node':
+                    // Determine its tree, then see if this node matches the rule
+                    /*
+                    if ($.inArray(parentTree, selectedElements) !== -1) {
+                   OR
+                    // Look for telltale string that triggers tests within a tree
+                    if ($.inArray(element.treeID+'-NODES', selectedElements) !== -1) {
+                        // TODO: Check for node/clade-specific rules
+                        //matchingRules.push(rule);
+                    }
+                    */
+                    break;
+                case 'edge':
+                    // Determine its tree, then see if this edge matches the rule
+                    /*
+                    if ($.inArray(parentTree, selectedElements) !== -1) {
+                   OR
+                    if ($.inArray(element.treeID+'-EDGES', selectedElements) !== -1) {
+                        // TODO: copy code from node above
+                    }
+                    */
+                    break;
+                default:
+                    // "Coarser" elements with a proper class (Illustration,
+                    // IllustratedTree, etc.) See if this is already listed as
+                    // a matching element.
+                    if ($.inArray(element, selectedElements) !== -1) {
+                        matchingRules.push(rule);
+                        return;
+                    }
             }
         });
         // N.B. that their relative order is preserved.
         return matchingRules;
+    }
+
+    var getParentTree = function(el) {
+        // This is mainly used to tie a node or edge (lightweight subtype) to
+        // its respective IllustratedTree.
+        switch( ko.utils.unwrapObservable(el.metadata.type) ) {
+            case 'node':
+            case 'edge':
+                // it's an edge, return... its tree?
+                return stylist.ill.getElementByID(el.metadata.illustratedTreeID);
+                break;
+            default:
+                return null;
+        }
     }
 
     var evaluateValueNode = function(valueNode, valueProcessor) {

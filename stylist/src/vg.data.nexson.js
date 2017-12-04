@@ -22,9 +22,11 @@ var vg  = require('vega'),
 function Nexson(graph) {
   Transform.prototype.init.call(this, graph);
   Transform.addParameters(this, {
+      // N.B. we need either `treeID` or both `*Position` args below!
       treeID: {type: 'value'},
       treesCollectionPosition: {type: 'value', default: 0},
       treePosition: {type: 'value', default: 0},
+      illustrationElementID: {type: 'value', default: ''},
       branchRotation: {type: 'value', default: 'UNCHANGED'},
       nodeLabelField: {type: 'value', default: 'originalLabel'}
   });
@@ -43,6 +45,7 @@ prototype.transform = function(input) {
       treePosition = this.param('treePosition'),
       branchRotation = this.param('branchRotation'),
       nodeLabelField = this.param('nodeLabelField'),
+      illustrationElementID = this.param('illustrationElementID'),
       nexml = null;
 
   /*
@@ -269,6 +272,27 @@ prototype.transform = function(input) {
         }
       }
   };
+  function assignNodeStyles(node) {
+      /* Reckon effective style values per node, to support node- and
+       * clade-specific styling.
+       */
+      if ('effectiveStyles' in node) {   // do this once only!
+          return;
+      }
+      node.effectiveStyles = {
+      }
+  }
+  function assignEdgeStyles(edge) {
+      /* Reckon effective style values per node, to support node- and
+       * clade-specific styling.
+       */
+      if ('effectiveStyles' in edge) {   // do this once only!
+          return;
+      }
+      edge.effectiveStyles = {
+          "edgeThickness": stylist.ill.getEffectiveStyle(edge, 'edgeThickness')
+      }
+  }
 
   function getTreeNodeByID(id) {
       // There should be only one matching (or none) within a tree
@@ -469,6 +493,7 @@ prototype.transform = function(input) {
       console.warn("  treeID: "+ treeID);
       console.warn("  treesCollectionPosition: "+ treesCollectionPosition);
       console.warn("  treePosition: "+ treePosition);
+      console.warn("  illustrationElementID: "+ illustrationElementID);
       return false;
     }
 
@@ -477,6 +502,7 @@ prototype.transform = function(input) {
         '_id': fullNexson._id
     };
 
+    console.warn("CREATING phyloNodes");
     data.phyloNodes = layout
       //.size(vg.data.size(size, group))
       //.value(value)
@@ -503,13 +529,30 @@ prototype.transform = function(input) {
         node.y = (node.y - minY) * yScale;
     });
 
-    // add all possible labels to each node
-    var tree = getSpecifiedTree();
     $.each(data.phyloNodes, function(i, node) {
+        // Add misc. properties and all possible labels
+        node.metadata = {type: 'node'};
+        if (illustrationElementID) {
+            node.metadata.illustratedTreeID = illustrationElementID;
+        }
         assignNodeLabels(node);
+        assignNodeStyles(node);
+        // TODO: Watch for divergent labels and styles (eg, when ladderizing)!
     });
 
+    console.warn("CREATING phyloEdges");
     data.phyloEdges = layout.links(data.phyloNodes);
+    $.each(data.phyloEdges, function(i, edge) {
+        // Add misc. properties
+        edge.metadata = {type: 'edge'};
+        if (illustrationElementID) {
+            edge.metadata.illustratedTreeID = illustrationElementID;
+        }
+        assignEdgeStyles(edge);
+        // TODO: Watch for divergent labels and styles (eg, when ladderizing)!
+        ///console.log(edge.effectiveStyles);
+    });
+
 /* translate incoming keys to their output names?
     var keys = vg.keys(output),
         len = keys.length;
@@ -534,7 +577,7 @@ prototype.transform = function(input) {
 */
     return data;
   }
-  
+
   //input.add.forEach(convert);
   for (var i = 0; i < input.add.length; i++) {
     // actually replace each item with the new stucture
@@ -557,7 +600,7 @@ Nexson.schema = {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "Nexson transform",
   "description": "Transforms NEXson data into a form suitable for use in the Tree Illustrator"
-               + " and d3.phylogram.js.",
+               + " and d3.phylogram.js. NOTE: Requires `treeID` OR both `*Position` args!",
   "type": "object",
   "properties": {
     "type": {"enum": ["nexson"]},
@@ -574,8 +617,12 @@ Nexson.schema = {
       "description": "Convert the nth 'tree' found in this collection", // TODO: confirm
       "oneOf": [{"type": "integer"}, {"$ref": "#/refs/signal"}],
       "default": 0
+    },
+    "illustrationElementID": {
+      "description": "The ID of the corresponding IllustratedTree (Tree Illustrator only)",
+      "oneOf": [{"type": "string"}, {"$ref": "#/refs/signal"}]  // TODO: signal?
     }
   },
   "additionalProperties": false,  // TODO: confirm this
-  "required": ["type"]  // TODO: add required params
+  "required": ["type"]
 };

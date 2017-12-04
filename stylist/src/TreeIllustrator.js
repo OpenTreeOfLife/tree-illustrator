@@ -959,7 +959,7 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                 }
             }
             // No cached value found! Check the current style rules for best match...
-            console.log('NO cachedValue for style '+ propName );
+            ///console.log('NO cachedValue for style '+ propName );
 
             /* Check each style rule to see if this element is selected.
              * N.B. in our simple implementation, the last matching style rule
@@ -1105,8 +1105,9 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                     if (true) {   // TODO: Pivot to other importers (e.g. NEXUS), as appropriate
                         treeData.transform.push({
                             "type": "nexson", 
-                            "treesCollectionPosition":0, 
-                            "treePosition":0,
+                            "treesCollectionPosition": 0,
+                            "treePosition": 0,
+                            "illustrationElementID": el.id(),  // "tree-3" or similar
                             "branchRotation": el.branchRotation(),
                             "nodeLabelField": el.nodeLabelField()   // needed for alphabetical branch rotation!
                         });
@@ -1241,10 +1242,16 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                                 ]
                               },
                               "properties": {
-                                "update": {
+                                "enter": {
                                   "path": {"field": "path"}, // , "transform":{"scale":"x"}},
                                   "stroke": {"value": self.getEffectiveStyle(el, 'edgeColor')},
-                                  "strokeWidth": {"value": self.getEffectiveStyle(el, 'edgeThickness')}
+                                  //"strokeWidth": {"value": self.getEffectiveStyle(el, 'edgeThickness')}  // WORKS! BUT uses tree (does not recognize: d, datum, this)
+                                  //"strokeWidth": {"function": "self.getEffectiveStyle(datum, 'edgeThickness')"}  // FAILS! invalid vega syntax?
+                                  //"strokeWidth": {"field": "stylist.ill.getEffectiveStyles(datum, 'edgeThickness')"} // FAILS! can't read globals?
+                                  "strokeWidth": {"field": {"datum": "effectiveStyles.edgeThickness"} }  // ASSUMES we've added these nested properties to datum!
+                                  //"strokeWidth": {"field": {"parent": "getEffectiveStyle(datum, 'edgeThickness')"} }  // FAILS, but not sure why...
+                                },
+                                "update": {
                                 },
                                 "hover": {
                                  // "stroke": {"value": "red"}
