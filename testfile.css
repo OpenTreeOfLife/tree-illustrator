@@ -6,7 +6,7 @@ tree {
 }
 tree:eq(0) {
   edge-color: #f33; /* red */
-  edge-thickness: 20px;
+  edge-thickness: 6px;
 }
 tree:eq(1) {
   edge-color: #33f; /* blue */
@@ -15,13 +15,19 @@ tree:eq(1) {
 :clade(1, test, "foo") {
   edge-color: #cc3; /* orange */
 }
-tree:eq(0) node label:primary {
+tree:eq(0) node label {     /* :primary */
   proximal-margin: 8px; /* vs center of adjacent node */
   distal-margin: 3px;   /* distance from peripheral data table */
   /* padding only matters if we're using bg or borders */
   proximal-padding: 8px ;
   distal-padding: 4px;
   background-color: #ffd; /* pale yellow */
+}
+/* TODO: clade:mrca('Placeholder B', 'Placeholder D') { */
+/* TODO: node:mrca('Placeholder B', 'Placeholder D') { */
+:mrca('Placeholder C', 'Placeholder D') {
+  edge-color: #00f;
+  edge-thickness: 12px;
 }
 data-table {
   proximal-margin: 6px;

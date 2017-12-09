@@ -1241,12 +1241,15 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                               "properties": {
                                 "enter": {
                                   "path": {"field": "path"}, // , "transform":{"scale":"x"}},
-                                  "stroke": {"value": self.getEffectiveStyle(el, 'edgeColor')},
-                                  //"strokeWidth": {"value": self.getEffectiveStyle(el, 'edgeThickness')}  // WORKS! BUT uses tree (does not recognize: d, datum, this)
-                                  //"strokeWidth": {"function": "self.getEffectiveStyle(datum, 'edgeThickness')"}  // FAILS! invalid vega syntax?
-                                  //"strokeWidth": {"field": "stylist.ill.getEffectiveStyles(datum, 'edgeThickness')"} // FAILS! can't read globals?
+                                  "stroke": {"field": {"datum": "effectiveStyles.edgeColor"} },  // ASSUMES we've added these nested properties to datum!
                                   "strokeWidth": {"field": {"datum": "effectiveStyles.edgeThickness"} }  // ASSUMES we've added these nested properties to datum!
-                                  //"strokeWidth": {"field": {"parent": "getEffectiveStyle(datum, 'edgeThickness')"} }  // FAILS, but not sure why...
+                                  /* And here are numerous failed attempts at dynamic styles:
+                                      "stroke": {"value": self.getEffectiveStyle(el, 'edgeColor')},
+                                      "strokeWidth": {"value": self.getEffectiveStyle(el, 'edgeThickness')}  // WORKS! BUT uses tree (does not recognize: d, datum, this)
+                                      "strokeWidth": {"function": "self.getEffectiveStyle(datum, 'edgeThickness')"}  // FAILS! invalid vega syntax?
+                                      "strokeWidth": {"field": "stylist.ill.getEffectiveStyles(datum, 'edgeThickness')"} // FAILS! can't read globals?
+                                      "strokeWidth": {"field": {"parent": "getEffectiveStyle(datum, 'edgeThickness')"} }  // FAILS, but not sure why...
+                                  */
                                 },
                                 "update": {
                                 },

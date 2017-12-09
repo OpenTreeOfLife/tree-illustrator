@@ -70,6 +70,7 @@ prototype.transform = function(input) {
       console.error("No such lookup as '"+ lookupName +"'!");
       return null;
   }
+
   function buildFastLookup( lookupName ) {
       // (re)build and store a flat list of Nexson elements by ID
       if (lookupName in fastLookups) {
@@ -186,7 +187,7 @@ prototype.transform = function(input) {
 
       $.each(childEdges, function(index, edge) {
           var childID = edge['@target'];
-          var childNode = getTreeNodeByID(childID);
+          var childNode = getPhyloNodeByID(childID);
           if (!('@id' in childNode)) {
               console.error(">>>>>>> childNode is a <"+ typeof(childNode) +">");
               console.error(childNode);
@@ -290,16 +291,51 @@ prototype.transform = function(input) {
           return;
       }
       edge.effectiveStyles = {
-          "edgeThickness": stylist.ill.getEffectiveStyle(edge, 'edgeThickness')
+          "edgeThickness": stylist.ill.getEffectiveStyle(edge, 'edgeThickness'),
+          "edgeColor": stylist.ill.getEffectiveStyle(edge, 'edgeColor')
       }
   }
 
-  function getTreeNodeByID(id) {
-      // There should be only one matching (or none) within a tree
+  function getPhyloNodeByID(id) {
+      // There should be only one matching node (or none) within a tree.
       // (NOTE that we now use a flat collection across all trees, so there's no 'tree' argument)
       var lookup = getFastLookup('NODES_BY_ID');
       return lookup[ id ] || null;
   }
+  //function getPhyloNodeByTaxon = function( tree, idOrLabel ) {
+  //function getPhyloNodeByValue = function( tree, idOrLabel ) {
+  function getPhyloNodesByLabel(label) {
+      /* Return any nodes that match the specified string in ANY label field
+       * N.B. that we will accept a regex here, for fast retrieval of multiple
+       * labeled nodes, e.g. to reckon their MRCA
+       */
+      var phylotree = this;
+      var matchingNodes = [ ];
+      // Check label attributes, taxon names, etc.
+      $.each(phylotree.phyloNodes, function(i, node) {
+          // Convert string to regex (OK for incoming regex, too)
+          label = RegExp(label, 'i');
+          // N.B. Regex test is very forgiving of non-string args.
+          if (label.test(node.ottTaxonName) ||
+              label.test(node.ottId) ||
+              label.test(node.explicitLabel) ||
+              label.test(node.originalLabel)) {
+              matchingNodes.push(node);
+          }
+      });
+      return matchingNodes;
+  }
+
+  function getPhyloNodeAncestry(node) {
+      // Gather all ancestor nodes, from tip (or target node) to root
+      var ancestors = [ ];
+      while (node.parent) {
+          ancestors.push(node.parent);
+          node = node.parent;
+      };
+      return ancestors;
+  }
+
   function getOTUByID(id) {
       // There should be only one matching (or none) in this study
       var lookup = getFastLookup('OTUS_BY_ID');
@@ -497,13 +533,30 @@ prototype.transform = function(input) {
       return false;
     }
 
-    data = {
-        // copy _id of source data
-        '_id': fullNexson._id
+    var phylotree = {
+        // Copy _id of source data
+        _id: fullNexson._id,
+        rootNode: rootNode,
+        // Add useful methods as well
+        getPhyloNodeByID: getPhyloNodeByID,
+        getPhyloNodesByLabel: getPhyloNodesByLabel
+        //getPhyloNodeAncestry: getPhyloNodeAncestry
     };
+    if (illustrationElementID) {
+        /* IF we're in Tree Illustrator, add reciprocal pointers between this
+         * phylotree and the corresponding IllustratedTree element.
+         *
+         * N.B. that this provides a vital bridge between two worlds: the
+         * ephemeral objects here (within the Vega rendering pipline) and the
+         * more persistent Illustration object model.
+         */
+        var illustratedTree = stylist.ill.getElementByID(illustrationElementID);
+        phylotree.illustratedTree = illustratedTree;
+        illustratedTree.phylotree = phylotree;
+    }
 
     console.warn("CREATING phyloNodes");
-    data.phyloNodes = layout
+    phylotree.phyloNodes = layout
       //.size(vg.data.size(size, group))
       //.value(value)
         .nodes(rootNode);
@@ -516,7 +569,7 @@ prototype.transform = function(input) {
         minY = Number.POSITIVE_INFINITY,
         maxX = Number.NEGATIVE_INFINITY,
         maxY = Number.NEGATIVE_INFINITY;
-    $.each(data.phyloNodes, function(i, node) {
+    $.each(phylotree.phyloNodes, function(i, node) {
         minX = Math.min(minX, node.x);
         minY = Math.min(minY, node.y);
         maxX = Math.max(maxX, node.x);
@@ -524,25 +577,26 @@ prototype.transform = function(input) {
     });
     var xScale = 1.0 / (maxX - minX);
     var yScale = 1.0 / (maxY - minY);
-    $.each(data.phyloNodes, function(i, node) {
+    $.each(phylotree.phyloNodes, function(i, node) {
         node.x = (node.x - minX) * xScale;
         node.y = (node.y - minY) * yScale;
     });
 
-    $.each(data.phyloNodes, function(i, node) {
+    $.each(phylotree.phyloNodes, function(i, node) {
         // Add misc. properties and all possible labels
         node.metadata = {type: 'phylonode'};
         if (illustrationElementID) {
             node.metadata.illustratedTreeID = illustrationElementID;
         }
+        node.ancestry = getPhyloNodeAncestry(node);
         assignNodeLabels(node);
         assignNodeStyles(node);
         // TODO: Watch for divergent labels and styles (eg, when ladderizing)!
     });
 
     console.warn("CREATING phyloEdges");
-    data.phyloEdges = layout.links(data.phyloNodes);
-    $.each(data.phyloEdges, function(i, edge) {
+    phylotree.phyloEdges = layout.links(phylotree.phyloNodes);
+    $.each(phylotree.phyloEdges, function(i, edge) {
         // Add misc. properties
         edge.metadata = {type: 'phyloedge'};
         if (illustrationElementID) {
@@ -557,7 +611,7 @@ prototype.transform = function(input) {
     var keys = vg.keys(output),
         len = keys.length;
 
-    data.forEach(function(d) {
+    phylotree.forEach(function(d) {
       var key, val;
       for (var i=0; i<len; ++i) {
         key = keys[i];
@@ -572,10 +626,10 @@ prototype.transform = function(input) {
 */
 
 /*
-    console.log("OUTGOING data from nexson transform:");
-    console.log(data);
+    console.log("OUTGOING phylotree from nexson transform:");
+    console.log(phylotree);
 */
-    return data;
+    return phylotree;
   }
 
   //input.add.forEach(convert);

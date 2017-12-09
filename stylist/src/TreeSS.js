@@ -438,6 +438,18 @@ var TreeSS = function(window, document, $, ko, stylist) {
         $.merge( everything, getStyleDescendants(stylist.ill) );
         return everything;
     }
+    var stripOuterQuotes = function(val) {
+        // This is generally used to simplify 'string' values (vs 'tag') in TreeSS
+        assert(typeof(val) === 'string',
+               "stripOuterQuotes(): Expected a string argument, not a <"+ typeof(val) +">");
+        val = $.trim(val);
+        switch(val[0]) {
+            case "'":  // single quote
+            case '"':  // double quote
+                return val.slice(1, val.length - 1);
+        }
+        return val;
+    }
     var testElementAgainstQualifier = function( el, pseudoNode, matchingElementsSoFar ) {
         /* Return true if the specified element passes the qualifying test
          * defined in pseudoNode, false otherwise. Typically this node is a
@@ -472,8 +484,16 @@ var TreeSS = function(window, document, $, ko, stylist) {
                             args.push(num);
                         }
                         break;
+                    case 'string':
                     case 'tag':
-                        /* Preserve these as strings here, since we can't be
+                        /* In this context, a `string` is a quoted string,
+                         * usually treated as a string literal (e.g., "Homo
+                         * sapiens"). A `tag` was not quoted in the CSS value,
+                         * so it's assumed to be the name of a tag/element in
+                         * the target DOM (e.g. 'tree').
+                         * N.B. that string values will include internal quotes!
+                         *
+                         * Preserve both as strings here, since we can't be
                          * certain of the author's intent.
                          */
                         args.push(node.value);
@@ -506,18 +526,101 @@ var TreeSS = function(window, document, $, ko, stylist) {
             case ':clade':  // TODO?
                 console.log("Now I'd filter for :clade!");
                 break;
+            case ':mrca':
+                /* Look for nodes with IDs or taxon labels matching the args,
+                 * and find their common ancestor; select this node and all its
+                 * descendant nodes, edges, etc.
+                 */
+                if (args.length < 2) {
+                    console.warn(":mrca selector ignored (two or more arguments required!)");
+                    return false;
+                }
+                // Strip internal quotes from 'string' values
+                args = args.map(function(currentValue, index, array) {
+                    return stripOuterQuotes(currentValue);
+                });
+                /* Call getPhyloNodesByLabel just once! using a regex like so:
+                 *   var tipTest = /^\s*(Homo sapiens|Canis)\s*$/;
+                 *   tipTest.test(...)
+                 */
+                var tipLabels = new RegExp('^\\s*('+ args.join('|') +')\\s*$');
+                // Search all trees found in matchingElementsSoFar
+                var treesToSearch = [ ];
+                $.each(matchingElementsSoFar, function(i, el) {
+                    if(!('metadata' in el) || !('type' in el.metadata)) {
+                        console.warn("mrca: no type found for this <"+ ko.utils.unwrapObservable(el.metadata.type) +">:");
+                        console.error(el);
+                        return; // keep checking other elements
+                    }
+                    switch (ko.utils.unwrapObservable(el.metadata.type)) {
+                        case 'IllustratedTree':
+                            treesToSearch.push(el);
+                            break;
+                        case 'phylotree':
+                            treesToSearch.push(el.illustratedTree);
+                            break;
+                        case 'Illustration':
+                            $.each(el.elements(), function(i, el) {
+                                if (ko.utils.unwrapObservable(el.metadata.type)
+                                    === 'IllustratedTree') {
+                                    treesToSearch.push(el);
+                                }
+                            });
+                        // ignore all other elements
+                    }
+                });
+                if (treesToSearch.length === 0) {
+                    console.warn(":mrca selector ignored (no trees selected!)");
+                    return false;
+                }
+                $.unique(treesToSearch); // remove any duplicates
+                var mrcaNodes = [ ],  // mulitple, in case selector includes multiple trees!
+                    foundMRCA = null; // check for MRCA in each tree
+                $.each(treesToSearch, function(i, illustratedTree) {
+                    // Match nodes on ID, taxon name, or any label field.
+                    // N.B. we call its associated phylotree (viz model) for this.
+                    var namedNodes = illustratedTree.phylotree.getPhyloNodesByLabel(tipLabels);
+                    if (namedNodes.length !== args.length) {
+                        console.warn(":mrca selector failed ("+ namedNodes.length +" tips found, expected "+ args.length +")");
+                        return false;
+                    }
+                    /* We found all the named nodes; now determine their MRCA.
+                     * The simplest method is to use the first tip's ancestry
+                     * (path to root) as a measuring stick. We'll compare each
+                     * of the other tips to see how far we need to travel this
+                     * path to find a common ancestor.
+                     */
+                    var firstTip = namedNodes[0],
+                        firstTipAncestry = [ ].concat(firstTip.ancestry); // use a copy!
+                        testTip = null;
+                    for (i = 1; i < namedNodes.length; i++) {
+                        testTip = namedNodes[i];
+                        $.each(testTip.ancestry, function(i, ancestor) {
+                            var foundPosition = $.inArray(ancestor, firstTipAncestry);
+                            if (foundPosition === -1) {
+                                return; // keep digging
+                            } else {
+                                firstTipAncestry = firstTipAncestry.slice(foundPosition);
+                                return false;  // stop digging
+                            }
+                        });
+                    }
+                    assert((firstTipAncestry.length > 0),
+                           ":mrca test failed (NO common ancestor!?)");
+                    /* We've truncated all the non-common ancestors of the
+                     * first tip. The first node remaining is our MRCA!
+                     */
+                    foundMRCA = firstTipAncestry[0];
+                    mrcaNodes.push(foundMRCA);
+                });
+                // TODO: Preserve this result for fast comparison to other elements!
+                return ($.inArray(el, mrcaNodes) !== -1);
             default:
                 throw new Error("Unknown filter <"+ pseudoNode.value +"> found in this selector!");
         }
-        return false; // TODO: What's the sensible fallback here?
+        return false;  // inaction (element fails filter) seems the sensible default
     }
 
-    /*
-    var applyFilter = function(contextElements, filter) {
-        var matches = [ ];
-        return matches;
-    }
-    */
     var applyCombinator = function(contextElements, combinatorNode) {
         var matchingElements = [ ];
         // return matching children/descendants/siblings of all context elements
@@ -556,17 +659,18 @@ console.log(matchingElements);
         /* Walk "upward" from node to tree, tree to illustration, etc.
          * according to the logic used in TreeSS.
          *
-         * TODO: If starting from a node or similar, we should include
-         * intermediate clades (and/or nodes?)
+         * N.B. If starting from a node or similar, we should include
+         * intermediate nodes and/or clades.
          */
         switch( ko.utils.unwrapObservable(el.metadata.type) ) {
-            case 'phylonode':
             case 'phyloedge':
-                // it's an edge, return... its tree?
-                return getParentTree(el);
-                break;
+                // It's an edge, return its source (rootward) node.
+                return el.source;
+            case 'phylonode':
+                // Climb nodes toward the root (or to IllustratedTree if we're
+                // already on the root node)
+                return el.parent || getParentTree(el);
             case 'Illustration':
-                console.warn("getStyleParent(): Illustration has no parent!");
                 return null;
             case 'IllustratedTree':
             case 'SupportingDataset':
@@ -587,35 +691,39 @@ console.log(matchingElements);
          * Append these to an existing array, if provided, and return it.
          */
         var children = elementList || [ ];
-        if (el instanceof TreeIllustrator.Illustration) {
-            // Add all trees (and any other visible children) from its main elements list
-            var styleChildren = el.elements().filter(function(child) {
-                return (child instanceof TreeIllustrator.IllustratedTree);
-            });
-            return $.merge( children, styleChildren );
-        }
-        if (el instanceof TreeIllustrator.IllustratedTree) {
-            // TODO: Add root node/clade
-            if ($.isEmptyObject(el.data)) {
-                // data is not loaded yet, skip for now...
+        switch( ko.utils.unwrapObservable(el.metadata.type) ) {
+            case 'Illustration':
+                // Add all trees (and any other visible children) from its main elements list
+                var styleChildren = el.elements().filter(function(child) {
+                    return (child instanceof TreeIllustrator.IllustratedTree);
+                });
+                return $.merge( children, styleChildren );
+            case 'IllustratedTree':
+                // Add its root node/clade, if found
+                if (el.phylotree) {
+                    return $.merge( children, [ el.phylotree.rootNode ] );
+                } else {
+                    // data is not loaded yet, skip for now...
+                    console.warn("getStyleChildren(): SKIPPING nodes and edges (phylotree not found)");
+                    return children;
+                }
+            case 'SupportingDataset':
+            case 'Ornament':
+            case 'phyloedge':
+                // don't add to the original list
                 return children;
-            } else {
-                var rootNode = null; // TODO: fetch the root node?
-                return $.merge( children, [ rootNode ] );
-            }
+            case 'phylonode':
+                if (el.children) {
+                    return $.merge( children, el.children );
+                } else {  // it's a leaf node
+                    return children;
+                }
+            default:
+                console.error("getStyleChildren(): unexpected parent element <"+ ko.utils.unwrapObservable(el.metadata.type)  +">:");
+                console.error(el);
         }
-        if (el instanceof TreeIllustrator.SupportingDataset) {
-            // don't add to the original list
-            return children;
-        }
-        if (el instanceof TreeIllustrator.Ornament) {
-            // don't add to the original list
-            return children;
-        }
-        // TODO: ADD cases for node, edge, clade, node label?
+        // TODO: ADD cases for clade, node label?
 
-        console.error("getStyleChildren(): unexpected parent element <"+ typeof(el) +">:");
-        console.error(el);
         return children;
     }
     function getStyleDescendants(el, elementList) {
@@ -677,38 +785,9 @@ console.log(matchingElements);
         var parentTree = getParentTree(element);
         $.each( stylist.ill.style(), function(i, rule) {
             var selectedElements = rule.gatherMatchingElements();
-            // Try to match nodes and edges as well...
-            switch( ko.utils.unwrapObservable(element.metadata.type) ) {
-                case 'phylonode':
-                    // Determine its tree, then see if this node matches the rule
-                    /*
-                    if ($.inArray(parentTree, selectedElements) !== -1) {
-                   OR
-                    // Look for telltale string that triggers tests within a tree
-                    if ($.inArray(element.treeID+'-NODES', selectedElements) !== -1) {
-                        // TODO: Check for node/clade-specific rules
-                        //matchingRules.push(rule);
-                    }
-                    */
-                    break;
-                case 'phyloedge':
-                    // Determine its tree, then see if this edge matches the rule
-                    /*
-                    if ($.inArray(parentTree, selectedElements) !== -1) {
-                   OR
-                    if ($.inArray(element.treeID+'-EDGES', selectedElements) !== -1) {
-                        // TODO: copy code from node above
-                    }
-                    */
-                    break;
-                default:
-                    // "Coarser" elements with a proper class (Illustration,
-                    // IllustratedTree, etc.) See if this is already listed as
-                    // a matching element.
-                    if ($.inArray(element, selectedElements) !== -1) {
-                        matchingRules.push(rule);
-                        return;
-                    }
+            if ($.inArray(element, selectedElements) !== -1) {
+                matchingRules.push(rule);
+                return;
             }
         });
         // N.B. that their relative order is preserved.
