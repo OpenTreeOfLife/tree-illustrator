@@ -946,12 +946,13 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
         getEffectiveStyle: function(obj, propName) {
             var self = this;  // ie, the current Illustration
             // Test for cached "local" styles on the element
-            var cachedStyleValue = null;
-            if ('cachedStyle' in obj) {
+            var cachedValue = null;
+            if ('effectiveStyles' in obj) {
                 // Fetch the cached value for this property
-                cachedValue = TreeSS.getValueFromStyleDeclarations( propName, obj.cachedStyle );
+                ///cachedValue = TreeSS.getValueFromStyleDeclarations( propName, obj.effectiveStyles );
+                cachedValue = obj.effectiveStyles[ propName ];
                 if (cachedValue !== null) {
-                    console.log('FOUND cachedValue for style '+ propName +': '+ cachedValue );
+                    ///console.log('FOUND cachedValue for style '+ propName +': '+ cachedValue );
                     return cachedValue;
                 }
             }
@@ -982,6 +983,75 @@ var TreeIllustrator = function(window, document, $, ko, stylist) {
                 return null;
             }
             return self.getEffectiveStyle(parentElement, propName);
+        },
+        gatherAllEffectiveStyles: function(obj, overridingStyles) {
+            var self = this;  // ie, the current Illustration
+            // Test for cached "local" styles on the element
+            if ('effectiveStyles' in obj) {
+                /*
+                console.log('FOUND cached style declarations:');
+                console.log(obj.effectiveStyles);
+                */
+                // Return a clone of this object
+                return $.extend({}, obj.effectiveStyles, overridingStyles);
+            }
+            /* No cached styles found! Interrogate all current style rules for
+             * matches; gather all properties found into a new object.
+             *
+             * Check each style rule to see if this element is selected.
+             * N.B. in our simple implementation, the last matching style rule
+             * wins (vs. a smart test for the "most specific" selector).
+             */
+            var foundStyles = {};
+            var matchingRules = TreeSS.getMatchingStyleRules(obj);
+            $.each(matchingRules, function(i, rule) {
+                // Add (or override with) the styles found here
+                $.extend(foundStyles, rule.declarations);
+            });
+            /* Now we have all of this element's directly assigned styles! Evaluate
+             * each one and keep the resulting, simpler value.
+             *
+             * N.B. that we should avoid unnecessary work here! No sense
+             * evaluating something that will be clobbered by a matching
+             * declaration. So we check `overridingStyles` for a matching
+             * property and skip evaluation if it's already there.
+             */
+            overridingStyles = overridingStyles || {};
+            propertiesToRemove = [ ];
+            for (var propName in foundStyles) {
+                if (!(propName in overridingStyles)) {
+                    // Evaluate this property in place (clobber or move its value node)
+                    var itsValue = TreeSS.getValueFromStyleDeclarations( propName, foundStyles );
+                    if (itsValue === null) {
+                        // Value is invalid! Remove it from our style collection.
+                        propertiesToRemove.push(propName);
+                    } else {
+                        // Replace its value node with the simpler final value.
+                        foundStyles[ propName ] = itsValue;
+                    }
+                }
+            }
+            $.each(propertiesToRemove, function(propName, i) {
+                delete foundStyles[ propName ];
+            });
+            /* Clobber any overridden properties with their existing values.
+             * The result should be a mix of old and new properties with simple
+             * values.
+             */
+            $.extend(foundStyles, overridingStyles);
+
+            // Recurse to add styles from each of my (tree-style) ancestors
+            var parentElement = TreeSS.getStyleParent(obj);
+            if (parentElement) {
+                // Be careful to override parent's values with mine!
+                foundStyles = self.gatherAllEffectiveStyles(parentElement, foundStyles);
+            }
+/*
+console.log("CACHING STYLES for this element:");
+console.log(obj);
+*/
+            obj.effectiveStyles = foundStyles;
+            return obj.effectiveStyles;
         },
         getConstrainedStyle: function (propName, rawValue) {
             var self = this;

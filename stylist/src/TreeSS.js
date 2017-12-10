@@ -769,10 +769,10 @@ console.log(matchingElements);
     var clearAllStyleCaches = function() {
         // Walk the style rules, clearing all cached results
         $.each( stylist.ill.style(), function(i, rule) {
-            // Clear per-element `cachedStyle` object, if any
+            // Clear per-element `effectiveStyles` object, if any
             var oldMatches = rule.gatherMatchingElements();
             $.each(oldMatches, function(i, el) {
-                delete el.cachedStyle;
+                delete el.effectiveStyles;
             });
             // Clear cached result from its "gathering" function
             rule.gatherMatchingElements({CLEAR_CACHE: true});

@@ -280,8 +280,7 @@ prototype.transform = function(input) {
       if ('effectiveStyles' in node) {   // do this once only!
           return;
       }
-      node.effectiveStyles = {
-      }
+      node.effectiveStyles = stylist.ill.gatherAllEffectiveStyles(node);
   }
   function assignEdgeStyles(edge) {
       /* Reckon effective style values per node, to support node- and
@@ -290,10 +289,13 @@ prototype.transform = function(input) {
       if ('effectiveStyles' in edge) {   // do this once only!
           return;
       }
+      /*
       edge.effectiveStyles = {
           "edgeThickness": stylist.ill.getEffectiveStyle(edge, 'edgeThickness'),
           "edgeColor": stylist.ill.getEffectiveStyle(edge, 'edgeColor')
       }
+      */
+      edge.effectiveStyles = stylist.ill.gatherAllEffectiveStyles(edge);
   }
 
   function getPhyloNodeByID(id) {
@@ -311,10 +313,10 @@ prototype.transform = function(input) {
        */
       var phylotree = this;
       var matchingNodes = [ ];
+      // Convert string to regex (OK for incoming regex, too)
+      label = RegExp(label, 'i');
       // Check label attributes, taxon names, etc.
       $.each(phylotree.phyloNodes, function(i, node) {
-          // Convert string to regex (OK for incoming regex, too)
-          label = RegExp(label, 'i');
           // N.B. Regex test is very forgiving of non-string args.
           if (label.test(node.ottTaxonName) ||
               label.test(node.ottId) ||
@@ -578,18 +580,19 @@ prototype.transform = function(input) {
     var xScale = 1.0 / (maxX - minX);
     var yScale = 1.0 / (maxY - minY);
     $.each(phylotree.phyloNodes, function(i, node) {
-        node.x = (node.x - minX) * xScale;
-        node.y = (node.y - minY) * yScale;
-    });
-
-    $.each(phylotree.phyloNodes, function(i, node) {
-        // Add misc. properties and all possible labels
+        // Add essential metadata (before assigning styles below)
         node.metadata = {type: 'phylonode'};
         if (illustrationElementID) {
             node.metadata.illustratedTreeID = illustrationElementID;
         }
         node.ancestry = getPhyloNodeAncestry(node);
+        // Scale X/Y coordinates
+        node.x = (node.x - minX) * xScale;
+        node.y = (node.y - minY) * yScale;
+        // Add misc. properties and all possible labels
         assignNodeLabels(node);
+    });
+    $.each(phylotree.phyloNodes, function(i, node) {
         assignNodeStyles(node);
         // TODO: Watch for divergent labels and styles (eg, when ladderizing)!
     });
@@ -597,11 +600,14 @@ prototype.transform = function(input) {
     console.warn("CREATING phyloEdges");
     phylotree.phyloEdges = layout.links(phylotree.phyloNodes);
     $.each(phylotree.phyloEdges, function(i, edge) {
-        // Add misc. properties
+        // Add essential metadata (before assigning styles below)
         edge.metadata = {type: 'phyloedge'};
         if (illustrationElementID) {
             edge.metadata.illustratedTreeID = illustrationElementID;
         }
+    });
+    $.each(phylotree.phyloEdges, function(i, edge) {
+        // Add misc. properties
         assignEdgeStyles(edge);
         // TODO: Watch for divergent labels and styles (eg, when ladderizing)!
         ///console.log(edge.effectiveStyles);
