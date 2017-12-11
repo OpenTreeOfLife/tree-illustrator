@@ -6,7 +6,7 @@ tree {
 }
 tree:eq(0) {
   edge-color: #f33; /* red */
-  edge-thickness: 6px;
+  edge-thickness: 3px;
 }
 tree:eq(1) {
   edge-color: #33f; /* blue */
@@ -27,6 +27,10 @@ tree:eq(0) node label {     /* :primary */
 /* TODO: node:mrca('Placeholder B', 'Placeholder D') { */
 :mrca('Placeholder C', 'Placeholder D') {
   edge-color: #00f;
+  edge-thickness: 8px;
+}
+:mrca('Coffea Arabica', 'Daucus Carota', 'Lactuca sativa') {
+  edge-color: #484;
   edge-thickness: 12px;
 }
 data-table {

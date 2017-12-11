@@ -303,13 +303,13 @@ var TreeSS = function(window, document, $, ko, stylist) {
 
             // Build (and cache) the list of elements matching this rule.
             // N.B. there might be *multiple* selectors whose results must be joined!
-            console.log("    GATHERING elements that match '"+ selectorString +"'...");
+            ///console.log("    GATHERING elements that match '"+ selectorString +"'...");
             var allIllustrationElements = getAllIllustrationElements( );
             var ruleMatchingElements = [ ];
-            console.log("    WALKING the AST to find elements...");
+            ///console.log("    WALKING the AST to find elements...");
             ast.each(function(item, i) {
-                console.log("      AST item, a "+ item.type +" in position ("+ i +")...");
                 /*
+                console.log("      AST item, a "+ item.type +" in position ("+ i +")...");
                 console.log("      position: "+ i);
                 console.log(item);
                 */
@@ -322,8 +322,6 @@ var TreeSS = function(window, document, $, ko, stylist) {
                     var selMatchingElements = $.merge([ ], allIllustrationElements);
                     // This will be winnowed down (or clobbered) by nodes below
                     $.each(item.nodes, function(nodePos, node) {
-                        console.log("          SELECTOR CHILD, a "+ node.type +" in position ("+ i +")...");
-                        console.log("            its value: "+ node.value);
                         /* Handle all element types, see https://github.com/postcss/postcss-selector-parser/blob/master/API.md#nodetype
                          * See also https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors
                          *
@@ -334,6 +332,10 @@ var TreeSS = function(window, document, $, ko, stylist) {
                          * set of matched elements. Combinators will instead
                          * move to their descendants/siblings/etc.
                          */
+                        /*
+                        console.log("          SELECTOR CHILD, a "+ node.type +" in position ("+ i +")...");
+                        console.log("            its value: "+ node.value);
+                        */
                         switch( node.type ) {
                             case 'tag':         // `illustration`, `tree`, `node`
                                 // Filter to just the elements of the specified type
@@ -380,12 +382,27 @@ var TreeSS = function(window, document, $, ko, stylist) {
                                 selMatchingElements = applyCombinator(selMatchingElements, node);
                                 break;
                             case 'pseudo':      // `:tree(2)`, `::adaxial-leaf`
-                                // filter the current matches that match this test
+                                /* Filter the current matches that match this test.
+                                 * Trivial tests can be applied to each element in
+                                 * turn, but a few are more holistic (and
+                                 * computationally expensive) and should be run
+                                 * only once, returning the new set of matching
+                                 * elements from a single call.
+                                 */
+                                switch(node.value) {
+                                    case ':mrca':
+                                        selMatchingElements = testElementAgainstQualifier(null, node, selMatchingElements);
+                                        // N.B. we sent null instead for arg `el`, which will be ignored
+                                        break;
+                                    default:
+                                        selMatchingElements = selMatchingElements.filter(function(el) {
+                                            return testElementAgainstQualifier(el, node, selMatchingElements);
+                                        });
+                                }
+                                /*
                                 console.log('... filtering with this qualifier: ');
                                 console.log(node);
-                                selMatchingElements = selMatchingElements.filter(function(el) {
-                                    return testElementAgainstQualifier(el, node, selMatchingElements);
-                                });
+                                */
                                 break;
                             case 'attribute':   // `[posterior-support >= 0.75]`
                             case 'class':       // `.highlight-3`
@@ -407,8 +424,10 @@ var TreeSS = function(window, document, $, ko, stylist) {
                             // Nothing matches after this step; bail out now w/ empty list!
                             return false;
                         }
+                        /*
                         console.log('... NEW matching elements');
                         console.log(selMatchingElements);
+                        */
                     });
                     // Append all matching elements to our main collection (incl. dupes)
                     // N.B. this modifies the first array in place.
@@ -530,10 +549,15 @@ var TreeSS = function(window, document, $, ko, stylist) {
                 /* Look for nodes with IDs or taxon labels matching the args,
                  * and find their common ancestor; select this node and all its
                  * descendant nodes, edges, etc.
+                 *
+                 * NOTE its exceptional behavior; instead of the usual T/F
+                 * response for a single element, we test against all matching
+                 * trees and return an array of the MRCA nodes (if any) found
+                 * in each.
                  */
                 if (args.length < 2) {
                     console.warn(":mrca selector ignored (two or more arguments required!)");
-                    return false;
+                    return [ ];
                 }
                 // Strip internal quotes from 'string' values
                 args = args.map(function(currentValue, index, array) {
@@ -570,8 +594,8 @@ var TreeSS = function(window, document, $, ko, stylist) {
                     }
                 });
                 if (treesToSearch.length === 0) {
-                    console.warn(":mrca selector ignored (no trees selected!)");
-                    return false;
+                    console.warn(":mrca selector failed (no trees selected!)");
+                    return [ ];
                 }
                 $.unique(treesToSearch); // remove any duplicates
                 var mrcaNodes = [ ],  // mulitple, in case selector includes multiple trees!
@@ -614,7 +638,8 @@ var TreeSS = function(window, document, $, ko, stylist) {
                     mrcaNodes.push(foundMRCA);
                 });
                 // TODO: Preserve this result for fast comparison to other elements!
-                return ($.inArray(el, mrcaNodes) !== -1);
+                ///return ($.inArray(el, mrcaNodes) !== -1);
+                return mrcaNodes;
             default:
                 throw new Error("Unknown filter <"+ pseudoNode.value +"> found in this selector!");
         }
