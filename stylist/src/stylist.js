@@ -2786,13 +2786,14 @@ function loadArchiveFromChosenFile( vm, evt ) {
     // ASSUME we're in the storage-options popup.
     var $hintArea = $('#local-filesystem-warning').eq(0);
     $hintArea.html("");  // clear for new results
-    switch(evt.srcElement.files.length) {
+    var eventTarget = evt.target || evt.srcElement;
+    switch(eventTarget.files.length) {
         case (0):
             console.warn('No file(s) selected!');
             return;
         case (1):
         default:  // ignore multiple files for now, just load the first
-            var fileInfo = evt.srcElement.files[0];
+            var fileInfo = eventTarget.files[0];
             console.warn("fileInfo.name = "+ fileInfo.name);
             console.warn("fileInfo.type = "+ fileInfo.type);
             var isValidArchive = false;
