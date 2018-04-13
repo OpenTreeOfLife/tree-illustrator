@@ -535,17 +535,21 @@
                     <div class="controls mini-form" 
                          style="display: none; margin-top: 0.25em;"
                          data-bind="attr: {id: id() +'-datasource-opentreeids-panel'}">
-                        <label for="#style-printsize-width-field">study id</label> 
-                        <input id="style-printsize-width-field" type="text" value="?"
-                               style="width: 3.0em;"
-                               data-bind="value: metadata.source.phylesystemStudyID,
-                                          valueUpdate: ['afterkeydown','input'],
-                                          event: {change: useChosenTreeDataSource.bind($data)}" />&nbsp;
 
-                        <label for="#style-printsize-height-field">tree id</label> 
-                        <input id="style-printsize-height-field" type="text" value="?"
+                        <label data-bind="attr: {for: id() +'-datasource-opentreeids-studyid'}">study id</label>
+                        <input type="text" value="?"
                                style="width: 3.0em;"
-                               data-bind="value: metadata.source.phylesystemTreeID,
+                               data-bind="attr: {id: id() +'-datasource-opentreeids-studyid'},
+                                          value: metadata.source.phylesystemStudyID,
+                                          valueUpdate: ['afterkeydown','input'],
+                                          event: {change: useChosenTreeDataSource.bind($data)}"
+                                          />&nbsp;
+
+                        <label data-bind="attr: {for: id() +'-datasource-opentreeids-treeid'}">tree id</label>
+                        <input type="text" value="?"
+                               style="width: 3.0em;"
+                               data-bind="attr: {id: id() +'-datasource-opentreeids-treeid'},
+                                          value: metadata.source.phylesystemTreeID,
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {change: useChosenTreeDataSource.bind($data)}" />&nbsp;
                     </div>
@@ -903,17 +907,19 @@
                     <div class="controls mini-form" 
                          style="display: none; margin-top: 0.25em;"
                          data-bind="attr: {id: id() +'-datasource-opentreeids-panel'}">
-                        <label for="#style-printsize-width-field">study id</label> 
-                        <input id="style-printsize-width-field" type="text" value="?"
+                        <label data-bind="attr: {for: id() +'-datasource-opentreeids-studyid'}">study id</label>
+                        <input type="text" value="?"
                                style="width: 3.0em;"
-                               data-bind="value: 'TODO: metadata.source.phylesystemStudyID',
+                               data-bind="attr: {id: id() +'-datasource-opentreeids-studyid'},
+                                          value: 'TODO: metadata.source.phylesystemStudyID',
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {change: useChosenDataSource.bind($data)}" />&nbsp;
 
-                        <label for="#style-printsize-height-field">tree id</label> 
-                        <input id="style-printsize-height-field" type="text" value="?"
+                        <label data-bind="attr: {for: id() +'-datasource-opentreeids-treeid'}">tree id</label>
+                        <input type="text" value="?"
                                style="width: 3.0em;"
-                               data-bind="value: 'TODO: metadata.source.phylesystemTreeID',
+                               data-bind="attr: {id: id() +'-datasource-opentreeids-treeid'},
+                                          value: 'TODO: metadata.source.phylesystemTreeID',
                                           valueUpdate: ['afterkeydown','input'],
                                           event: {change: useChosenDataSource.bind($data)}" />&nbsp;
                     </div>
